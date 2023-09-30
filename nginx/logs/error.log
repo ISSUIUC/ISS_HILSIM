@@ -47,3 +47,6 @@
 2023/09/30 15:13:25 [error] 21384#40376: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "localhost"
 2023/09/30 16:17:40 [emerg] 10148#1264: CreateFile() "./conf/proxy_params" failed (2: The system cannot find the file specified) in ./conf/dev.conf:19
 2023/09/30 16:18:36 [emerg] 28528#8824: CreateFile() "./conf/proxy_params" failed (2: The system cannot find the file specified) in ./conf/dev.conf:19
+2023/09/30 17:10:35 [emerg] 20512#20028: CreateDirectory() "C:\Users\mpkar\Documents\ISS\ISS_HILSIM\nginx/temp/client_body_temp" failed (3: The system cannot find the path specified)
+2023/09/30 17:11:21 [emerg] 18832#33816: CreateDirectory() "C:\Users\mpkar\Documents\ISS\ISS_HILSIM\nginx/temp/client_body_temp" failed (3: The system cannot find the path specified)
+2023/09/30 17:13:17 [emerg] 2036#10776: CreateDirectory() "C:\Users\mpkar\Documents\ISS\ISS_HILSIM\nginx/temp/client_body_temp" failed (3: The system cannot find the path specified)
