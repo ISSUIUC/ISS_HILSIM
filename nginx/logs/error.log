@@ -1,0 +1,49 @@
+2023/09/29 17:46:05 [notice] 41164#33104: signal process started
+2023/09/29 17:48:46 [notice] 25636#6020: signal process started
+2023/09/29 17:48:46 [error] 25636#6020: CreateFile() "C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/logs/nginx.pid" failed (2: The system cannot find the file specified)
+2023/09/29 17:48:57 [notice] 37100#39288: signal process started
+2023/09/29 17:51:52 [error] 34872#38020: *1 CreateFile() "C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/html/favicon.ico" failed (2: The system cannot find the file specified), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost:5000", referrer: "http://localhost:5000/"
+2023/09/29 17:52:36 [notice] 41608#40956: signal process started
+2023/09/29 17:53:22 [error] 40664#40368: *2 CreateFile() "C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/html/favicon.ico" failed (2: The system cannot find the file specified), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost:5000", referrer: "http://localhost:5000/"
+2023/09/29 17:53:27 [error] 40664#40368: *3 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: localhost, request: "GET /api/ HTTP/1.1", upstream: "http://[::1]:433/api/", host: "localhost:5000"
+2023/09/29 17:53:29 [error] 40664#40368: *3 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: localhost, request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:433/api/", host: "localhost:5000"
+2023/09/29 17:54:04 [emerg] 37912#41092: unknown directive "http://127.0.0.1:433" in C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/conf/nginx.conf:40
+2023/09/29 17:54:14 [notice] 41880#41900: signal process started
+2023/09/29 17:54:23 [error] 41104#31348: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: localhost, request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:433/api/", host: "localhost:5000"
+2023/09/29 17:54:23 [error] 41104#31348: *1 CreateFile() "C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/html/favicon.ico" failed (2: The system cannot find the file specified), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost:5000", referrer: "http://localhost:5000/api/"
+2023/09/29 17:54:28 [error] 41104#31348: *1 CreateFile() "C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/html/favicon.ico" failed (2: The system cannot find the file specified), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost:5000", referrer: "http://localhost:5000/"
+2023/09/29 17:59:56 [notice] 38232#37292: signal process started
+2023/09/29 18:00:30 [notice] 41444#27856: signal process started
+2023/09/29 18:00:40 [error] 39404#39996: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:433//", host: "localhost:5000"
+2023/09/29 18:01:05 [notice] 34100#41528: signal process started
+2023/09/29 18:01:12 [error] 26328#30756: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:433/", host: "localhost:5000"
+2023/09/29 18:01:24 [error] 26328#30756: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:433/", host: "localhost:5000"
+2023/09/29 18:03:44 [error] 26328#30756: *14 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:433/", host: "localhost:5000"
+2023/09/29 18:04:28 [notice] 2984#41148: signal process started
+2023/09/29 18:05:34 [error] 35896#37688: *21 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET /api/ HTTP/1.1", upstream: "http://127.0.0.1:433/", host: "localhost:5000"
+2023/09/29 18:06:02 [notice] 36996#21448: signal process started
+2023/09/29 18:16:35 [notice] 37188#33712: signal process started
+2023/09/29 18:21:57 [notice] 9228#35488: signal process started
+2023/09/29 18:22:19 [notice] 40284#36532: signal process started
+2023/09/29 18:22:19 [error] 40284#36532: CreateFile() "C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/logs/nginx.pid" failed (2: The system cannot find the file specified)
+2023/09/29 18:22:44 [notice] 40816#38076: signal process started
+2023/09/29 18:22:51 [notice] 20428#28892: signal process started
+2023/09/29 18:22:51 [error] 20428#28892: CreateFile() "C:\Users\mpkar\Documents\ISS\remote-test-repo\nginx/logs/nginx.pid" failed (2: The system cannot find the file specified)
+2023/09/29 18:23:29 [notice] 21368#30400: signal process started
+2023/09/29 18:23:57 [notice] 11692#40120: signal process started
+2023/09/29 18:42:34 [error] 41692#37956: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:80/", host: "localhost:5000"
+2023/09/29 18:45:04 [notice] 20652#40436: signal process started
+2023/09/29 18:57:09 [error] 41692#37956: *29 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:80/", host: "localhost:5000"
+2023/09/29 18:59:46 [notice] 22988#39560: signal process started
+2023/09/29 19:06:37 [notice] 12848#12844: signal process started
+2023/09/29 19:07:49 [notice] 8644#23964: signal process started
+2023/09/29 19:11:57 [notice] 28824#14520: signal process started
+2023/09/29 20:19:57 [notice] 18620#15224: signal process started
+2023/09/29 20:22:08 [error] 23068#14724: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "localhost"
+2023/09/30 13:06:49 [error] 34812#36968: *10 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "localhost"
+2023/09/30 15:13:11 [error] 21384#40376: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "localhost"
+2023/09/30 15:13:15 [error] 21384#40376: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "localhost"
+2023/09/30 15:13:19 [error] 21384#40376: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "localhost"
+2023/09/30 15:13:25 [error] 21384#40376: *1 connect() failed (10061: No connection could be made because the target machine actively refused it) while connecting to upstream, client: 127.0.0.1, server: , request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "localhost"
+2023/09/30 16:17:40 [emerg] 10148#1264: CreateFile() "./conf/proxy_params" failed (2: The system cannot find the file specified) in ./conf/dev.conf:19
+2023/09/30 16:18:36 [emerg] 28528#8824: CreateFile() "./conf/proxy_params" failed (2: The system cannot find the file specified) in ./conf/dev.conf:19
