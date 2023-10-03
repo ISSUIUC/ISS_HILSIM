@@ -44,6 +44,7 @@ def construct_pong():
     packet_dict = {'type': "PONG", 'data': {}}
     return json.dumps(packet_dict)
 
+
 #### Intermediate data ####
 def construct_job_status(job_ok, current_action, status_text):
     return {"job_ok": job_ok, 'current_action': current_action, "status": status_text}
@@ -67,5 +68,7 @@ def validate_server_packet(packet_type: str, packet_data):
             return True
         case "JOB":
             return "job_data" in packet_data and "csv_data" in packet_data
+        case "PONG":
+            return True
 
     

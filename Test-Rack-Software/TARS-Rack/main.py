@@ -37,9 +37,7 @@ def main():
     pio.pio_clean()
     git.remote_pull_branch("AV-999/protobuf-integration")
 
-    port = getfirstport()
-    if(not port):
-       return
+
 
     try:
         pio.pio_upload("mcu_hilsim")
