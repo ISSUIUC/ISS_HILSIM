@@ -37,5 +37,3 @@ If you have run the server in the `dev` environment, all aspects of the running 
 Sometimes, Nginx will keep running even if the process that started it is killed. Usually, Nginx processes are killed with the `nginx -s stop` command.
 
 To force-kill all nginx process (if `-s stop` stop doesn't work): `taskkill /f /IM nginx.exe`
-
-# test
