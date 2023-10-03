@@ -20,12 +20,13 @@ The rest of `av_platform/run_setup.py` -- Implement platform-specific code pushi
 
 Here are your technical requirements for server communication:
 - Whenever an `IDENT?` packet is recieved, IF this board was assigned an id before, send an ID-CONF packet with the board type and board id stored. OTHERWISE, send an IDENT packet.
-- Whenever an `ACK` packet is recieved, store the board ID assigned and which port sent it (This will be the server port).
+- Whenever an `ACK` packet is recieved, store the board ID assigned and which port sent it (This will be the server port). Then, send a `READY` packet.
 - Whenever a `REASSIGN` packet is recieved, change to board_id but do not terminate any jobs.
 - Whenever a `TERMINATE` packet is recieved, immediately terminate all currently running jobs, then, send a `READY` packet.
 - Whenever a `CYCLE` packet is recieved, terminate all currently running jobs. If the current platform supports power cycling, then power cycle the test stand, then send a `READY` packet. If the current platform cannot power cycle, immediately send a `READY` packet.
 - `stream_data` runs in a while loop, so to implement the above two bullet points you will need to figure out how to communicate to the server while running a hilsim job. (I don't know exactly how to do that so go ham)
 - Whenever a `JOB` packet is recieved, IF a job is currently running, send a `BUSY` packet back with the currently running job data. Otherwise, run the job and send `JOB-UPD` packets with the status of the job while it's running (The first status should always be `"Accepted"`)
+- Whenever a `PING` packet is recieved, send a `PONG` packet immediately.
 
 Most of the places where code needs to be implemented is marked with a `TODO`. Good luck!
 
