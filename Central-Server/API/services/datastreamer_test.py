@@ -15,7 +15,7 @@ import util.packets as pkt
 
 
 
-comport = "COM8"
+comport = "COM9"
 
 if __name__ == "__main__":
     print("Detected script running as __main__, beginning test of Data Streamer functionality")

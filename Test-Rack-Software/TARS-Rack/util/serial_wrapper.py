@@ -3,7 +3,7 @@ import serial.tools.list_ports
 import util.config
 import util.packets as packet
 
-connected_comports = []
+connected_comports: list[serial.Serial] = []
 
 """
 Function to retrieve a list of comports connected to this device
@@ -13,18 +13,40 @@ def get_com_ports():
     return serial.tools.list_ports.comports()
 
 
-"""
-Close all initialized ports, then loop through each port and initialize it.
-"""
-def init_com_ports():
-    print("(init_comports) Closing all initialized comports..")
+"""Close all connected COMports"""
+def close_com_ports():
+    print("(cloase_com_ports) Closing all initialized comports..")
     for port in connected_comports:
         port.close()
+
+def close_port(port: serial.Serial):
+    print("(cloase_com_ports) Closing " + port.name)
+    for comport in connected_comports:
+        if(comport.name == port.name):
+            comport.close()
+
+"""
+TODO: Delete this!
+Test script for init_com_ports()
+"""
+def t_init_com_ports():
+    print("(init_comports) Attempting to initialize all connected COM ports..")
+    if(len(connected_comports) > 0):
+        return
+    port = serial.Serial("COM8", write_timeout=0)
+    connected_comports.append(port)
+    print("(init_comports) Initialized port COM8")
+
+"""
+Loop through each port and try to initialize it if it's not already initialized
+"""
+def init_com_ports():
     print("(init_comports) Attempting to initialize all connected COM ports..")
     for port_data in get_com_ports():
         try:
-            port = serial.Serial(port_data.device)
+            port = serial.Serial(port_data.device, write_timeout=0)
             connected_comports.append(port)
+            print("(init_comports) Initialized port " + port_data.device)
         except serial.SerialException as err:
             if("denied" in str(err)):
                 for connected in connected_comports:
@@ -43,7 +65,7 @@ an ACK packet from the central server.
 @param port: serial.Serial -- Port to send the IDENT packet to
 """
 def send_ident(port: serial.Serial):
-    port.write(packet.construct_ident(config.boa))
+    port.write(packet.construct_ident(util.config.board_type).encode())
 
 """
 The main function that handles all packets sent by the server, also returns the packet data to the caller.
