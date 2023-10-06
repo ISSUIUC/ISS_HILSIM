@@ -1,0 +1,25 @@
+version: '3'
+services:
+  web:
+    build:
+      context: ./Central-Server/hilsim-web
+      dockerfile: ./Dockerfile.prod
+    ports:
+      - "8080:8080"
+  api:
+    build:
+      context: ./Central-Server/API
+      dockerfile: ./Dockerfile.prod
+    ports:
+      - "443:443"
+    environment:
+      - PORT=443
+    volumes:
+      - ./Central-Server/API:/src/api
+  proxy:
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile.prod
+    ports:
+      - "80:80"
+
