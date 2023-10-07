@@ -25,17 +25,25 @@ def close_port(port: serial.Serial):
         if(comport.name == port.name):
             comport.close()
 
+"""Clears all of the data in the port buffer"""
+def clear_port(port: serial.Serial):
+    if port.in_waiting:
+        data = port.read_all()
+
 """
 TODO: Delete this!
 Test script for init_com_ports()
 """
+alr_init = False
 def t_init_com_ports():
-    print("(init_comports) Attempting to initialize all connected COM ports..")
-    if(len(connected_comports) > 0):
-        return
-    port = serial.Serial("COM8", write_timeout=0)
-    connected_comports.append(port)
-    print("(init_comports) Initialized port COM8")
+    global alr_init
+    init_com_ports()
+    if alr_init == False:
+        port = serial.Serial("COM8", write_timeout=0)
+        connected_comports.append(port)
+        alr_init = True
+        print("(init_comports) Initialized port COM8")
+    
 
 """
 Loop through each port and try to initialize it if it's not already initialized
@@ -52,8 +60,6 @@ def init_com_ports():
                 for connected in connected_comports:
                     if(connected.name == port_data.device):
                         print("(init_comports) " + port_data.device + " already initialized")
-                    else:
-                        print("(init_comports) " + port_data.device + " cannot be initialized.")
                 
             else:
                 print(err)

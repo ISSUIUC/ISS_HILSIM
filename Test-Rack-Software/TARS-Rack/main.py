@@ -23,12 +23,105 @@ import serial
 server_port: serial.Serial = None
 tester_boards: list[serial.Serial] = None
 board_id = -1
+current_job: avionics.HilsimRun = None
+current_job_data: dict = None
+signal_abort = False
+job_active = False
 
 def ready():
     return avionics.ready and server_port != None
 
+def setup_job(job_packet_data):
+    global current_job
+    current_job = avionics.HilsimRun(job_packet_data['csv_data'], job_packet_data['job_data'])
+    current_job_data = job_packet_data['job_data']
+
+def handle_server_packet(packet_type, packet_data, packet_string, comport: serial.Serial):
+    global server_port, job_active
+    if(packet_type != "JOB"):
+        print("Handling packet << " + packet_string)
+    else:
+        print("Handling packet << " + packet_type + f" ({packet_data['job_data']}) + [hidden csv data]")
+    global server_port, board_id
+    if packet_type == "ACK":
+        if server_port == None:
+            server_port = comport
+            board_id = packet_data['board_id']
+            print("(datastreamer) Connected to server as board " + str(board_id) + "!")
+            return
+        else:
+            print("Recieved ACK packets from more than one source! Discarding second ACK.")
+            comport.write(packet.construct_invalid(packet_string).encode())
+            return
+
+    if (not ready()):
+        print("(datastreamer) Recieved packet but not ready! Send ACK first.")
+        comport.write(packet.construct_invalid(packet_string).encode())
+        return
+    log_string = ""
+    match packet_type:
+        case "IDENT?":
+            comport.write(packet.construct_id_confirm(config.board_type, board_id).encode())
+            log_string += "Sending packet >> " + packet.construct_id_confirm(config.board_type, board_id)
+        case "PING":
+            comport.write(packet.construct_pong().encode())
+            log_string += "Sending packet >> " + packet.construct_pong()
+        case "REASSIGN":
+            if(board_id != -1):
+                new_id = packet_data['board_id']
+                log_string += "Reassigned board ID (" + str(board_id) + " ==> " + str(new_id) + ")" 
+                board_id = new_id
+            else:
+                comport.write(packet.construct_invalid(packet_string).encode())
+                log_string += "Recieved REASSIGN packet but this board has not been initialized"
+        case "JOB":
+            try:
+                setup_job(packet_data)
+                job_status = packet.construct_job_status(True, "Setup", "Accepted")
+                log_string += "Job set up"
+                print("(handle_packet) Job accepted")
+                comport.write(packet.construct_job_update(job_status, []).encode())
+
+                # Returns true if the job should be canceled.
+                def cancel_job():
+                    read_data([server_port])
+                    return signal_abort
+                
+                completed, status = current_job.job_setup(cancel_job)
+                job_status = packet.construct_job_status(completed, "Setup", status)
+                comport.write(packet.construct_job_update(job_status, []).encode())
+
+                if(completed):
+                    job_active = True
+            except Exception as e:
+                log_string += "Job rejected: " + str(e)
+                comport.write(packet.construct_invalid(packet_string).encode())
+    if(log_string == ""):
+        log_string = "(handle_packet) No special log string for pkt\n" + packet_string
+    else:
+        log_string = "(handle_packet) " + log_string
+    print(log_string)
+
+def read_data(listener_list: list[serial.Serial]):
+    # Process all incoming packets (Caution! Will process EVERYTHING before server is connected!)
+    for comport in listener_list:
+        if comport.in_waiting:
+            data = comport.read_all()
+            packet_string = data.decode("utf8")
+            valid, type, data = packet.decode_packet(packet_string)
+            if not valid:
+                # If it's not valid, it's either not a valid packet, or type="RAW" (just a string)
+                if type == "RAW":
+                    avionics.handle_raw(packet_string)
+                else:
+                    # invalid packet
+                    comport.write(packet.construct_invalid(packet_string).encode())
+            else:
+                # Is server packet
+                handle_server_packet(type, data, packet_string, comport)
+
 def main():
-    global server_port, tester_boards, board_id
+    global server_port, tester_boards, board_id, job_active
     # TODO: Implement application-specific setup
     # TODO: Implement stack-specific setup
     # TODO: Implement Server-application communication (Serial communication)
@@ -39,6 +132,7 @@ def main():
 
     next_conn_debounce = time.time() + 0.5
     next_av_debounce = time.time() + 0.1
+    last_job_loop_time = time.time()
 
     print("(datastreamer) first setup done")
     while True: # Run setup
@@ -53,10 +147,11 @@ def main():
             
 
         if not avionics.ready and time.time() > next_av_debounce:
-            print("(datastreamer) Attempting to detect avionics")
-            avionics.detect_avionics([server_port])
-            # let's just assume avionics is ready
-            avionics.ready = True
+            avionics.detect_avionics([server_port], server_port != None)
+
+            # Uncomment line below if testing with actual avionics
+            # avionics.ready = True
+
             if(avionics.ready):
                 print("(datastreamer) Avionics ready!")
             next_av_debounce = time.time() + 0.1
@@ -65,35 +160,36 @@ def main():
         if(server_port != None):
             listener_list = [server_port]
 
-        # Process all incoming packets
-        for comport in listener_list:
-            if comport.in_waiting:
-                data = port.read_all()
-                packet_string = data.decode("utf8")
-                valid, type, data = packet.decode_packet(packet_string)
-                if not valid:
-                    comport.write(packet.construct_invalid(packet_string).encode())
-                else:
-                    if type == "ACK":
-                        if server_port == None:
-                            server_port = comport
-                            board_id = data['board_id']
-                            print("(datastreamer) Connected to server!")
-                            continue
-                        else:
-                            print("Recieved ACK packets from more than one source! Discarding second ACK.")
-                            comport.write(packet.construct_invalid(packet_string).encode())
-                            continue
+        # Reads all comport data and acts on it
+        read_data(listener_list)
+
+        def send_running_job_status(job_status_packet):
+            server_port.write(packet.construct_job_update(job_status_packet, current_job.get_current_log()).encode())
+            print(f"(current_job_status) Is_OK: {str(job_status_packet['job_ok'])}, Current action: {job_status_packet['current_action']}, Status: {job_status_packet['status']}")
+
+        # Runs currently active job (If any)
+        if(job_active):
+            if(last_job_loop_time != time.time()):
+                dt = time.time() - last_job_loop_time
+                run_finished, run_errored, cur_log = current_job.step(dt, send_running_job_status)
+                
+                
+                # CURRENT ISSUE:
+                # Doesn't stream enough data.
 
 
-                    if (not ready()):
-                        print("(datastreamer) Recieved packet but not ready! Send ACK first.")
-                        comport.write(packet.construct_invalid(packet_string).encode())
-                        continue
+                
+                if(run_finished):
+                    job_active = False
+                    pass
 
-                    match type:
-                        case "IDENT?":
-                            comport.write(packet.construct_id_confirm(config.board_type, board_id).encode())
+                if(run_errored):
+                    job_active = False
+                    pass
+
+                last_job_loop_time = time.time()
+        
+        
 
 
             

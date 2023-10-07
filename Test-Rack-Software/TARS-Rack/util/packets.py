@@ -34,7 +34,7 @@ def construct_busy(job_data):
     packet_dict = {'type': "BUSY", 'data': {'job_data': job_data}}
     return json.dumps(packet_dict)
 
-def construct_job_update(job_status, current_log: str):
+def construct_job_update(job_status, current_log: list[str]):
     # Constructs JOB-UPD packet
     packet_dict = {'type': "JOB-UPD", 'data': {'job_status': job_status, 'hilsim_result': current_log}}
     return json.dumps(packet_dict)
@@ -45,12 +45,23 @@ def construct_pong():
     return json.dumps(packet_dict)
 
 #### Intermediate data ####
-def construct_job_status(job_ok, current_action, status_text):
+def construct_job_status(job_ok: bool, current_action: str, status_text: str):
     return {"job_ok": job_ok, 'current_action': current_action, "status": status_text}
 
 #### SERVER PACKETS ####
 def decode_packet(packet: str):
-    packet_dict = json.loads(packet)
+    try:
+        if "[raw==>]" in packet:
+            # This is a job packet, we treat it differently.
+            packet_split = packet.split("[raw==>]")
+            job_packet = packet_split[0]
+            raw_data = packet_split[1]
+            packet_dict = json.loads(job_packet)
+            packet_dict['data']['csv_data'] = raw_data
+            return validate_server_packet(packet_dict['type'], packet_dict['data']), packet_dict['type'], packet_dict['data']
+        packet_dict = json.loads(packet)
+    except Exception as e:
+        return False, "RAW", packet
     return validate_server_packet(packet_dict['type'], packet_dict['data']), packet_dict['type'], packet_dict['data']
 
 def validate_server_packet(packet_type: str, packet_data):
@@ -67,5 +78,7 @@ def validate_server_packet(packet_type: str, packet_data):
             return True
         case "JOB":
             return "job_data" in packet_data and "csv_data" in packet_data
+        case "PING":
+            return True
 
     

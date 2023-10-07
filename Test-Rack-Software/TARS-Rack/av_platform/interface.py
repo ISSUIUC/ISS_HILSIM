@@ -1,6 +1,7 @@
 # AV Interface (TARS)
 # This is the specific interface.py file for the TARS avionics stack.
-# @implements
+# @implements handle_raw(str raw_string) -- Determines what to do when a raw string is recieved from the stack.
+# @implements detect_avionics(serial.Serial[] ignorePorts) -- Scans all ports for a connection, sets ready status if connected to an avionics stack.
 # @implements first_setup() -- Performs the first setup (assuming fresh install). 
 # @implements code_reset() -- Resets the project to a "known" state (Usually master branch).
 # @implements code_pull(str git_branch) -- Sets up the project to do a code flash.
@@ -20,15 +21,25 @@ import util.packets as packet
 ready = False # Is the stack ready to recieve data?
 TARS_port: serial.Serial = None
 
+"""This function handles all raw input BEFORE all initialization is complete."""
+# Doesn't do anything for TARS, but other boards may have initialization packets.
+def handle_raw(raw_string: str):
+    pass
+
 """This function will check if there's any serial plugged into this board that is NOT the server.
 TARS only has one board, so we're good if we see any other port"""
-def detect_avionics(ignore_ports: list[serial.Serial]):
+def detect_avionics(ignore_ports: list[serial.Serial], connected_to_server: bool):
+    global ready, TARS_port
+    # For TARS, we need to make sure that we're already connected to the server
+    if(not connected_to_server):
+        ready = False
+        return
+    print("(detect_avionics) Attempting to detect avionics")
     for comport in server.connected_comports:
         if not (comport in ignore_ports):
-            if(comport.in_waiting):
-                TARS_port = comport
-                ready = True
-    ready = False
+            print("(detect_avionics) Detected viable target @ " + comport.name)
+            TARS_port = comport
+            ready = True
     
 
 """
@@ -46,6 +57,8 @@ TARS: Resets the TARS-Software repository to master branchd
 """
 def code_reset():
     git.remote_reset()
+    # Clean build dir
+    pio.pio_clean()
 
 """
 This function must be implemented in all run_setup.py functions for each stack
@@ -60,8 +73,6 @@ code_flash(): Flashes currently staged code to the avionics stack.
 TARS: Uses environment mcu_hilsim
 """
 def code_flash():
-    # Clean build dir
-    pio.pio_clean()
     # For TARS, we need to attempt the code flash twice, since it always fails the first time.
     try:
         pio.pio_upload("mcu_hilsim")
@@ -83,9 +94,51 @@ class HilsimRun:
     start_time = 0
     current_time = 0
     port = None
+    job_data = None
+
+    # Getter for current log
+    def get_current_log(self):
+        return self.return_log
+
+    # Sets up job to run (Cannot be canceled)
+    # @param cancel_callback: Function that returns whether the job should be terminated.
+    def job_setup(self, cancel_callback):
+        job = self.job_data
+        # Temporarily close port so code can flash
+        TARS_port.close()
+        if(job['pull_type'] == "branch"):
+            try:
+                code_reset()
+                if(cancel_callback()):
+                    return False, "Terminate signal sent during setup"
+                code_pull(job['pull_target'])
+                if(cancel_callback()):
+                    return False, "Terminate signal sent during setup"
+                code_flash()
+
+                # Wait for the port to open back up (Max wait 10s)
+                start = time.time()
+                while(time.time() < start + 10):
+                    if(cancel_callback()):
+                        return False, "Terminate signal sent during COMPort setup"
+                    try:
+                        TARS_port.open()
+                        print("\n(job_setup) Successfully re-opened TARS port (" + TARS_port.name + ")")
+                        return True, "Setup Complete"
+                    except:
+                        time_left = abs((start + 10) - time.time())
+                        print(f"(job_setup) attempting to re-open tars port.. ({time_left:.1f}s)", end="\r")
+                return False, "Unable to re-open avionics COM Port"
+                
+            except Exception as e:
+                return False, "Setup failed: " + str(e)
+        elif (job['pull_type'] == "commit"):
+            # Not implemented yet
+            pass
+
 
     # Turns a raw CSV string to a Pandas dataframe
-    def raw_csv_to_dataframe(raw_csv) -> pandas.DataFrame:
+    def raw_csv_to_dataframe(self, raw_csv) -> pandas.DataFrame:
         # Get column names
         header = raw_csv.split('\n')[0].split(",")
         csv = "\n".join(raw_csv.split('\n')[1:])
@@ -93,14 +146,16 @@ class HilsimRun:
         return pandas.read_csv(csvStringIO, sep=",", header=None, names=header)
 
     # Initializes the HILSIM run object
-    def __init__(self, raw_csv: str, serial_port: serial.Serial) -> None:
+    def __init__(self, raw_csv: str, job: dict) -> None:
+        global TARS_port
         self.flight_data_raw = raw_csv
         self.flight_data_dataframe = self.raw_csv_to_dataframe(self.flight_data_raw)
         self.flight_data_rows = self.flight_data_dataframe.iterrows()
-        self.port = serial_port
+        self.port = TARS_port
         self.start_time = time.time()
         self.current_time = self.start_time
         self.last_packet_time = self.start_time
+        self.job_data = job
 
     """
     Runs one iteration of the HILSIM loop, with a change in time of dt.
@@ -110,8 +165,8 @@ class HilsimRun:
     """
     def step(self, dt: float, callback_func):
         self.current_time += dt
-        if self.current_time > self.last_packet_time + 10:
-            self.last_packet_time += 10
+        if self.current_time > self.last_packet_time + 1:
+            self.last_packet_time += 0.01
             if self.current_time < self.start_time + 5:
                 # Wait for 5 seconds to make sure serial is connected
                 pass
@@ -119,7 +174,7 @@ class HilsimRun:
                 if(self.current_line == 0):
                     callback_func(packet.construct_job_status(True, "running", f"Running (Data streaming started)"))
                 self.current_line += 1
-
+                
                 if(self.current_line % 300 == 0):
                     # Only send a job update every 3-ish seconds
                     callback_func(packet.construct_job_status(True, "running", f"Running ({self.current_line/len(self.flight_data_dataframe)*100:.2f}%) [{self.current_line} processed out of {len(self.flight_data_dataframe)} total]"))
@@ -144,6 +199,8 @@ class HilsimRun:
             if string:
                 string = string[0 : (len(string)-1)]
                 self.return_log.append(string)
+
+        return False, False, self.return_log
         
 
 

@@ -39,10 +39,8 @@ def construct_job(job_data, flight_csv):
     return json.dumps(packet_dict)
 
 #### CLIENT PACKETS ####
-def decode_packet(packet: str):
+def decode_packet(packet: str) -> tuple[bool, str, dict]:
     packet_dict = json.loads(packet)
-    if(type(packet_dict) == str):
-        packet_dict = json.loads(packet_dict)
     return validate_client_packet(packet_dict['type'], packet_dict['data']), packet_dict['type'], packet_dict['data']
 
 def validate_client_packet(packet_type: str, packet_data):
