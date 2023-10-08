@@ -44,6 +44,8 @@ def TRY_WRITE(port: serial.Serial, data, component):
         FAIL("Write:" + port.name, "Timeout while writing data (" + component + ")")
 
 def RESET_TEST(port: serial.Serial):
+    if(port.in_waiting):
+        port.read_all()
     port.write("!test_reset".encode())
 
 def FAIL(component, reason):
@@ -85,8 +87,8 @@ def TEST(component, condition):
         FAIL(component, condition[1])
 
 
-def AWAIT_ANY_RESPONSE(port: serial.Serial, timeout=3.0):
-    wait_text("COM:" + port.name, "Awaiting a response from port..")
+def AWAIT_ANY_RESPONSE(port: serial.Serial, timeout=3.0, comment=""):
+    wait_text("COM:" + port.name, "Awaiting a response from port.. " + comment)
     try:
         start_time = time.time()
         while(time.time() - start_time < timeout):
@@ -111,7 +113,7 @@ def ENSURE_NO_RESPONSE(port: serial.Serial, timeout=3.0):
 def TRY_OPEN_PORT(port_name):
     wait_text(port_name, "Attempting to open port")
     try:
-        port = serial.Serial(port_name, timeout=5, write_timeout=2)
+        port = serial.Serial(port_name, timeout=5, write_timeout=0)
         PASS("COMPORT " + port_name, "Successfully connected to COM:" + port_name)
         return port
     except:
@@ -124,8 +126,10 @@ def GET_PACKET(port: serial.Serial, timeout=3.0):
         start_time = time.time()
         while(time.time() - start_time < timeout):
             if port.in_waiting:
-                data = port.read_until(b"\n")
+                data = port.read_all()
                 string = data.decode("utf8")
+                while port.in_waiting:
+                    string += port.read_all().decode("utf8")
         
                 if string:
                     valid, type, data = pkt.decode_packet(string)
@@ -136,7 +140,8 @@ def GET_PACKET(port: serial.Serial, timeout=3.0):
 
         FAIL("Read:" + port.name, "Read timeout")
     except:
-        FAIL("Read:" + port.name, "VALID_FORMAT ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m")
+        print(string)
+        FAIL("Read:" + port.name, "GET_PACKET ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m")
     
 # Reads last packet and detects if it's of a valid format
 def VALID_PACKET(port: serial.Serial, packet_type, valid, type, data, timeout=3.0):

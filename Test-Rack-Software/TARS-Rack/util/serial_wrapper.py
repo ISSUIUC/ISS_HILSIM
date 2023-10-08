@@ -4,6 +4,7 @@ import util.config
 import util.packets as packet
 
 connected_comports: list[serial.Serial] = []
+packet_buffer: dict = []
 
 """
 Function to retrieve a list of comports connected to this device
@@ -93,3 +94,16 @@ def ping_ident():
     for comport_info in get_com_ports():
         comport = serial.Serial(comport_info.device, 9600, timeout=10)
         send_ident(comport)
+
+"""Saves a packet to be sent next write_all() call"""
+def write_to_buffer(port: serial.Serial, packet: str):
+    global packet_buffer
+    if(not port.name in packet_buffer.keys()):
+        packet_buffer[port.name] = []
+    packet_buffer[port.name].append(packet.encode())
+
+"""Write all packets in a port's packet buffer"""
+def write_all(port: serial.Serial):
+    global packet_buffer
+    full_data = "[packet]".join(packet_buffer[port.name])
+    port.write(full_data)

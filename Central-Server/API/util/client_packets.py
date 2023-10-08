@@ -51,6 +51,15 @@ def construct_job_status(job_ok, current_action, status_text):
 
 #### SERVER PACKETS ####
 def decode_packet(packet: str):
+    if "[raw==>]" in packet:
+        # This is a job packet, we treat it differently.
+        packet_split = packet.split("[raw==>]")
+        job_packet = packet_split[0]
+        raw_data = packet_split[1]
+        packet_dict = json.loads(job_packet)
+        packet_dict['data']['csv_data'] = raw_data
+        return validate_server_packet(packet_dict['type'], packet_dict['data']), packet_dict['type'], packet_dict['data']
+
     packet_dict = json.loads(packet)
     return validate_server_packet(packet_dict['type'], packet_dict['data']), packet_dict['type'], packet_dict['data']
 

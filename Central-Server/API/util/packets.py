@@ -35,8 +35,8 @@ def construct_cycle():
 
 def construct_job(job_data, flight_csv):
     # Constructs TERMINATE packet
-    packet_dict = {'type': "JOB", 'data': {'job_data': job_data, 'sim_data': flight_csv}}
-    return json.dumps(packet_dict)
+    packet_dict = {'type': "JOB", 'data': {'job_data': job_data}}
+    return json.dumps(packet_dict) + "[raw==>]" + flight_csv # [raw==>] used as delimiter
 
 #### CLIENT PACKETS ####
 def decode_packet(packet: str):

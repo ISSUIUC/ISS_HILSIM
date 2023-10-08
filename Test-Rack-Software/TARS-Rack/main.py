@@ -27,12 +27,19 @@ current_job: avionics.HilsimRun = None
 current_job_data: dict = None
 signal_abort = False
 job_active = False
+job_clock_reset = False
 
 def ready():
     return avionics.ready and server_port != None
 
 def setup_job(job_packet_data):
     global current_job
+    while(server_port.in_waiting):
+        data = server_port.read_all()
+        string = data.decode("utf8")   
+        if string:
+            job_packet_data['csv_data'] += string
+    
     current_job = avionics.HilsimRun(job_packet_data['csv_data'], job_packet_data['job_data'])
     current_job_data = job_packet_data['job_data']
 
@@ -93,6 +100,7 @@ def handle_server_packet(packet_type, packet_data, packet_string, comport: seria
 
                 if(completed):
                     job_active = True
+                    job_clock_reset = False
             except Exception as e:
                 log_string += "Job rejected: " + str(e)
                 comport.write(packet.construct_invalid(packet_string).encode())
@@ -121,7 +129,7 @@ def read_data(listener_list: list[serial.Serial]):
                 handle_server_packet(type, data, packet_string, comport)
 
 def main():
-    global server_port, tester_boards, board_id, job_active
+    global server_port, tester_boards, board_id, job_active, job_clock_reset
     # TODO: Implement application-specific setup
     # TODO: Implement stack-specific setup
     # TODO: Implement Server-application communication (Serial communication)
@@ -135,7 +143,7 @@ def main():
     last_job_loop_time = time.time()
 
     print("(datastreamer) first setup done")
-    while True: # Run setup
+    while True: 
         # Are we in init state? (Don't have a server connected)
         if server_port == None and time.time() > next_conn_debounce:
             print("(datastreamer) Missing server connection! Running server probe")
@@ -169,15 +177,15 @@ def main():
 
         # Runs currently active job (If any)
         if(job_active):
+            if(job_clock_reset == False):
+                current_job.reset_clock()
+                job_clock_reset = True
+                last_job_loop_time = time.time()
+            
+            
             if(last_job_loop_time != time.time()):
                 dt = time.time() - last_job_loop_time
                 run_finished, run_errored, cur_log = current_job.step(dt, send_running_job_status)
-                
-                
-                # CURRENT ISSUE:
-                # Doesn't stream enough data.
-
-
                 
                 if(run_finished):
                     job_active = False

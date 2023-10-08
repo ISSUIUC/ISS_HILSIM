@@ -17,6 +17,7 @@ import io
 import time
 import serial
 import util.packets as packet
+import traceback
 
 ready = False # Is the stack ready to recieve data?
 TARS_port: serial.Serial = None
@@ -157,6 +158,11 @@ class HilsimRun:
         self.last_packet_time = self.start_time
         self.job_data = job
 
+    def reset_clock(self):
+        self.start_time = time.time()
+        self.current_time = self.start_time
+        self.last_packet_time = self.start_time
+
     """
     Runs one iteration of the HILSIM loop, with a change in time of dt.
     callback_func is a function to communicate back to the main process mid-step.
@@ -165,8 +171,10 @@ class HilsimRun:
     """
     def step(self, dt: float, callback_func):
         self.current_time += dt
-        if self.current_time > self.last_packet_time + 1:
-            self.last_packet_time += 0.01
+        simulation_dt = 0.01
+        if self.current_time > self.last_packet_time + simulation_dt:
+            self.last_packet_time += simulation_dt
+
             if self.current_time < self.start_time + 5:
                 # Wait for 5 seconds to make sure serial is connected
                 pass
