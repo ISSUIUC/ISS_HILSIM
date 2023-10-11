@@ -2,6 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import { useState, useEffect } from 'react';
 import { socket, useWebsocket } from './websocket';
+import { createContext } from 'react';
 
 import {
   createBrowserRouter,
@@ -9,6 +10,9 @@ import {
 } from "react-router-dom";
 import Page404 from './components/Page404';
 import WebsocketStatus from './components/WebsocketStatus';
+import Login from './components/Login';
+
+export const AuthContext = createContext();
 
 const router = createBrowserRouter([
   {
@@ -23,6 +27,10 @@ const router = createBrowserRouter([
     path: "/wsstatus",
     element: <WebsocketStatus />,
   },
+  {
+    path: "/login",
+    element: <Login />
+  }
 ]);
 
 
