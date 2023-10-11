@@ -11,7 +11,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true 
     volumes:
-      - ./Central-Server/hilsim-web:/src/hilsim-webapp
+      - ./Central-Server/hilsim-web/src:/src/hilsim-webapp/src
       - /Central-Server/hilsim-web/node_modules/
   api:
     build:
