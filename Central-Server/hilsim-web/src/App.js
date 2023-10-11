@@ -9,11 +9,12 @@ import {
 } from "react-router-dom";
 import Page404 from './components/Page404';
 import WebsocketStatus from './components/WebsocketStatus';
+import HomePage from './components/homepage';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <div><h2>This will be the homepage!</h2></div>,
+    element: <HomePage />,
   },
   {
     path: "*",
