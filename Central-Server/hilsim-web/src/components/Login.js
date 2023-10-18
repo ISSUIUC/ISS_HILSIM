@@ -56,6 +56,7 @@ const Login = () => {
   return (
     <div>
       <a href={githubOAuthURL}>Sign in with GitHub</a>
+      <p>{sessionStorage.getItem("idv")}</p>
     </div>
   );
 };
