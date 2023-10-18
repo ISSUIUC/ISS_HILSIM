@@ -1,9 +1,9 @@
 import React from 'react';
 
-const GITHUB_CLIENT_ID = 'your_client_id';
-const GITHUB_CLIENT_SECRET = '';
-const GITHUB_CALLBACK_URL = 'localhost';
-const githubOAuthURL = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=user`;
+const GITHUB_CLIENT_ID = process.env.REACT_APP_GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+const GITHUB_CALLBACK_URL = 'http://localhost';
+const githubOAuthURL = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=read:user,user:email,read:org&redirect_uri=${GITHUB_CALLBACK_URL}`;
 
 const Login = () => {
   const handleLogin = async (code) => {
@@ -33,6 +33,7 @@ const Login = () => {
 
       // Handle the user profile data (e.g., store it in your database and log the user in)
       console.log(`Welcome, ${userProfile.data.name}!`);
+
     } catch (error) {
       console.error(error);
     }
