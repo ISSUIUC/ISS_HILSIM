@@ -10,7 +10,6 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 import util.packets as pkt
-import util.client_packets as cl_pkt
 
 success = 0
 fails = 0
@@ -35,10 +34,10 @@ def display(result):
         print("ALL TESTS \033[92mSUCCESSFUL\033[0m")
         print("Test breakdown: \033[92m" + str(success) + " passed\033[0m\n")
 
-def TRY_WRITE(port: serial.Serial, data, component):
+def TRY_WRITE(port: serial.Serial, data: pkt.DataPacket, component):
     wait_text(port.name, "Attempting to write " + str(len(data)) + " bytes (" + component + ")")
     try:
-        port.write(data)
+        port.write(data.serialize().encode())
         PASS("Write:" + port.name, component)
     except serial.SerialTimeoutException as exc:
         FAIL("Write:" + port.name, "Timeout while writing data (" + component + ")")
@@ -47,6 +46,9 @@ def RESET_TEST(port: serial.Serial):
     if(port.in_waiting):
         port.read_all()
     port.write("!test_reset".encode())
+
+def CLEAR(port: serial.Serial):
+    port.reset_input_buffer()
 
 def FAIL(component, reason):
     global fails, cur_wait_text
@@ -119,42 +121,66 @@ def TRY_OPEN_PORT(port_name):
     except:
         FAIL("COMPORT " + port_name, "Unable to open port:\033[90m\n\n" + traceback.format_exc()  + "\033[0m")
     
-def GET_PACKET(port: serial.Serial, timeout=3.0):
-    wait_text("Read:" + port.name, "Decoding Serial Packet")
+def GET_PACKETS(port: serial.Serial, ignore_heartbeat=True, silent=False) -> list[pkt.DataPacket] | None:
+    if not silent:
+        wait_text("Read:" + port.name, "Decoding Serial Packet")
+    try:
+        list = pkt.DataPacketBuffer.serial_to_packet_list(port)
+        new_list = []
+        if ignore_heartbeat:
+            for packet in list:
+                if(packet.packet_type != pkt.DataPacketType.HEARTBEAT):
+                    new_list.append(packet)
+        else:
+            new_list = list
 
+
+        return new_list
+    except:
+        FAIL("Read:" + port.name, "GET_PACKET ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m")
+
+def WAIT_FOR_PACKET_TYPE(port: serial.Serial, packet_type: pkt.DataPacketType, timeout=3.0):
+    wait_text(port.name, "Waiting for packet of type " + str(packet_type))
     try:
         start_time = time.time()
         while(time.time() - start_time < timeout):
-            if port.in_waiting:
-                data = port.read_all()
-                string = data.decode("utf8")
-                while port.in_waiting:
-                    string += port.read_all().decode("utf8")
-        
-                if string:
-                    valid, type, data = pkt.decode_packet(string)
-                    if(valid):
-                        return valid, type, data
-                    else:
-                        FAIL("Read:" + port.name, "Failed to decode packet")
-
-        FAIL("Read:" + port.name, "Read timeout")
+                all_packets = GET_PACKETS(port, False, True)
+                for packet in all_packets:
+                    if(packet.packet_type == packet_type):
+                        return packet
+        FAIL("Wait for packet " + str(packet_type), "Timed out")
     except:
-        print(string)
+        FAIL("Wait for packet " + str(packet_type), "Encountered a non-recoverable error")
+
+def GET_PACKET(port: serial.Serial, ignore_heartbeat=True, timeout=3.0) -> pkt.DataPacket | None:
+    wait_text("Read:" + port.name, "Decoding Serial Packet")
+    try:
+        list = pkt.DataPacketBuffer.serial_to_packet_list(port)
+        new_list = []
+        if ignore_heartbeat:
+            for packet in list:
+                if(packet.packet_type != pkt.DataPacketType.HEARTBEAT):
+                    new_list.append(packet)
+        else:
+            new_list = list
+
+        return new_list[0]
+    except:
         FAIL("Read:" + port.name, "GET_PACKET ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m")
     
+
 # Reads last packet and detects if it's of a valid format
-def VALID_PACKET(port: serial.Serial, packet_type, valid, type, data, timeout=3.0):
-    wait_text("Check packet format", "Checking validity of " + packet_type + " packet")
+def VALID_PACKET(port: serial.Serial, packet: pkt.DataPacket, packet_type: pkt.DataPacketType, timeout=3.0):
+    wait_text("Check packet format", "Checking validity of " + str(packet_type) + " packet")
 
     try:
-        if(type == packet_type):
-            if(valid):
-                return True, "Packet complies to type " + packet_type
+        if(packet.packet_type == packet_type):
+            if(pkt.PacketValidator.is_client_packet(packet) and pkt.PacketValidator.validate_client_packet):
+                return True, "Packet complies to type " + str(packet_type)
             else:
-                return False, "VALID_FORMAT FAILED for " + packet_type + ", got \033[90m\n\n" + type + ": " + data + "\033[0m"
+                return False, "VALID_FORMAT FAILED for " + str(packet_type) + ", got \033[90m\n\n" + str(packet.packet_type) + ": " + str(packet) + "\033[0m"
         else:
-            return False, "VALID_FORMAT recieved a different packet type than " + packet_type
+            return False, "VALID_FORMAT recieved a different packet type than " + str(packet_type)
     except:
         return False, "VALID_FORMAT ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m"
     

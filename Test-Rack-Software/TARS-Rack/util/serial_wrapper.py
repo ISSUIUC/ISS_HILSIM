@@ -2,9 +2,10 @@ import serial # Pyserial! Not serial
 import serial.tools.list_ports
 import util.config
 import util.packets as packet
+import json
 
 connected_comports: list[serial.Serial] = []
-packet_buffer: dict = []
+packet_buffer: dict = {}
 
 """
 Function to retrieve a list of comports connected to this device
@@ -28,8 +29,15 @@ def close_port(port: serial.Serial):
 
 """Clears all of the data in the port buffer"""
 def clear_port(port: serial.Serial):
-    if port.in_waiting:
-        data = port.read_all()
+    port.reset_input_buffer()
+    port.reset_output_buffer()
+    print("(clear_port) Successfully cleared port " + port.name)
+
+"""Clears all of the data in the port buffer"""
+def hard_reset(port: serial.Serial):
+    port.close()
+    port.open()
+    print("(clear_port) Successfully hard reset port " + port.name)
 
 """
 TODO: Delete this!
@@ -65,45 +73,3 @@ def init_com_ports():
             else:
                 print(err)
             
-
-"""
-Function which sends an IDENT packet to a given port. This function will be called for every single port connected to the raspi until it gets
-an ACK packet from the central server.
-@param port: serial.Serial -- Port to send the IDENT packet to
-"""
-def send_ident(port: serial.Serial):
-    port.write(packet.construct_ident(util.config.board_type).encode())
-
-"""
-The main function that handles all packets sent by the server, also returns the packet data to the caller.
-"""
-def handle_server_packet(port: serial.Serial, raw_packet: str):
-    valid_packet, packet_type, packet_data = packet.decode_packet(raw_packet)
-    if not valid_packet:
-        port.write(packet.construct_invalid(raw_packet))
-    else:
-        # TODO: Handle server comm packets here.
-        pass
-    return valid_packet, packet_type, packet_data
-    
-
-"""
-Ping all connected devices with an IDENT packet
-"""
-def ping_ident():
-    for comport_info in get_com_ports():
-        comport = serial.Serial(comport_info.device, 9600, timeout=10)
-        send_ident(comport)
-
-"""Saves a packet to be sent next write_all() call"""
-def write_to_buffer(port: serial.Serial, packet: str):
-    global packet_buffer
-    if(not port.name in packet_buffer.keys()):
-        packet_buffer[port.name] = []
-    packet_buffer[port.name].append(packet.encode())
-
-"""Write all packets in a port's packet buffer"""
-def write_all(port: serial.Serial):
-    global packet_buffer
-    full_data = "[packet]".join(packet_buffer[port.name])
-    port.write(full_data)
