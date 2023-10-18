@@ -30,7 +30,7 @@ async function SendCookie() {
           body: {
                 client_id: GITHUB_CLIENT_ID,
                 client_secret: GITHUB_CLIENT_SECRET,
-                code,
+                code: code,
           },
           headers: {
                 'Content-Type': 'application/json'
@@ -38,31 +38,24 @@ async function SendCookie() {
     }).then((response) => response.json());
 
     const accessToken = data.access_token;
-    console.log("AT: "+accessToken)
-
-    // Fetch the user's GitHub profile
-    const userProfile = await fetch('https://api.github.com/user', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'User-Agent': 'Your-App-Name'
-      }
-    });
-
-    // Handle the user profile data (e.g., store it in your database and log the user in)
-    console.log(`Welcome, ${userProfile.data.name}!`);
+    return "AT: "+accessToken;
 
   } catch (error) {
     console.error(error);
-    return <p>asukdh</p>
+    return "l";
   }
-
-  return <div><h2>This will be the homepage! {code}</h2></div>
 }
 
 function RouteWithCookie() {
+  const [val, updateVal] = useState("bad");
+
   const location = useLocation();
+  // updateVal(SendCookie())
   const queryParams = new URLSearchParams(location.search);
-  return <div><h2>This will be the homepage! {queryParams.get("code")}</h2></div>
+  return <div>
+            <h2>This will be the homepage! {queryParams.get("code")}</h2>
+            <p>{val}</p>
+        </div>
 }
 
 const router = createBrowserRouter([
