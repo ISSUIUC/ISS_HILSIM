@@ -14,6 +14,20 @@ class JobStatus(Enum):
     FAILED_TIMEOUT = 6 # Job timed out, cancelled #cancelculturestrikesagain
     FAILED_OTHER = 7 # Job failed for some other reason
 
+def convert_job_info(job):
+    if job[8] > 7 or job[8] < 0:
+        job[8] = 7
+
+    return {"id": job[0],
+          "username": job[1],
+          "branch": job[2],
+          "hash": job[3],
+          "date_queue": job[5],
+          "date_start": job[6],
+          "date_end": job[7],
+          "status": JobStatus(job[8]).name,
+          }
+
 jobs_blueprint = Blueprint('jobs', __name__)
 @jobs_blueprint.route('/jobs/list')
 def list_jobs():
@@ -24,7 +38,10 @@ def list_jobs():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM hilsim_runs")
     # Sort through the json and set status
-    return jsonify(cursor.fetchall())
+    job_list = []
+    for job in cursor.fetchall():
+        job_list.append(convert_job_info(job))
+    return jsonify(job_list)
 
 @jobs_blueprint.route('/jobs/<int:job_id>')
 def job_information(job_id):
@@ -36,19 +53,8 @@ def job_information(job_id):
     cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM hilsim_runs where run_id={job_id}")
     data = cursor.fetchone()
-    if data[8] > 7 or data[8] < 0:
-        data[8] = 7
 
-    dt = {"id": data[0],
-          "username": data[1],
-          "branch": data[2],
-          "hash": data[3],
-          "date_queue": data[5],
-          "date_start": data[6],
-          "date_end": data[7],
-          "status": JobStatus(data[8]).name,
-          }
-    return jsonify(dt)
+    return jsonify(data)
 
 @jobs_blueprint.route('/jobs/data/<int:job_id>')
 def job_data(job_id):
