@@ -14,22 +14,34 @@ services:
       - "443:443"
     environment:
       - PORT=443
+      - DB_PASSWORD_FILE=/run/secrets/db_password
     volumes:
       - ./Central-Server/API:/src/api
+    secrets:
+      - db_password
+
   proxy:
     build:
       context: ./nginx
       dockerfile: ./Dockerfile.prod
     ports:
       - "80:80"
+
   db:
     image: postgres
     restart: always
     environment:
-      POSTGRES_PASSWORD: example
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 8080:8080
+
+# Ask someone responsible for the secrets folder
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt

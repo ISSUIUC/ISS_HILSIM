@@ -3,7 +3,9 @@ from flask_socketio import SocketIO
 import sys
 from waitress import serve
 import os
-import psycopg2
+import database
+from jobs import jobs_blueprint
+import random
 
 argc = len(sys.argv)
 if(argc != 2):
@@ -11,7 +13,8 @@ if(argc != 2):
     exit(1)
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="/static", static_folder="./static")
+app.register_blueprint(jobs_blueprint)
 
 @app.route("/")
 def api_index():
@@ -23,16 +26,32 @@ def get_generic():
 
 @app.route("/ping", methods=["GET"])
 def ping():
-    conn = psycopg2.connect(database="postgres",
-                    host="db",
-                    user="postgres",
-                    password="example",
-                    port=5432)
+    conn = database.connect()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM ping")
     web = cursor.fetchone()
     st = "<h1 style=\"font-size:108\">" + str(web[1]) + "</h1>"
     return st
+
+@app.errorhandler(403)
+def access_forbidden_error(e):
+    if random.randint(0, 100000) == 42069: # We are a really serious space program, check out the CEO of SpaceX, we like the same jokes
+        return "<html><h1>Access forbidden :(</h1><img src=\"/api/static/image_480.png\"/></html>", 200
+    return jsonify(error=str(e)), 403
+
+@app.route("/generate_database", methods=["GET"])
+def generate_jobs_table():
+    conn = database.connect()
+    cursor = conn.cursor()
+    try:
+        with open("database.sql") as f:
+            cursor.execute(f.read())
+        conn.commit()
+        conn.close()
+        cursor.close()
+        return "Ok", 200
+    except Exception as e:
+        return "Not Ok: " + str(e), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 443))
