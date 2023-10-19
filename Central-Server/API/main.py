@@ -17,7 +17,6 @@ app = Flask(__name__)
 def api_index():
     return "OK"
 
-
 @app.route("/get-list", methods=["GET"])
 def get_generic():
     return jsonify([1,3,5,100])
