@@ -75,3 +75,20 @@ def job_data(job_id):
             return "Error with file: " + Exception(e), 500
     else:
         return file_name + " does not exist", 404
+
+@jobs_blueprint.route('/jobs/queue', methods=["GET"])
+def queue_job():
+    # Queue a job
+    if not (auth.authenticate_request(request)):
+        abort(403)
+    if "commit" in request.args and "username" in request.args and "branch" in request.args:
+        pass
+    else:
+        return jsonify({"status": "Missing arguments"}), 400
+    conn = database.connect()
+    cursor = conn.cursor()
+    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status) VALUES ('{request.args['username']}', '{request.args['branch']}', '{request.args['commit']}', now(), 'output.csv', 0)")
+    conn.commit()
+    conn.close()
+    cursor.close()
+    return jsonify({"status": "Ok"}), 200
