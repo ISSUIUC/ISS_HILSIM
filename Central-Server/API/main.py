@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 from flask_socketio import SocketIO
 import sys
 from waitress import serve
@@ -6,15 +6,16 @@ import os
 import database
 from jobs import jobs_blueprint
 import random
+from job_queue import job_queue_blueprint
 
 argc = len(sys.argv)
 if(argc != 2):
     print("Usage: main.py [environment]")
     exit(1)
 
-
 app = Flask(__name__, static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
+app.register_blueprint(job_queue_blueprint)
 
 @app.route("/")
 def api_index():
@@ -51,7 +52,7 @@ def generate_jobs_table():
         cursor.close()
         return "Ok", 200
     except Exception as e:
-        return "Not Ok: " + str(e), 500
+        return Response("Not Ok: " + str(e), 500)
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 443))

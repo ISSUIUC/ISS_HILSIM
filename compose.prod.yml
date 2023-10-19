@@ -15,6 +15,7 @@ services:
     environment:
       - PORT=443
       - DB_PASSWORD_FILE=/run/secrets/db_password
+      - DB_NAME=prod_db
     volumes:
       - ./Central-Server/API:/src/api
     secrets:
@@ -27,7 +28,7 @@ services:
     ports:
       - "80:80"
 
-  db:
+  prod_db:
     image: postgres
     restart: always
     environment:
@@ -38,8 +39,6 @@ services:
   adminer:
     image: adminer
     restart: always
-    ports:
-      - 8080:8080
 
 # Ask someone responsible for the secrets folder
 secrets:

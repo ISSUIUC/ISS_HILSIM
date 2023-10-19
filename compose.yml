@@ -23,6 +23,7 @@ services:
     environment:
       - PORT=443
       - DB_PASSWORD_FILE=/run/secrets/db_password
+      - DB_NAME=db
     volumes:
       - ./Central-Server/API:/src/api
     secrets:
@@ -46,8 +47,6 @@ services:
   adminer:
     image: adminer
     restart: always
-    ports:
-      - 8080:8080
 
 # Ask someone responsible for the secrets folder
 secrets:
