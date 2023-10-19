@@ -19,30 +19,51 @@ function Main() {
         const code = queryParams.get("code")
       
         try {
-            const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
-            const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+        //     const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+        //     const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
       
-          const data = await fetch('https://jsonplaceholder.typicode.com/posts', {
-                method: "POST",
-          }).then((response) => response.json());
-
-        //   const data = await fetch('https://github.com/login/oauth/access_token', {
+        //   const data = await fetch('https://jsonplaceholder.typicode.com/posts', {
         //         method: "POST",
-        //         body: {
-        //                 client_id: GITHUB_CLIENT_ID,
-        //                 client_secret: GITHUB_CLIENT_SECRET,
-        //                 code: code,
-        //         },
-        //         headers: {
-        //                 'Content-Type': 'application/json'
-        //         }
-        //     }).then((response) => response.json());
+        //   }).then((response) => response.json());
+
+            //https://github.com/login/oauth/authorize?client_id=70662875937be8f7bce6&client_secret=89c565b3761740ca3710c3c31d41c1859fa3ab95&code=
+            // const githubOAuthURL = `https://github.com/login/oauth/authorize?client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&client_secret=${process.env.REACT_APP_GITHUB_CLIENT_SECRET}&code=${code}`;
+            // const githubOAuthURL = `https://github.com/login/oauth/access_token?client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&client_secret=89c565b3761740ca3710c3c31d41c1859fa3ab95&code=${code}`;
+            const githubOAuthURL = 'https://github.com/login/oauth/access_token'
+            // const data = await fetch(githubOAuthURL, {
+            //     method: "POST",
+            //     headers: {
+            //             'Content-Type': 'application/json'
+            //     }
+            // }).then((response) => response.json());
+
+            // const data = await fetch(githubOAuthURL, {
+            //     method: "POST",
+            //     body: "{client_id:process.env.REACT_APP_GITHUB_CLIENT_ID, client_secret89c565b3761740ca3710c3c31d41c1859fa3ab95:}"
+            //     body: "{client_id:process.env.REACT_APP_GITHUB_CLIENT_ID, client_secret:, code:}"
+            //     headers: {
+            //             'Content-Type': 'application/json'
+            //     }
+            // }).then((response) => response.json());
+
+            const data = await fetch(githubOAuthURL, {
+                method: "POST",
+                body: {
+                    client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
+                    client_secret: '89c565b3761740ca3710c3c31d41c1859fa3ab95',
+                    code: 'a8d089472c22f7a24e76'
+                },
+                headers: {
+                        'Content-Type': 'application/json'
+                }
+            }).then((response) => response.json());
+
             // const accessToken = data.access_token;
             console.log(data.id)
 
             sessionStorage.setItem("idv", data.id)
 
-            const accessToken = 'ppe';
+            // const accessToken = 'ppe';
             updateVal(data)
       
         } catch (error) {
