@@ -3,6 +3,7 @@ from flask_socketio import SocketIO
 import sys
 from waitress import serve
 import os
+import psycopg2
 
 argc = len(sys.argv)
 if(argc != 2):
@@ -21,8 +22,20 @@ def api_index():
 def get_generic():
     return jsonify([1,3,5,100])
 
+@app.route("/ping", methods=["GET"])
+def ping():
+    conn = psycopg2.connect(database="postgres",
+                    host="db",
+                    user="postgres",
+                    password="example",
+                    port=5432)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM ping")
+    web = cursor.fetchone()
+    st = "<h1 style=\"font-size:108\">" + str(web[1]) + "</h1>"
+    return st
+
 if __name__ == "__main__":
-    
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)
     if(sys.argv[1] == "dev"):
