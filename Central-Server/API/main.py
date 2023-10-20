@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_socketio import SocketIO
+from flask_cors import CORS
 import sys
 from waitress import serve
 import os
@@ -11,6 +12,7 @@ if(argc != 2):
 
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/")
 def api_index():
