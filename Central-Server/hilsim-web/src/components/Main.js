@@ -47,16 +47,18 @@ function Main() {
             // }).then((response) => response.json());
 
             const data = await fetch(githubOAuthURL, {
+                mode: 'no-cors',
                 method: "POST",
                 body: {
                     client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
-                    client_secret: '89c565b3761740ca3710c3c31d41c1859fa3ab95',
-                    code: 'a8d089472c22f7a24e76'
+                    client_secret: '',
+                    code: 'e849b80e0ab4914d1671'
                 },
                 headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        // 'Access-Control-Allow-Origin':'http://localhost/'
                 }
-            }).then((response) => response.json());
+            }).then((response) => response.json())
 
             // const accessToken = data.access_token;
             console.log(data.id)
@@ -67,8 +69,9 @@ function Main() {
             updateVal(data)
       
         } catch (error) {
-          console.error(error);
+          console.error(error)
           updateVal("error")
+          sessionStorage.setItem("idv", error)
         }
       }
     
