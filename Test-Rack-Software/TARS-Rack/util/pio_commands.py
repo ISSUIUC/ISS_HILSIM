@@ -32,6 +32,6 @@ def pio_upload(build_target=None):
         
 def pio_clean(build_target=None):
     if(build_target == None):
-        run_script(['run', '--target', 'clean'])
+        run_script(['run', '--target', 'clean', '-s'])
     else:
-        run_script(['run', '--target', 'clean', '--environment', build_target])
+        run_script(['run', '--target', 'clean', '--environment', build_target, '-s'])

@@ -3,7 +3,7 @@ import util.packets as pkt
 import util.handle_jobs as jobs
 
 def add_transitions(statemachine: Datastreamer.ServerStateController):
-    pass
+    jobs.handle_job_transitions(statemachine)
 
 
 ### Always read incoming packets regardless of state

@@ -80,6 +80,20 @@ class ServerStateController():
     def add_always_event(self, always_target, callback) -> None:
         self.transition_always.append(ServerStateController.Always(self.server, always_target, callback))
 
+    def force_transition(self, to_state: ServerState) -> None:
+        """Same as try_transition, but doesn't check for transition_events passing or not"""
+        successful_transition = True
+        transition_checks = 0
+        for transition_event in self.transition_events:
+            if(transition_event.state_b == to_state or transition_event.state_b == ServerStateController.ServerState.ANY):
+                transition_checks += 1
+            transition_event.run(self.server_state, to_state)
+        
+        if successful_transition:
+            print("(server_state) Successfully transitioned to state", to_state, "(Executed", transition_checks, "transition functions)")
+            self.server_state = to_state
+    
+
     def try_transition(self, to_state: ServerState) -> bool:
         """
         Attempt a transition, return true if successful
@@ -108,8 +122,6 @@ class ServerStateController():
         self.transition_pipes.append([from_state, to_state])
 
     def update_transitions(self) -> None:
-        for always_event in self.transition_always:
-            always_event.run(self.server_state)
         for pipe in self.transition_pipes:
             from_pipe = pipe[0]
             to_pipe = pipe[1]
@@ -117,22 +129,48 @@ class ServerStateController():
                 if self.try_transition(to_pipe):
                     return
 
+    def update_always(self) -> None:
+        for always_event in self.transition_always:
+            always_event.run(self.server_state)
 
 class DatastreamerServer:
     state: ServerStateController = ServerStateController()
     board_type: str = ""
     server_port: serial.Serial = None
     board_id = -1
+
     current_job: avionics.HilsimRun = None
     current_job_data: dict = None
+
     signal_abort = False
     job_active = False
     job_clock_reset = False
+
     packet_buffer:packet.DataPacketBuffer = packet.DataPacketBuffer()
     server_start_time = time.time()
     last_server_connection_check = time.time()
     next_heartbeat_time = time.time()
 
+    def tick(self):
+        if self.server_port != None:
+            self.packet_buffer.write_buffer_to_serial(self.server_port)
+            self.packet_buffer.read_to_input_buffer(self.server_port)
+        
+        self.state.update_always()
+        self.state.update_transitions() # Run all transition tests
+        self.packet_buffer.clear_input_buffer()
+
+    def defer(self):
+        """
+        This function allows a single execution of the server tick from any scope that has access to the server.
+        This server tick does not do any transitions, since that control is held by the scope you call this function from.
+        """
+        if self.server_port != None:
+            self.packet_buffer.write_buffer_to_serial(self.server_port)
+            self.packet_buffer.read_to_input_buffer(self.server_port)
+        
+        self.state.update_always()
+        self.packet_buffer.clear_input_buffer()
 
 """Singleton object for the Datastreamer server:"""
 instance = DatastreamerServer()

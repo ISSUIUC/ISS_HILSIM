@@ -64,6 +64,13 @@ def check_server_connection(Server: Datastreamer.DatastreamerServer):
             if pkt.packet_type == packet.DataPacketType.ACKNOWLEDGE:
                 Server.board_id = pkt.data['board_id']
                 Server.server_port = port
+
+                #temporary, close all non-server ports:
+                for port in connection.connected_comports:
+                    if(port.name != Server.server_port.name):
+                        print("TEMP: closed " + port.name)
+                        port.close()
+
                 return True
     return False
 
@@ -112,11 +119,7 @@ def main():
 
 
     while True:
-        if Server.server_port != None:
-            Server.packet_buffer.write_buffer_to_serial(Server.server_port)
-            Server.packet_buffer.read_to_input_buffer(Server.server_port)
-        
-        Server.state.update_transitions() # Run all transition tests
+        Server.tick()
 
         # Actions that always happen:
         if(Server.server_port != None and should_heartbeat(Server)):
