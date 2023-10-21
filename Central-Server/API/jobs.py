@@ -14,6 +14,7 @@ class JobStatus(Enum):
     FAILED_COMPILE_ERROR = 5 # Job failed to compile
     FAILED_TIMEOUT = 6 # Job timed out, cancelled #cancelculturestrikesagain
     FAILED_OTHER = 7 # Job failed for some other reason
+    SETUP = 8
 
 def convert_job_info(job):
     if job[8] > 7 or job[8] < 0:
