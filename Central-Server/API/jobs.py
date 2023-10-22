@@ -8,7 +8,7 @@ import sanitizers
 class JobStatus(Enum):
     QUEUED = 0 # Job is queued and will be run on the next available TARS
     RUNNING = 1 # Job is currently running on TARS
-    CANCELLED = 2 # Job was cancelled by someone #cancelculture
+    CANCELED = 2 # Job was canceled by someone #cancelculture
     SUCCESS = 3 # Job was successfully run
     FAILED_CRASHED = 4 # Job crashed on TARS
     FAILED_COMPILE_ERROR = 5 # Job failed to compile
