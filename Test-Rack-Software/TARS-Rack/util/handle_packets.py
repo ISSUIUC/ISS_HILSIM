@@ -1,13 +1,17 @@
+# This script handles all incoming packets as an ALWAYS action on the ANY state.
+
 import util.datastreamer_server as Datastreamer
 import util.packets as pkt
 import util.handle_jobs as jobs
 
 def add_transitions(statemachine: Datastreamer.ServerStateController):
+    """Add transition events for all packets"""
     jobs.handle_job_transitions(statemachine)
 
 
 ### Always read incoming packets regardless of state
 def handle_server_packets(Server: Datastreamer.DatastreamerServer):
+    """Callback to handle all packets"""
     # Retrieve all the packets from the server input buffer
     packets = Server.packet_buffer.input_buffer
     for packet in packets:
@@ -34,8 +38,9 @@ def handle_server_packets(Server: Datastreamer.DatastreamerServer):
                 jobs.handle_job_packet(packet)
                 
 
-            
-    
 
 def add_always_events(statemachine: Datastreamer.ServerStateController):
+    """Add the always events for packets.
+    
+    Because of the nature of how we want to handle packets, we ALWAYS listen to packets regardless of server state."""
     statemachine.add_always_event(Datastreamer.ServerStateController.ServerState.ANY, handle_server_packets)

@@ -12,29 +12,48 @@ class PacketDeserializeException(Exception):
         self.message = message
         self.reason = reason
         if len(self.packet_string) > 100:
+            # If a packet string is over 100 characters, we truncate it
             self.packet_string = self.packet_string[0:99] + ".. (rest hidden)"
         super().__init__(self.message + " " + packet_string + " ==> " + self.reason)
 
 class DataPacketType(int, Enum):
+    """Enum describing the different types of packets we can send/recieve"""
     IDENT = 0
+    """[CLIENT] Identification packet. Sent to servers to identify this as a testing rack."""
     ID_CONFIRM = 1
+    """[CLIENT] Identification confirmation. Sent to a server after failure to confirm this rack's identity"""
     READY = 2
+    """[CLIENT] Sent when this board is ready for a new job"""
     DONE = 3
+    """[CLIENT] Sent when a board is done with a job"""
     INVALID = 4
+    """[CLIENT] Sent in response to a [SERVER] packet that's invalid"""
     BUSY = 5
+    """[CLIENT] Sent when the client is currently busy with setup or running, and cannot complete the request"""
     JOB_UPDATE = 6
+    """[CLIENT] Sent intermittently while a job is running"""
     PONG = 7
+    """[CLIENT] Sent in response to a PING packet"""
     HEARTBEAT = 8
+    """[CLIENT] Sent to update the Kamaji server of this board's status"""
     # Server packets
     IDENT_PROBE = 100
+    """[SERVER] Requests the identity of a board. Expects an ID_CONFIRM response"""
     PING = 101
+    """[SERVER] Attempts to ping a board. Expects a PONG response"""
     ACKNOWLEDGE = 102
+    """[SERVER] Acknowledges the IDENT packet sent by boards. Expects no response"""
     REASSIGN = 103
+    """[SERVER] Reassigns a board's id. Expects no response"""
     TERMINATE = 104
+    """[SERVER] Terminates the currently running job. Eventually expects a READY"""
     CYCLE = 105
+    """[SERVER] Requests a power cycle of a board. Eventually expects a READY"""
     JOB = 106
+    """[SERVER] Sends a job to a testing rack. Eventually expects a JOB_UPDATE"""
     # Misc packets
     RAW = 200
+    """[MISC] A completely raw datapacket"""
 
 class DataPacket:
     """
@@ -115,9 +134,11 @@ class DataPacket:
         return string_construct
 
     def __len__(self) -> int:
+        """Returns the length of the serialized string for this packet"""
         return len(self.serialize())
 
     def __str__(self) -> str:
+        """Creates a human-readable version of this packet"""
         if self.use_raw:
             if(len(self.raw_data) > 50):
                 return "<packet:" + str(self.packet_type) + "> " + str(self.data) + " [raw: +" + str(len(self.raw_data)) + "c]"
@@ -213,18 +234,29 @@ class DataPacketBuffer:
 
 
 class JobData:
+    """A struct-like class that describes a single job to be run on the datastreamer"""
     class GitPullType(int, Enum):
+        """Describes what kind of data to pull from the remote"""
         BRANCH = 0 # Pull a branch
+        """Pull a specific branch from github"""
         COMMIT = 1 # Pull a specific commit
+        """Pull a specific commit from github"""
     
     class JobType(int, Enum):
+        """Describes what kind of job the datastreamer will run"""
         DEFAULT = 0 # Pull code, flash, run hilsim, return result
+        """Normal job"""
         DIRTY = 1 # Run hilsim with whatever is currently flashed, return result (tbd)
+        """Not implemented"""
         TEST = 2 # Run some sort of test suite (tbd)
+        """Not implemented"""
 
     class JobPriority(int, Enum):
+        """What priority should this job have with regards to other jobs?"""
         NORMAL = 0 # Normal priority, goes through queue like usual
+        """A normal priority job"""
         HIGH = 1 # High priority, get priority in the queue
+        """A high priority job"""
 
 
     job_id:int
@@ -247,6 +279,7 @@ class JobData:
         self.job_timestep = job_timestep
 
     def to_dict(self) -> dict:
+        """Converts this object to a dictionary for easy JSON serialization"""
         return {'job_id': self.job_id, 'pull_type': self.pull_type, 'pull_target': self.pull_target,
                 'job_type': self.job_type, 'job_author_id': self.job_author_id, 'job_priority': self.job_priority,
                 'job_timestep': self.job_timestep}
@@ -256,14 +289,20 @@ class JobData:
 class JobStatus:
     """Static class for making job statuses"""
     class JobState(int, Enum):
+        """Enum storing the job state as an integer"""
         IDLE = 0
+        """The job is waiting on something that is blocking it from running"""
         ERROR = 1
+        """The job has errored and cannot continue"""
         SETUP = 2
+        """The job is being set up"""
         RUNNING = 3
+        """The job is actively running and streaming data"""
         
     job_state: JobState = JobState.IDLE
     current_action: str = ""
     status_text: str = ""
+
     def __init__(self, job_state: JobState, current_action:str, status_text:str) -> None:
         self.job_state = job_state
         self.current_action = current_action
@@ -273,12 +312,13 @@ class JobStatus:
         return {'job_state': self.job_state, 'current_action': self.current_action, 'status_text': self.status_text}
 
 class HeartbeatServerStatus:
-    server_state: Enum # ServerState, from main.
+    """Class representing a server connection test/status update"""
+    server_state = None # ServerState, from main.
     server_startup_time: float # (Time.time())
     is_busy: bool # Current job running, being set up, or in cleanup.
-    is_ready: bool # Ready for another job
+    is_ready: bool # Ready for another job?
 
-    def __init__(self, server_state: Enum, server_startup_time: float,
+    def __init__(self, server_state, server_startup_time: float,
                  is_busy: bool, is_ready: bool) -> None:
         self.server_state = server_state
         self.server_startup_time = server_startup_time
@@ -286,11 +326,13 @@ class HeartbeatServerStatus:
         self.is_ready = is_ready
 
     def to_dict(self) -> dict:
+        """Converts the heartbeat update into a dictionary so it can be serialized to JSON"""
         return {'server_state': self.server_state, 'server_startup_time': self.server_startup_time,
          'is_busy': self.is_busy, 'is_ready': self.is_ready}
 
 
 class HeartbeatAvionicsStatus:
+    """Class representing a status update for the avionics system. TBD."""
     connected:bool # Connected to server
     avionics_type:str # May turn this into an enum
     # More debug info to come
@@ -300,6 +342,7 @@ class HeartbeatAvionicsStatus:
         self.avionics_type = avionics_type
 
     def to_dict(self):
+        """Converts the heartbeat update into a dictionary so it can be serialized to JSON"""
         return {'connected': self.connected, 'avionics_type':self.avionics_type}
         
 
@@ -348,7 +391,7 @@ def CL_JOB_UPDATE(job_status: JobStatus, current_log: str) -> DataPacket:
     @current_log: Current outputs of HILSIM
     """
     packet_data = {'job_status': job_status.to_dict()}
-    return DataPacket(DataPacketType.BUSY, packet_data, current_log)
+    return DataPacket(DataPacketType.JOB_UPDATE, packet_data, current_log)
 
 def CL_PONG() -> DataPacket:
     """Constructs PONG packet"""
@@ -401,13 +444,16 @@ def SV_JOB(job_data: JobData, flight_csv: str) -> DataPacket:
     return DataPacket(DataPacketType.JOB, packet_data, flight_csv)
 
 class PacketValidator:
-    def is_server_packet(packet: DataPacket):
+    def is_server_packet(packet: DataPacket) -> bool:
+        """Determines whether this packet is a server packet or not. Returns FALSE for misc packets."""
         return packet.packet_type.value > 99 and packet.packet_type.value < 199
     
     def is_client_packet(packet: DataPacket):
+        """Determines whether this packet is a client packet or not. Returns FALSE for misc packets."""
         return packet.packet_type.value > -1 and packet.packet_type.value < 99
 
     def validate_server_packet(server_packet: DataPacket):
+        """Returns whether a given packet is a valid server packet. Will return false for non-server packets"""
         match server_packet.packet_type:
             case DataPacketType.IDENT_PROBE:
                 return True
@@ -423,8 +469,10 @@ class PacketValidator:
                 return "job_data" in server_packet.data and server_packet.use_raw
             case DataPacketType.PING:
                 return True
+        return False
 
-    def validate_client_packet(client_packet: DataPacket):
+    def validate_client_packet(client_packet: DataPacket) -> bool:
+        """Returns whether a given packet is a valid client packet. Will return false for non-client packets"""
         match client_packet.packet_type:
             case DataPacketType.IDENT:
                 return "board_type" in client_packet.data
@@ -442,3 +490,4 @@ class PacketValidator:
                 return "job_data" in client_packet.data
             case DataPacketType.PONG:
                 return True
+        return False

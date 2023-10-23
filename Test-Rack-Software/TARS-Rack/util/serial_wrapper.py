@@ -1,50 +1,49 @@
+# This script provides a few wrapper functions for PySerial
 import serial # Pyserial! Not serial
 import serial.tools.list_ports
-import util.config
 import util.packets as packet
-import json
 
 connected_comports: list[serial.Serial] = []
-packet_buffer: dict = {}
 
-"""
-Function to retrieve a list of comports connected to this device
-@returns ListPortInfo[] A list of port data.
-"""
+
 def get_com_ports():
+    """
+    Function to retrieve a list of comports connected to this device
+    @returns ListPortInfo[] A list of port data.
+    """
     return serial.tools.list_ports.comports()
 
 
-"""Close all connected COMports"""
 def close_com_ports():
+    """Close all connected COMports"""
     print("(cloase_com_ports) Closing all initialized comports..")
     for port in connected_comports:
         port.close()
 
 def close_port(port: serial.Serial):
-    print("(cloase_com_ports) Closing " + port.name)
-    for comport in connected_comports:
-        if(comport.name == port.name):
-            comport.close()
+    """Close a specific port"""
+    port.close()
 
-"""Clears all of the data in the port buffer"""
 def clear_port(port: serial.Serial):
+    """Clears all of the data in the port buffer"""
     port.reset_input_buffer()
     port.reset_output_buffer()
     print("(clear_port) Successfully cleared port " + port.name)
 
-"""Clears all of the data in the port buffer"""
+
 def hard_reset(port: serial.Serial):
+    """Clears all of the data in the port buffer by closing the port and opening it back up"""
     port.close()
     port.open()
     print("(clear_port) Successfully hard reset port " + port.name)
 
-"""
-TODO: Delete this!
-Test script for init_com_ports()
-"""
+
 alr_init = False
 def t_init_com_ports():
+    """
+    TODO: Delete this!
+    Test script for init_com_ports()
+    """
     global alr_init
     init_com_ports()
     if alr_init == False:
@@ -54,10 +53,11 @@ def t_init_com_ports():
         print("(init_comports) Initialized port COM8")
     
 
-"""
-Loop through each port and try to initialize it if it's not already initialized
-"""
+
 def init_com_ports():
+    """
+    Loop through each port and try to initialize it if it's not already initialized
+    """
     print("(init_comports) Attempting to initialize all connected COM ports..")
     for port_data in get_com_ports():
         try:

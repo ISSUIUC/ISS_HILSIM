@@ -11,17 +11,18 @@ from git import Repo
 import sys
 import os, shutil
 
-"""
-Clone the repository defined in config into the directory defined in config. (Usually ./remote)
-"""
 def clone_repo():
+    """
+    Clone the repository defined in config into the directory defined in config. (Usually ./remote)
+    """
     print("(git_commands) Cloning repository..")
     Repo.clone_from(config.repository_url, config.remote_path)
 
-"""
-Reset the repository back to its "master" or "main" state by stashing current changes, switching to main, then pulling.
-"""
+
 def reset_repo():
+    """
+    Reset the repository back to its "master" or "main" state by stashing current changes, switching to main, then pulling.
+    """
     repo = Repo(config.remote_path)
     print("(git_commands) Stashing changes..")
     repo.git.checkout(".")
@@ -29,11 +30,12 @@ def reset_repo():
     repo.git.checkout("master")
     repo.git.pull()
 
-"""
-Switch to a specific branch and pull it
-@param branch The branch to pull from the remote defined in config.
-"""
+
 def pull_branch(branch):
+    """
+    Switch to a specific branch and pull it
+    @param branch The branch to pull from the remote defined in config.
+    """
     repo = Repo(config.remote_path)
     print("(git_commands) Fetching repository data")
     repo.git.fetch()

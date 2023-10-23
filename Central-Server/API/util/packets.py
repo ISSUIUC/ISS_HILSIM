@@ -348,7 +348,7 @@ def CL_JOB_UPDATE(job_status: JobStatus, current_log: str) -> DataPacket:
     @current_log: Current outputs of HILSIM
     """
     packet_data = {'job_status': job_status.to_dict()}
-    return DataPacket(DataPacketType.BUSY, packet_data, current_log)
+    return DataPacket(DataPacketType.JOB_UPDATE, packet_data, current_log)
 
 def CL_PONG() -> DataPacket:
     """Constructs PONG packet"""

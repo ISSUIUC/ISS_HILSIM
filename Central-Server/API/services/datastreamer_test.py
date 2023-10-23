@@ -40,7 +40,6 @@ if __name__ == "__main__":
     serial_tester.TEST("IDENT? packet after ACK packet conforms to ID-CONF", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.ID_CONFIRM))
     
     cond = False
-    print(packet.data)
     res = "ID-CONF does not return correct board ID after ACK (Expected " + str(ack_test_boardid) + ", but got " + str(packet.data['board_id']) + ")"
     if(packet.data['board_id'] == ack_test_boardid):
         cond = True
@@ -98,10 +97,14 @@ if __name__ == "__main__":
     serial_tester.TRY_WRITE(port, pkt.SV_JOB(job_data, csv_data), "Writing JOB packet")
     packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.JOB_UPDATE, 30)
 
-    serial_tester.TEST("Packet after valid JOB packet complies to JOB-UPD", serial_tester.VALID_PACKET(port, "JOB-UPD", valid, type, data))
-    job_good = data['job_status']['job_ok'] == True and data['job_status']['status'] == "Accepted"
-    serial_tester.TEST("Ensure job_ok is True and job_status is 'Accepted'", (job_good, f"Got job_ok {data['job_status']['job_ok']} and job_status '{data['job_status']['status']}'"))
-    serial_tester.TEST("Responds after building job", serial_tester.AWAIT_ANY_RESPONSE(port, 100, "(Waiting for build: This will take a while.)"))
+    serial_tester.TEST("Packet after valid JOB packet complies to JOB-UPD", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.JOB_UPDATE))
+
+    job_good = packet.data['job_status']['job_state'] == 2 and packet.data['job_status']['status_text'] == "Accepted"
+    serial_tester.TEST("Ensure job_state is '2' and job_status is 'Accepted'", (job_good, f"Got job_ok {packet.data['job_status']['job_state']} and job_status '{packet.data['job_status']['status_text']}'"))
+    
+    # Check for packets during setup process
+    
+    # serial_tester.TEST("Responds with any after building job", serial_tester.AWAIT_ANY_RESPONSE(port, 100, "(Waiting for build: This will take a while.)"))
     
     # Check for ok update after flash
     valid, type, data = serial_tester.GET_PACKET(port)

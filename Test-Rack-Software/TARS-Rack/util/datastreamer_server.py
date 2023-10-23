@@ -1,6 +1,7 @@
 import sys
 import os
 
+# Make sure ../util and ../av_platform paths can be accessed
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
@@ -11,29 +12,52 @@ import serial
 from enum import Enum
 
 class ServerStateController():
-    # A state machine for the server
+    """A class representing the server's state as a state machine.
+    
+    Consists of a few main components:
+
+    @`Pipes (A=>B)` are transitions (to state B) that the server is constantly attempting to perform if it's in state A
+    @`Transition events` are blocks of code that are run when specific transitions are performed. If using `try_transition`, they can also dictate whether the transition succeeds.
+    @`Always events` are blocks of code that are executed each tick when on a specific state"""
     server = None
     class ServerState(int, Enum):
+        "Enum describing possible server states as an integer."
         ANY = -1
+        """Any server state"""
         INIT = 0
+        """State when datastreamer is initializing systems"""
         CONNECTING = 1 # Before server connection
+        """State when datastreamer is detecting a Kamaji server"""
         AV_DETECT = 2 # Before detecting avionics
+        """State when datastreamer is detecting an avionics stack"""
         READY = 3 # Ready to recieve jobs
+        """State when datastreamer is ready for jobs/idle"""
         JOB_SETUP = 4 # Recieved a job, in setup
+        """State when datastreamer is performing setup to run a job"""
         JOB_RUNNING = 5 # Running a job
+        """State when datastreamer is actively running a job"""
         CLEANUP = 6 # Finished job, cleaning up environment
+        """State after a job is done/after a job fails, to clean up the environment"""
         ERROR = 100 # Error state (recoverable)
+        """Fail state (recoverable)"""
         FERROR = 101 # Error state (unrecoverable)
+        """Fatal fail state (non-recoverable)"""
         JOB_ERROR = 102 # Error during a job
+        """Job fail state (recoverable), used for logging errors when a job fails during setup or run"""
 
     class Always:
         """A class representing an action that should always be run in a certain state"""
         def __init__(self, server, target_state, callback) -> None:
+            """Initialize an `Always event`
+            @server {DatastreamerServer} -- The server to use
+            @target_state {ServerStateController.ServerState} -- The state during which to run the callback
+            @callback {lambda} -- The callback to call when the Always event is run."""
             self.server: DatastreamerServer = server
             self.target_state: ServerStateController.ServerState = target_state
             self.callback = callback
 
         def run(self, current_state):
+            """Determine if this callback should be run or not"""
             if(self.target_state == current_state or self.target_state == ServerStateController.ServerState.ANY):
                 self.callback(self.server)
 
@@ -72,26 +96,31 @@ class ServerStateController():
     transition_pipes:list[list[ServerState]] = []
 
     def __init__(self) -> None:
+        """Initialize the state machine with default state ServerState.INIT"""
         self.server_state = ServerStateController.ServerState.INIT
 
     def add_transition_event(self, initial_state, final_state, callback) -> None:
+        """Add a `transition_event` to the state machine"""
         self.transition_events.append(ServerStateController.StateTransition(self.server, initial_state, final_state, callback))
 
     def add_always_event(self, always_target, callback) -> None:
+        """Add an `always_event` to the state machine"""
         self.transition_always.append(ServerStateController.Always(self.server, always_target, callback))
 
     def force_transition(self, to_state: ServerState) -> None:
         """Same as try_transition, but doesn't check for transition_events passing or not"""
-        successful_transition = True
         transition_checks = 0
         for transition_event in self.transition_events:
+            # For each transition event, we check if its to_state matches the state we're forcing the transition to.
+            # If yes, we execute the code but discard the result.
             if(transition_event.state_b == to_state or transition_event.state_b == ServerStateController.ServerState.ANY):
                 transition_checks += 1
+            
             transition_event.run(self.server_state, to_state)
         
-        if successful_transition:
-            print("(server_state) Successfully transitioned to state", to_state, "(Executed", transition_checks, "transition functions)")
-            self.server_state = to_state
+        # Report transition
+        print("(server_state) Successfully transitioned to state", to_state, "(Executed", transition_checks, "transition functions)")
+        self.server_state = to_state
     
 
     def try_transition(self, to_state: ServerState) -> bool:
@@ -102,11 +131,16 @@ class ServerStateController():
         successful_transition = True
         transition_checks = 0
         for transition_event in self.transition_events:
+            # For each transition event, we check if its to_state matches what state we're attempting to transition to.
             if(transition_event.state_b == to_state or transition_event.state_b == ServerStateController.ServerState.ANY):
                 transition_checks += 1
+                # If yes, we check if the transition event allows us to transition.
+            
+            #transition_event.run performs its own run checks.
             if(not transition_event.run(self.server_state, to_state)):
                 successful_transition = False
         
+        # If all transition checks succeed, we transition to the new state.
         if successful_transition:
             print("(server_state) Successfully transitioned to state", to_state, "(Passed", transition_checks, "transition checks)")
             self.server_state = to_state
@@ -122,43 +156,66 @@ class ServerStateController():
         self.transition_pipes.append([from_state, to_state])
 
     def update_transitions(self) -> None:
+        """Attempt to perform all pipe transitions defined in self.transition_pipes. Returns early if one is successful"""
         for pipe in self.transition_pipes:
             from_pipe = pipe[0]
             to_pipe = pipe[1]
+            # If a pipe exists from the current state, we try to transition to its to_state
             if(self.server_state == from_pipe):
                 if self.try_transition(to_pipe):
                     return
 
     def update_always(self) -> None:
+        """Runs all `Always events` defined in self.transition_always"""
         for always_event in self.transition_always:
             always_event.run(self.server_state)
 
 class DatastreamerServer:
+    """A singleton-designed class that holds all relevant information about the Datastreamer."""
     state: ServerStateController = ServerStateController()
+    """Datastreamer server's state machine reference"""
     board_type: str = ""
     server_port: serial.Serial = None
+    """Serial port reference to the serial port that connects to the Kamaji server."""
     board_id = -1
+    """Board ID assigned by the Kamaji server"""
 
-    current_job: avionics.HilsimRun = None
-    current_job_data: dict = None
+    current_job = None # HilsimRun
+    """The job that is currently being setup/run"""
+    current_job_data: packet.JobData = None
+    """The data for the current job"""
 
     signal_abort = False
+    """Standin for a process SIGABRT. If set to true, jobs will attempt to stop as soon as it's gracefully possible to do so"""
     job_active = False
+    """Boolean to check if a job is currently being run"""
     job_clock_reset = False
+    """Boolean that forces a job's internal clock to reset. WARNING: Doing so in the middle of a job will cause overwrites"""
 
     packet_buffer:packet.DataPacketBuffer = packet.DataPacketBuffer()
+    """Reference to the server's packet buffer, a utility object that helps handle packets"""
     server_start_time = time.time()
+    """Time that this server started"""
     last_server_connection_check = time.time()
+    """Time of last heartbeat packet"""
     next_heartbeat_time = time.time()
+    """Time when next heartbeat packet will be sent."""
+
+    last_job_step_time = time.time()
+    """The last time that a job step() was completed"""
 
     def tick(self):
+        """Generic single action on the server. Will perform all server actions by calling transition events and always events.
+        
+        This function will generally be run within an infinite while loop."""
         if self.server_port != None:
+            # We clear out output buffer and also populate our input buffer from the server
             self.packet_buffer.write_buffer_to_serial(self.server_port)
             self.packet_buffer.read_to_input_buffer(self.server_port)
         
-        self.state.update_always()
-        self.state.update_transitions() # Run all transition tests
-        self.packet_buffer.clear_input_buffer()
+        self.state.update_always() # Run all `always` events
+        self.state.update_transitions()  # Run all transition tests
+        self.packet_buffer.clear_input_buffer() # Discard our input buffer so we can get a new one next loop
 
     def defer(self):
         """
@@ -166,12 +223,15 @@ class DatastreamerServer:
         This server tick does not do any transitions, since that control is held by the scope you call this function from.
         """
         if self.server_port != None:
+            # We clear out output buffer and also populate our input buffer from the server
             self.packet_buffer.write_buffer_to_serial(self.server_port)
             self.packet_buffer.read_to_input_buffer(self.server_port)
         
-        self.state.update_always()
+        self.state.update_always() # Run all `always` events
         self.packet_buffer.clear_input_buffer()
 
-"""Singleton object for the Datastreamer server:"""
+
 instance = DatastreamerServer()
-instance.state.server = instance
+"""Singleton object for the Datastreamer server"""
+
+instance.state.server = instance # Set the serverstate's internal server object to a cyclical reference.

@@ -1,54 +1,61 @@
 import util.datastreamer_server as Datastreamer
 import util.packets as pkt
-import util.pio_commands as pio
-import util.git_commands as git
+import av_platform.interface as avionics
+import util.avionics_interface as AVInterface
+import time
 
 def run_setup_job(Server: Datastreamer.DatastreamerServer):
-    # This is a blocking action. Thus we will manually invoke Server.defer() between logical steps.
+    """Invokes the avionics system's job setup method.
+    
+    Avionics setup methods are generally blocking. Make sure that they properly call Server.defer() when possible."""
     try:
-        if (Server.current_job == None):
-            raise Exception("Setup error: Server.current_job is not defined.")
-        job_data: pkt.JobData = Server.current_job
-
-
-        git.remote_reset()
-        git.remote_pull_branch(job_data.pull_target)
-
-        Server.defer() # Check for abort signals
-        if(Server.signal_abort):
-            Server.state.try_transition(Datastreamer.ServerStateController.ServerState.CLEANUP)
-            return False
+        job = Server.current_job_data
+        accepted_status = pkt.JobStatus(pkt.JobStatus.JobState.SETUP, "Setting up job " + str(job.job_id), "Accepted")
+        Server.packet_buffer.add(pkt.CL_JOB_UPDATE(accepted_status, ""))
+        Server.defer()
         
-        pio.pio_clean()
-
-        Server.defer() # Check for abort signals
-        if(Server.signal_abort):
-            Server.state.try_transition(Datastreamer.ServerStateController.ServerState.CLEANUP)
-            return False
-        
-        try:
-            pio.pio_upload("mcu_hilsim")
-        except:
-            Server.defer() # Check for abort signals
-            if(Server.signal_abort):
-                Server.state.try_transition(Datastreamer.ServerStateController.ServerState.CLEANUP)
-                return False
-            pio.pio_upload("mcu_hilsim")
-
-        return True
-    except:
+        current_job: AVInterface.HilsimRunInterface = Server.current_job # For type hints
+        setup_successful, setup_fail_reason = current_job.job_setup()
+        if(setup_successful):
+            return True
+        else:
+            raise Exception("Setup failed: " + setup_fail_reason)
+    except Exception as e:
+        print(e)
         Server.state.force_transition(Datastreamer.ServerStateController.ServerState.JOB_ERROR)
         return False
     
 def run_job(Server: Datastreamer.DatastreamerServer):
+    """Invokes the step() method in the current HilsimRun (plaform-blind)"""
+    dt = time.time() - Server.last_job_step_time
+    run_finished, run_errored, return_log = Server.current_job.step(dt)
+    if(run_finished):
+        if(run_errored):
+            Server.state.force_transition(Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+            return False
+        else:
+            # The job has successfully completed! Inform the server of this fact
+            # TODO: report job finish status to server
+            return True
+
+    Server.last_job_step_time = time.time()
+
+def handle_job_setup_error(Server: Datastreamer.DatastreamerServer):
     pass
 
+def handle_job_runtime_error(Server: Datastreamer.DatastreamerServer):
+    pass
 
 def handle_job_transitions(statemachine: Datastreamer.ServerStateController):
+    """Add transition events for jobs"""
     SState = Datastreamer.ServerStateController.ServerState
     statemachine.add_transition_event(SState.JOB_SETUP, SState.JOB_RUNNING, run_setup_job) 
+    statemachine.add_transition_event(SState.JOB_RUNNING, SState.CLEANUP, run_job)
+    statemachine.add_transition_event(SState.JOB_SETUP, SState.JOB_ERROR, handle_job_setup_error)
+    statemachine.add_transition_event(SState.JOB_RUNNING, SState.JOB_ERROR, handle_job_runtime_error)
 
 def handle_job_packet(packet: pkt.DataPacket):
+    """Handles all job packets sent by the Kamaji server"""
     SState = Datastreamer.ServerStateController.ServerState
     # If already running job or in setup:
     if(Datastreamer.instance.state.server_state == SState.JOB_SETUP or Datastreamer.instance.state.server_state == SState.JOB_RUNNING or Datastreamer.instance.state.server_state == SState.JOB_ERROR):
@@ -57,13 +64,11 @@ def handle_job_packet(packet: pkt.DataPacket):
 
     # Set up a job
     job = packet.data['job_data']
-    Datastreamer.instance.current_job = pkt.JobData(job['job_id'], pkt.JobData.GitPullType(job['pull_type']),
+    raw_csv = packet.raw_data
+    Datastreamer.instance.current_job_data = pkt.JobData(job['job_id'], pkt.JobData.GitPullType(job['pull_type']),
                                                     job['pull_target'], pkt.JobData.JobType(job['job_type']),
                                                     job['job_author_id'], pkt.JobData.JobPriority(job['job_priority']),
                                                     job['job_timestep'])
+    Datastreamer.instance.current_job = avionics.HilsimRun(Datastreamer.instance, avionics.av_instance, raw_csv, Datastreamer.instance.current_job_data)
     
     Datastreamer.instance.state.try_transition(Datastreamer.ServerStateController.ServerState.JOB_SETUP)
-
-    
-
-    pass
