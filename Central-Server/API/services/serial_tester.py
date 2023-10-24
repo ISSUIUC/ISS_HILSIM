@@ -106,7 +106,9 @@ def ENSURE_NO_RESPONSE(port: serial.Serial, timeout=3.0):
         start_time = time.time()
         while(time.time() - start_time < timeout):
             if port.in_waiting:
-                return False, "ENSURE_NO_RESPONSE recieved a response."
+                data = port.read_all()
+                string = data.decode("utf8")   
+                return False, "ENSURE_NO_RESPONSE recieved a response: " + string
         return True, "ENSURE_NO_RESPONSE succeeded, no data was transferred."
     except:
         return False, "ENSURE_NO_RESPONSE ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m"
@@ -137,7 +139,38 @@ def GET_PACKETS(port: serial.Serial, ignore_heartbeat=True, silent=False) -> lis
 
         return new_list
     except:
-        FAIL("Read:" + port.name, "GET_PACKET ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m")
+        FAIL("Read:" + port.name, "GET_PACKETS ran into a non-recoverable error:\033[90m\n\n" + traceback.format_exc() + "\033[0m")
+
+def ACCUMULATE_PACKETS(port: serial.Serial, stop_packet_type: pkt.DataPacketType, timeout=3.0):
+    wait_text(port.name, "Hooking into packet buffer (reading all packets)")
+    try:
+        all_packets = []
+        start_time = time.time()
+        while(time.time() - start_time < timeout):
+                p_in_buffer = GET_PACKETS(port, False, True)
+                should_stop = False
+                for p in p_in_buffer:
+                    all_packets.append(p)
+                    if(p.packet_type == stop_packet_type):
+                        should_stop = True
+
+                if should_stop:
+                    PASS("Collect packets (stop)", "(stop packet reached) Collected " + str(len(all_packets)) + " packets from buffer")
+                    return all_packets
+        if(len(all_packets) > 0):
+            PASS("Collect packets", "Collected " + str(len(all_packets)) + " packets from buffer")
+            return all_packets
+        else:
+            FAIL("Collect packets", "Serial timed out while waiting for packets")
+    except Exception as e:
+        print(e)
+        FAIL("Wait for packet", "Wait for packet Encountered a non-recoverable error")
+
+def WAIT_FOR_PACKET_TYPE_ACCUM(packet_accum: list[pkt.DataPacket], packet_type: pkt.DataPacketType):
+    for packet in packet_accum:
+        if(packet.packet_type == packet_type):
+            return packet
+    FAIL("Wait for packet", "No packet of type " + str(packet_type) + " found in buffer")
 
 def WAIT_FOR_PACKET_TYPE(port: serial.Serial, packet_type: pkt.DataPacketType, timeout=3.0):
     wait_text(port.name, "Waiting for packet of type " + str(packet_type))

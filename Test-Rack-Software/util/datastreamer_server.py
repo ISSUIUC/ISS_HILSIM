@@ -5,11 +5,12 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-import av_platform.interface as avionics
 import util.packets as packet
 import time
 import serial
 from enum import Enum
+
+
 
 class ServerStateController():
     """A class representing the server's state as a state machine.
@@ -18,7 +19,8 @@ class ServerStateController():
 
     @`Pipes (A=>B)` are transitions (to state B) that the server is constantly attempting to perform if it's in state A
     @`Transition events` are blocks of code that are run when specific transitions are performed. If using `try_transition`, they can also dictate whether the transition succeeds.
-    @`Always events` are blocks of code that are executed each tick when on a specific state"""
+    @`Always events` are blocks of code that are executed each tick when on a specific state
+    @`Success events` are identical to transition events, but are only executed once, when the transition succeeds."""
     server = None
     class ServerState(int, Enum):
         "Enum describing possible server states as an integer."
@@ -74,22 +76,24 @@ class ServerStateController():
             self.state_b: ServerStateController.ServerState = final_state
             self.transition_callback = callback
         
-        def run(self, state_a, state_b):
+        def run(self):
+            """Execute the transition callback"""
+            return self.transition_callback(self.server)
+
+        def should_run(self, state_a, state_b):
+            """Determine if a callback should run"""
             if(state_a == self.state_a and self.state_b == ServerStateController.ServerState.ANY):
-                # If transition A -> ANY
-                return self.transition_callback(self.server)
+                return True
 
             if(state_b == self.state_b and self.state_a == ServerStateController.ServerState.ANY):
-                # If transition ANY -> B
-                return self.transition_callback(self.server)
+                return True
 
             if(state_a == self.state_a and state_b == self.state_b):
-                # If transition A -> B
-                return self.transition_callback(self.server)
-            return True
-
+                return True
+            return False
         
     transition_events: list[StateTransition] = []
+    success_events: list[StateTransition] = []
     transition_always: list[Always] = []
     error_transition_events: list[StateTransition] = []
     server_state: ServerState = ServerState.INIT
@@ -103,6 +107,10 @@ class ServerStateController():
         """Add a `transition_event` to the state machine"""
         self.transition_events.append(ServerStateController.StateTransition(self.server, initial_state, final_state, callback))
 
+    def add_success_event(self, initial_state, final_state, callback) -> None:
+        """Add a `success_event` to the state machine"""
+        self.success_events.append(ServerStateController.StateTransition(self.server, initial_state, final_state, callback))
+
     def add_always_event(self, always_target, callback) -> None:
         """Add an `always_event` to the state machine"""
         self.transition_always.append(ServerStateController.Always(self.server, always_target, callback))
@@ -113,10 +121,17 @@ class ServerStateController():
         for transition_event in self.transition_events:
             # For each transition event, we check if its to_state matches the state we're forcing the transition to.
             # If yes, we execute the code but discard the result.
-            if(transition_event.state_b == to_state or transition_event.state_b == ServerStateController.ServerState.ANY):
+            if(transition_event.should_run(self.server_state, to_state)):
                 transition_checks += 1
+                transition_event.run()
+
+        for success_event in self.success_events:
+            # Since this transition is forced, we always call all success_events
+            if(success_event.should_run(self.server_state, to_state)):
+                transition_checks += 1
+                success_event.run()
             
-            transition_event.run(self.server_state, to_state)
+            
         
         # Report transition
         print("(server_state) Successfully transitioned to state", to_state, "(Executed", transition_checks, "transition functions)")
@@ -132,17 +147,26 @@ class ServerStateController():
         transition_checks = 0
         for transition_event in self.transition_events:
             # For each transition event, we check if its to_state matches what state we're attempting to transition to.
-            if(transition_event.state_b == to_state or transition_event.state_b == ServerStateController.ServerState.ANY):
+            if(transition_event.should_run(self.server_state, to_state)):
                 transition_checks += 1
                 # If yes, we check if the transition event allows us to transition.
+                if(not transition_event.run()):
+                    successful_transition = False
             
-            #transition_event.run performs its own run checks.
-            if(not transition_event.run(self.server_state, to_state)):
-                successful_transition = False
+
         
         # If all transition checks succeed, we transition to the new state.
         if successful_transition:
             print("(server_state) Successfully transitioned to state", to_state, "(Passed", transition_checks, "transition checks)")
+            success_events_executed = 0
+            for success_event in self.success_events:
+                # Call all success events if the transition succeeds
+                if(success_event.should_run(self.server_state, to_state)):
+                    success_events_executed += 1
+                    success_event.run()
+
+            if success_events_executed > 0:
+                print("(server_state) Executed " + str(success_events_executed) + " success events")
             self.server_state = to_state
         
         return successful_transition
@@ -187,6 +211,8 @@ class DatastreamerServer:
 
     signal_abort = False
     """Standin for a process SIGABRT. If set to true, jobs will attempt to stop as soon as it's gracefully possible to do so"""
+    signal_cycle = False
+    """Signal to cycle the board when avaliable"""
     job_active = False
     """Boolean to check if a job is currently being run"""
     job_clock_reset = False
@@ -210,6 +236,8 @@ class DatastreamerServer:
         This function will generally be run within an infinite while loop."""
         if self.server_port != None:
             # We clear out output buffer and also populate our input buffer from the server
+            if(len(self.packet_buffer.packet_buffer) > 0):
+                print(self.packet_buffer.to_serialized_string())
             self.packet_buffer.write_buffer_to_serial(self.server_port)
             self.packet_buffer.read_to_input_buffer(self.server_port)
         

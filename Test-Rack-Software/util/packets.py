@@ -54,6 +54,7 @@ class DataPacketType(int, Enum):
     # Misc packets
     RAW = 200
     """[MISC] A completely raw datapacket"""
+    ERR = 201
 
 class DataPacket:
     """
@@ -166,7 +167,10 @@ class DataPacketBuffer:
         Writes the entire packet buffer to serial
         """
         serialized_full: str = self.to_serialized_string()
+        if(len(self.packet_buffer) > 0):
+            serialized_full += "[[pkt_end]]"
         self.packet_buffer = []
+        
         serial_port.write(serialized_full.encode())
 
 
@@ -194,6 +198,8 @@ class DataPacketBuffer:
         serialized_packets = stream.split("[[pkt_end]]")
         ds_packets: list[DataPacket] = []
         for ser_pkt in serialized_packets:
+            if(ser_pkt == ""):
+                continue
             new_packet = DataPacket(DataPacketType.RAW, {})
             if(safe_deserialize):
                 new_packet.safe_deserialize(ser_pkt)
@@ -371,7 +377,7 @@ def CL_DONE(job_data: JobData, hilsim_result:str) -> DataPacket:
     @job_data: The job data sent along with this packet (For ID purposes)
     @hilsim_result: Raw string of the HILSIM output"""
     packet_data = {'job_data': job_data.to_dict()}
-    return DataPacket(DataPacketType.READY, packet_data, hilsim_result)
+    return DataPacket(DataPacketType.DONE, packet_data, hilsim_result)
 
 def CL_INVALID(invalid_packet:DataPacket) -> DataPacket:
     """Constructs INVALID packet (RAW)
@@ -442,6 +448,12 @@ def SV_JOB(job_data: JobData, flight_csv: str) -> DataPacket:
     """Constructs JOB packet"""
     packet_data = {'job_data': job_data.to_dict()}
     return DataPacket(DataPacketType.JOB, packet_data, flight_csv)
+
+# Misc packets
+def MISC_ERR(error: str) -> DataPacket:
+    """Constructs ERR packet"""
+    packet_data = {'error': error}
+    return DataPacket(DataPacketType.ERR, packet_data)
 
 class PacketValidator:
     def is_server_packet(packet: DataPacket) -> bool:

@@ -34,8 +34,17 @@ def handle_server_packets(Server: Datastreamer.DatastreamerServer):
                 else:
                     Server.packet_buffer.add(pkt.CL_INVALID(packet))
             case pkt.DataPacketType.JOB:
-                # For JOB, we try to trigger a job.
-                jobs.handle_job_packet(packet)
+                # For JOB, we try to trigger a job if none exists
+                # If a job is running, send BUSY
+                if(Server.job_active):
+                    Server.packet_buffer.add(pkt.CL_BUSY(Server.current_job_data))
+                else:
+                    jobs.handle_job_packet(packet)
+            case pkt.DataPacketType.TERMINATE:
+                Server.signal_abort = True
+            case pkt.DataPacketType.CYCLE:
+                Server.signal_abort = True
+                Server.signal_cycle = True
                 
 
 

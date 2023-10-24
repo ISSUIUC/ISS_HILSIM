@@ -6,24 +6,35 @@
 # The biggest caveat of this script is it depending on being run from a python shell. Luckily, git-commands.py
 # provides an abstraction layer for this script.
 
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
 import config
 from git import Repo
-import sys
-import os, shutil
+
+import util.avionics_meta
+
+config_meta: util.avionics_meta.PlatformMetaInterface = config.use_meta
+
+
 
 def clone_repo():
     """
     Clone the repository defined in config into the directory defined in config. (Usually ./remote)
     """
     print("(git_commands) Cloning repository..")
-    Repo.clone_from(config.repository_url, config.remote_path)
+    print("ASDF", config_meta.repository_url)
+    Repo.clone_from(config_meta.repository_url, config_meta.remote_path)
 
 
 def reset_repo():
     """
     Reset the repository back to its "master" or "main" state by stashing current changes, switching to main, then pulling.
     """
-    repo = Repo(config.remote_path)
+    repo = Repo(config_meta.remote_path)
     print("(git_commands) Stashing changes..")
     repo.git.checkout(".")
     print("(git_commands) Checking-out and pulling origin/master..")
@@ -36,7 +47,7 @@ def pull_branch(branch):
     Switch to a specific branch and pull it
     @param branch The branch to pull from the remote defined in config.
     """
-    repo = Repo(config.remote_path)
+    repo = Repo(config_meta.remote_path)
     print("(git_commands) Fetching repository data")
     repo.git.fetch()
     print("(git_commands) checking out and pulling origin/" + branch)

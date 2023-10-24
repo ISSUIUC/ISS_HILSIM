@@ -1,4 +1,4 @@
-import av_platform.hilsimpacket_pb2 as hilsimpacket_pb2
+import tars_rack.av_platform.hilsimpacket_pb2 as hilsimpacket_pb2
 
 def csv_line_to_protobuf(parsed_csv):
     

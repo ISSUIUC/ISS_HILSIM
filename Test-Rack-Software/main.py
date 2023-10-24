@@ -9,35 +9,31 @@
 # will be to recieve job data and pass it on to whichever device is connected to this device, then send that data back.
 # That's it! Work of when to run jobs/hardware cooldowns/getting jobs will be handled by the central server.
 
-import av_platform.interface as avionics
-import av_platform.stream_data as platform
+import config as test_board_config
 import util.serial_wrapper as connection
 import util.packets as packet
-import util.config as config
-import os
 import time
-import serial
-from enum import Enum
+import util.avionics_meta as AVMeta
 import util.handle_packets as handle_packets
 import util.datastreamer_server as Datastreamer
+
+# Set up interface defined in config
+avionics = test_board_config.use_interface
+av_meta: AVMeta.PlatformMetaInterface = test_board_config.use_meta
 
 ############### HILSIM Data-Streamer-RASPI ###############
 
 def handle_error_state(Server: Datastreamer.DatastreamerServer):
-    pass
-
-def handle_job_setup_error(Server: Datastreamer.DatastreamerServer):
-    pass
-
-def handle_job_runtime_error(Server: Datastreamer.DatastreamerServer):
+    # Recoverable error
     pass
 
 def handle_first_setup(Server: Datastreamer.DatastreamerServer):
     try:
-        Server.board_type = config.board_type
+        Server.board_type = av_meta.board_type
         avionics.av_instance.first_setup()
         return True
     except Exception as e:
+        print(e)
         return False
     
 def should_heartbeat(Server: Datastreamer.DatastreamerServer):
@@ -51,13 +47,12 @@ def send_wide_ident(Server: Datastreamer.DatastreamerServer):
     if(time.time() > Server.last_server_connection_check):
         connection.t_init_com_ports()
         for port in connection.connected_comports:
-            packet.DataPacketBuffer.write_packet(packet.CL_IDENT(config.board_type), port)
+            packet.DataPacketBuffer.write_packet(packet.CL_IDENT(av_meta.board_type), port)
         Server.last_server_connection_check += 0.25
     return True    
     
 
 def check_server_connection(Server: Datastreamer.DatastreamerServer):
-    global board_id, server_port
     for port in connection.connected_comports:
         in_packets = packet.DataPacketBuffer.serial_to_packet_list(port, True)
         for pkt in in_packets:
@@ -66,10 +61,11 @@ def check_server_connection(Server: Datastreamer.DatastreamerServer):
                 Server.server_port = port
 
                 #temporary, close all non-server ports:
-                for port in connection.connected_comports:
+
+                """for port in connection.connected_comports:
                     if(port.name != Server.server_port.name):
                         print("TEMP: closed " + port.name)
-                        port.close()
+                        port.close()"""
 
                 return True
     return False
@@ -83,8 +79,49 @@ def reset_connection_data(Server: Datastreamer.DatastreamerServer):
     return True
 
 def detect_avionics(Server: Datastreamer.DatastreamerServer):
-    # Let's assume we can detect avionics already
-    return True
+    try:
+        return avionics.av_instance.detect()
+    except Exception as e:
+        print(e)
+
+
+def on_ready(Server: Datastreamer.DatastreamerServer):
+    Server.signal_abort = False
+
+    # we only want to send ready packet if we are not in the process of CYCLE'ing!
+    if(not Server.signal_cycle):
+        Server.packet_buffer.add(packet.CL_READY())
+        print("(transition_to_ready) Reset fail flags and sent READY packet.")
+    else:
+        print("(transition_to_ready) In CYCLE process! Cleared fail flag")
+
+def handle_power_cycle(Server: Datastreamer.DatastreamerServer):
+    SState = Datastreamer.ServerStateController.ServerState
+    # This is linked to ANY state, but we realistically only care about some:
+    ignore_state = [SState.AV_DETECT, SState.CONNECTING, SState.INIT]
+    if Server.state.server_state in ignore_state:
+        return
+    
+    # We now know we're in a state with connected avionics
+    if Server.signal_cycle:
+        # Make sure we wait until all jobs are stopped to avoid weird side effects
+        if not Server.job_active:
+            # Now we actually cycle the board
+            try:
+                if (avionics.av_instance.power_cycle()):
+                    print("(power_cycle) Successfully power cycled avionics system")
+                    # Manually send READY packet if not in ready state (May not be in READY state!)
+                    Server.packet_buffer.add(packet.CL_READY())
+                    print("(power_cycle) Sent READY packet")
+                    Server.signal_abort = False
+                    Server.signal_cycle = False
+                else:
+                    print("Unable to power cycle!")
+                    Server.packet_buffer.add(packet.MISC_ERR("Unable to power cycle"))
+            except:
+                print("ERROR during power cycle!")
+                Server.packet_buffer.add(packet.MISC_ERR("Error during power cycle"))
+
 
 def main():
     Server = Datastreamer.instance
@@ -96,8 +133,6 @@ def main():
     # FSM error handling:
     # Generic error
     Server.state.add_transition_event(SState.ANY, SState.ERROR, handle_error_state) 
-    Server.state.add_transition_event(SState.JOB_SETUP, SState.JOB_ERROR, handle_job_setup_error)
-    Server.state.add_transition_event(SState.JOB_RUNNING, SState.JOB_ERROR, handle_job_runtime_error)
 
     # Set up FSM flow:
     Server.state.add_transition_pipe(SState.INIT, SState.CONNECTING) # Always try to transition INIT => CONNECTING
@@ -113,6 +148,12 @@ def main():
     Server.state.add_transition_event(SState.CONNECTING, SState.AV_DETECT, send_wide_ident)
     Server.state.add_transition_event(SState.CONNECTING, SState.AV_DETECT, check_server_connection)
     Server.state.add_transition_event(SState.AV_DETECT, SState.READY, detect_avionics)
+
+    # Success events
+    Server.state.add_success_event(SState.ANY, SState.READY, on_ready)
+
+    # Always events
+    Server.state.add_always_event(SState.ANY, handle_power_cycle)
 
     handle_packets.add_transitions(Server.state)
     handle_packets.add_always_events(Server.state)

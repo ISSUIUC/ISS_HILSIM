@@ -1,6 +1,7 @@
 import util.datastreamer_server as Datastreamer
 import util.packets as pkt
 from abc import ABC, abstractmethod # ABC = Abstract Base Classes 
+import os
 
 
 class AvionicsInterface(ABC):
@@ -10,7 +11,7 @@ class AvionicsInterface(ABC):
     server: Datastreamer.DatastreamerServer = None
 
     def __init__(self, datastreamer: Datastreamer.DatastreamerServer) -> None:
-        server = datastreamer
+        self.server = datastreamer
 
     @abstractmethod
     def handle_init(self) -> None:
@@ -43,6 +44,15 @@ class AvionicsInterface(ABC):
     def code_flash(self) -> None:
         """Flashes currently staged code to the AV stack"""
         raise NotImplementedError("AvionicsInterface.code_flash method not implemented")
+    
+
+    @abstractmethod
+    def power_cycle(self) -> bool:
+        """Attempt to power cycle the avionics stack. Make sure to call server.defer() if it's a blocking action
+
+        @returns whether power cycling was successful"""
+        raise NotImplementedError("AvionicsInterface.HilsimRun.power_cycle method not implemented")
+
     
 class HilsimRunInterface(ABC):
     """The server to defer to"""
@@ -77,6 +87,10 @@ class HilsimRunInterface(ABC):
         self.av_interface = av_interface
         self.job = job
         self.server = datastreamer
+    
+    def post_setup(self) -> None:
+        """Dictates code that runs after setup is complete. Not required."""
+        pass
 
     @abstractmethod
     def step(self, dt: float, send_status) -> tuple[bool, bool, str]:
@@ -86,5 +100,4 @@ class HilsimRunInterface(ABC):
         @Returns a tuple: (run_finished, run_errored, return_log)
         """
         raise NotImplementedError("AvionicsInterface.HilsimRun.step method not implemented")
-        
 

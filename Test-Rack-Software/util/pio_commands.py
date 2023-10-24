@@ -3,9 +3,16 @@
 #
 # This script will run the remote-command.py wrapper commands for you.
 
-import subprocess
 import os
-import util.config as config
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
+import subprocess
+import config as cfg
+
+config = cfg.use_meta
 
 #### Helper functions ####
 def run_script(arg_list):

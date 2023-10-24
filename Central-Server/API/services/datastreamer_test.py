@@ -19,7 +19,12 @@ comport = "COM9"
 
 if __name__ == "__main__":
 
-
+    # Get job data
+    job_data = pkt.JobData(0)
+    
+    # Open csv file
+    file = open(os.path.join(os.path.dirname(__file__), "./datastreamer_test_data.csv"), 'r')
+    csv_data = file.read()
 
     print("Detected script running as __main__, beginning test of Data Streamer functionality")
     serial_tester.SECTION("Test setup")
@@ -32,8 +37,8 @@ if __name__ == "__main__":
     serial_tester.CLEAR(port)
     
     serial_tester.TRY_WRITE(port, pkt.SV_ACKNOWLEDGE(ack_test_boardid), "Writing valid ACK packet")
-    print(port.out_waiting)
-    serial_tester.TEST("No response from application [Success]", serial_tester.ENSURE_NO_RESPONSE(port, 1.0))
+    packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.READY, 10)
+    serial_tester.TEST("Packet after ACK is READY", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.READY))
     serial_tester.TRY_WRITE(port, pkt.SV_IDENT_PROBE(), "Writing IDENT? packet after ACK packet")
     packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.ID_CONFIRM)
 
@@ -83,62 +88,66 @@ if __name__ == "__main__":
         res = "ID-CONF correctly returned board ID " + str(reassign_test_boardid)
     serial_tester.TEST("Connected board returns properly set ID", (cond, res))
 
-    # Jobs
-    serial_tester.SECTION("Comprehensive JOB Tests")
-    serial_tester.SECTION("Initializes job and sends updates")
+    # Job (cancel)
+    serial_tester.SECTION("Cancel job test")
 
-    # Get job data
-    job_data = pkt.JobData(0)
-    
-    # Open csv file
-    file = open(os.path.join(os.path.dirname(__file__), "./datastreamer_test_data.csv"), 'r')
-    csv_data = file.read()
+
 
     serial_tester.TRY_WRITE(port, pkt.SV_JOB(job_data, csv_data), "Writing JOB packet")
     packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.JOB_UPDATE, 30)
-
     serial_tester.TEST("Packet after valid JOB packet complies to JOB-UPD", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.JOB_UPDATE))
+    job_good = packet.data['job_status']['job_state'] == 2 and packet.data['job_status']['current_action'] == "ACCEPTED"
+    serial_tester.TEST("Ensure job_state is '2' and current_action is 'ACCEPTED'", (job_good, f"Got job_ok {packet.data['job_status']['job_state']} and current_action '{packet.data['job_status']['current_action']}'"))
+    
 
-    job_good = packet.data['job_status']['job_state'] == 2 and packet.data['job_status']['status_text'] == "Accepted"
-    serial_tester.TEST("Ensure job_state is '2' and job_status is 'Accepted'", (job_good, f"Got job_ok {packet.data['job_status']['job_state']} and job_status '{packet.data['job_status']['status_text']}'"))
-    
-    # Check for packets during setup process
-    
-    # serial_tester.TEST("Responds with any after building job", serial_tester.AWAIT_ANY_RESPONSE(port, 100, "(Waiting for build: This will take a while.)"))
-    
-    # Check for ok update after flash
-    valid, type, data = serial_tester.GET_PACKET(port)
-    serial_tester.TEST("Packet after expected build complies to JOB-UPD", serial_tester.VALID_PACKET(port, "JOB-UPD", valid, type, data))
-    job_good = data['job_status']['job_ok'] == True and data['job_status']['status'] == "Setup Complete"
-    serial_tester.TEST("Ensure job_ok is True and job_status is 'Setup Complete'", (job_good, f"Got job_ok {data['job_status']['job_ok']} and job_status '{data['job_status']['status']}'"))
+    # Check for flash workflow
+    packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.JOB_UPDATE, 30)
+    serial_tester.TEST("(part 1) Waiting for COMPILE_READY", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.JOB_UPDATE))
+    job_good = packet.data['job_status']['job_state'] == 2 and packet.data['job_status']['current_action'] == "COMPILE_READY"
+    serial_tester.TEST("Ensure job_state is '2' and current_action is 'COMPILE_READY'", (job_good, f"Got job_ok {packet.data['job_status']['job_state']} and current_action '{packet.data['job_status']['current_action']}'"))
+
+
+    packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.JOB_UPDATE, 100)
+    serial_tester.TEST("(part 2) Waiting for COMPILED", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.JOB_UPDATE))
+    job_good = packet.data['job_status']['job_state'] == 2 and packet.data['job_status']['current_action'] == "COMPILED"
+    serial_tester.TEST("Ensure job_state is '2' and current_action is 'COMPILED'", (job_good, f"Got job_ok {packet.data['job_status']['job_state']} and current_action '{packet.data['job_status']['current_action']}'"))
 
     # Job updates
-    serial_tester.TEST("Job updates are sent", serial_tester.AWAIT_ANY_RESPONSE(port, 10, "(Waiting for any job update)"))
-    valid, type, data = serial_tester.GET_PACKET(port)
-    serial_tester.TEST("Packet after expected run start complies to JOB-UPD", serial_tester.VALID_PACKET(port, "JOB-UPD", valid, type, data))
-    job_good = data['job_status']['job_ok'] == True
-    serial_tester.TEST("Ensure job_ok is True", (job_good, f"Got job_ok {data['job_status']['job_ok']}"))
+    packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.JOB_UPDATE, 10)
+    serial_tester.TEST("(part 3) Waiting for BEGIN", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.JOB_UPDATE))
+    job_good = packet.data['job_status']['job_state'] == 3 and (packet.data['job_status']['current_action'] == "BEGIN" or packet.data['job_status']['current_action'] == "RUNNING")
+    serial_tester.TEST("Ensure job_ok is True", (job_good, f"Got job_ok {packet.data['job_status']['job_state']}"))
 
     # Terminate
     serial_tester.SECTION("Terminates gracefully and successfully")
-    time.sleep(0.5)
+    time.sleep(1)
     serial_tester.CLEAR(port)
-    serial_tester.TRY_WRITE(port, pkt.construct_terminate().encode(), "Writing TERMINATE packet")
-    serial_tester.TEST("TERMINATE response sent (job packet)", serial_tester.AWAIT_ANY_RESPONSE(port, 3, "(Waiting for job update)"))
-    valid, type, data = serial_tester.GET_PACKET(port)
-
-    serial_tester.TEST("Packet after expected run force stop complies to JOB-UPD", serial_tester.VALID_PACKET(port, "JOB-UPD", valid, type, data))
-    job_good = data['job_status']['job_ok'] == False
-    job_end_correct_reason = data['job_status']['current_action'] == "Stopped"
-    serial_tester.TEST("Ensure job_ok is False", (job_good, f"Got job_ok {data['job_status']['job_ok']}"))
-    serial_tester.TEST("Ensure current_action is 'Stopped' (Non-error stop code)", (job_end_correct_reason, f"Got current_action {data['job_status']['current_action']}"))
+    serial_tester.TRY_WRITE(port, pkt.SV_TERMINATE(), "Writing TERMINATE packet")
 
     # Next packet READY?
-    serial_tester.TEST("Await a READY packet", serial_tester.AWAIT_ANY_RESPONSE(port, 3))
-    valid, type, data = serial_tester.GET_PACKET(port)
-    serial_tester.TEST("Packet after expected run force stop complies to READY", serial_tester.VALID_PACKET(port, "READY", valid, type, data))
+    packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.READY, 10)
+    serial_tester.TEST("Packet after terminate is READY", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.READY))
     
+    # Cycle test
+    serial_tester.SECTION("Test of cycle")
+    serial_tester.TRY_WRITE(port, pkt.SV_CYCLE(), "Writing CYCLE packet")
+    packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.READY, 15)
+    serial_tester.TEST("Packet after cycle is READY", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.READY))
 
+    # Actual job finish
+    serial_tester.SECTION("Full job run (no intermediate tests)")
+
+    # Simulated cooldown period
+    time.sleep(5)
+
+    serial_tester.TRY_WRITE(port, pkt.SV_JOB(job_data, csv_data), "Writing JOB packet")
+
+
+
+    packet = serial_tester.WAIT_FOR_PACKET_TYPE(port, pkt.DataPacketType.DONE, 180) # Should finish in 3 min ideally
+    serial_tester.TEST("Job finishes", serial_tester.VALID_PACKET(port, packet, pkt.DataPacketType.DONE))
+
+    print(packet.raw_data)
 
     # CLEANUP
     serial_tester.SECTION("Cleanup")

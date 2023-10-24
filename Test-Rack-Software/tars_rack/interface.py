@@ -9,7 +9,7 @@
 import util.git_commands as git
 import util.pio_commands as pio
 import util.serial_wrapper as server
-import av_platform.csv_datastream as csv_datastream
+import tars_rack.av_platform.csv_datastream as csv_datastream
 import pandas
 import io 
 import time
@@ -28,18 +28,21 @@ class TARSAvionics(AVInterface.AvionicsInterface):
     
     def detect(self) -> bool:
         # For TARS, we need to make sure that we're already connected to the server
-        if(not self.server):
-            self.ready = False
-            return
         print("(detect_avionics) Attempting to detect avionics")
+        if(not self.server.server_port):
+            print("(detect_avionics) No server detected!")
+            self.ready = False
+            return False
+        
 
         ignore_ports = [self.server.server_port]
 
         for comport in server.connected_comports:
             if not (comport in ignore_ports):
-                print("(detect_avionics) Detected viable target @ " + comport.name)
+                print("(detect_avionics) Detected viable avionics target @ " + comport.name)
                 self.TARS_port = comport
                 self.ready = True
+                return True
 
     def first_setup(self) -> None:
         git.remote_clone()
@@ -48,7 +51,12 @@ class TARSAvionics(AVInterface.AvionicsInterface):
     def code_reset(self) -> None:
         git.remote_reset()
         # Clean build dir
-        pio.pio_clean()
+        # TODO: add line below back, removed for faster compilation in testing.
+        # pio.pio_clean()
+
+    def power_cycle(self) -> bool:
+        # Unfortunately TARS doesn't support power cycling :(
+        return True
     
     def code_pull(self, git_target) -> None:
         git.remote_pull_branch(git_target)
@@ -59,6 +67,7 @@ class TARSAvionics(AVInterface.AvionicsInterface):
         try:
             pio.pio_upload("mcu_hilsim")
         except:
+            print("(code_flash) First flash failed, attempting re-flash for Teensy error 1")
             pio.pio_upload("mcu_hilsim")
 
 class HilsimRun(AVInterface.HilsimRunInterface):
@@ -75,24 +84,25 @@ class HilsimRun(AVInterface.HilsimRunInterface):
     job_data = None
 
     def get_current_log(self) -> str:
-        return self.return_log
+        return "\n".join(self.return_log)
 
     def job_setup(self):
+        print("ABORT?", self.server.signal_abort)
         if (self.job == None):
             raise Exception("Setup error: Server.current_job is not defined.")
         
         # Temporarily close port so code can flash
-        # self.av_interface.TARS_port.close()
+        self.av_interface.TARS_port.close()
+        print("(job_setup) deferred TARS port control to platformio")
 
         if(self.job.pull_type == pkt.JobData.GitPullType.BRANCH):
             try:
-                
                 self.av_interface.code_reset()
 
                 # Check for defer (This may be DRY, but there aren't many better ways to do this --MK)
                 self.server.defer()
                 if(self.server.signal_abort):
-                    self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.CLEANUP)
+                    self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.JOB_ERROR)
                     return False, "Abort signal recieved"
 
                 self.av_interface.code_pull(self.job.pull_target)
@@ -103,7 +113,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                 # Check for defer (This may be DRY, but there aren't many better ways to do this --MK)
                 self.server.defer()
                 if(self.server.signal_abort):
-                    self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.CLEANUP)
+                    self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.JOB_ERROR)
                     return False, "Abort signal recieved"
                 
                 self.av_interface.code_flash()
@@ -115,7 +125,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                 # Check for defer (This may be DRY, but there aren't many better ways to do this --MK)
                 self.server.defer()
                 if(self.server.signal_abort):
-                    self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.CLEANUP)
+                    self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.JOB_ERROR)
                     return False, "Abort signal recieved"
 
                 # Wait for the port to open back up (Max wait 10s)
@@ -124,7 +134,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     # Check for defer (This may be DRY, but there aren't many better ways to do this --MK)
                     self.server.defer()
                     if(self.server.signal_abort):
-                        self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.CLEANUP)
+                        self.server.state.try_transition(Datastreamer.ServerStateController.ServerState.JOB_ERROR)
                         return False, "Abort signal recieved"
                     
                     try:
@@ -137,6 +147,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                 return False, "Unable to re-open avionics COM Port"
                 
             except Exception as e:
+                print(e)
                 return False, "Setup failed: " + str(e)
         elif (self.job.pull_type == pkt.JobData.GitPullType.COMMIT):
             raise NotImplementedError("Commit-based pulls are not implemented yet.")
@@ -164,9 +175,14 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         self.job_data = job
 
     def reset_clock(self):
+        """Resets start time to current time"""
+        print("clock reset")
         self.start_time = time.time()
         self.current_time = self.start_time
         self.last_packet_time = self.start_time
+
+    def post_setup(self) -> None:
+        self.reset_clock()
 
     """
     Runs one iteration of the HILSIM loop, with a change in time of dt.
@@ -180,12 +196,12 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         # can safely send data.
         if self.current_time > self.last_packet_time + simulation_dt:
             self.last_packet_time += simulation_dt
-
             if self.current_time < self.start_time + 5:
                 # Wait for 5 seconds to make sure serial is connected
                 pass
             else:
                 if(self.current_line == 0):
+                    self.last_packet_time = self.current_time
                     job_status = pkt.JobStatus(pkt.JobStatus.JobState.RUNNING, "BEGIN", f"Running (Data streaming started)")
                     status_packet: pkt.DataPacket = pkt.CL_JOB_UPDATE(job_status, "\n".join(self.return_log))
                     self.av_interface.server.packet_buffer.add(status_packet)
@@ -196,6 +212,8 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     job_status = pkt.JobStatus(pkt.JobStatus.JobState.RUNNING, "RUNNING", f"Running ({self.current_line/len(self.flight_data_dataframe)*100:.2f}%) [{self.current_line} processed out of {len(self.flight_data_dataframe)} total]")
                     status_packet: pkt.DataPacket = pkt.CL_JOB_UPDATE(job_status, "\n".join(self.return_log))
                     self.av_interface.server.packet_buffer.add(status_packet)
+
+                    print(f"Running ({self.current_line/len(self.flight_data_dataframe)*100:.2f}%) [{self.current_line} processed out of {len(self.flight_data_dataframe)} total]")
 
                 line_num, row = next(self.flight_data_rows, (None, None))
                 if line_num == None:
@@ -225,6 +243,6 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                 self.return_log.append(string)
 
         return False, False, self.return_log
-        
+    
 
 av_instance = TARSAvionics(Datastreamer.instance)
