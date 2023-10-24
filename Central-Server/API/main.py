@@ -7,6 +7,7 @@ import database
 from jobs import jobs_blueprint
 import random
 from job_queue import job_queue_blueprint
+from perms import perms_blueprint
 
 argc = len(sys.argv)
 if(argc != 2):
@@ -16,6 +17,7 @@ if(argc != 2):
 app = Flask(__name__, static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(job_queue_blueprint)
+app.register_blueprint(perms_blueprint)
 
 @app.route("/")
 def api_index():
