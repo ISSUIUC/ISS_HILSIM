@@ -59,14 +59,6 @@ def check_server_connection(Server: Datastreamer.DatastreamerServer):
             if pkt.packet_type == packet.DataPacketType.ACKNOWLEDGE:
                 Server.board_id = pkt.data['board_id']
                 Server.server_port = port
-
-                #temporary, close all non-server ports:
-
-                """for port in connection.connected_comports:
-                    if(port.name != Server.server_port.name):
-                        print("TEMP: closed " + port.name)
-                        port.close()"""
-
                 return True
     return False
 
