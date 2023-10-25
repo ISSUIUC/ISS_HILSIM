@@ -3,6 +3,7 @@ import os
 from urllib.parse import parse_qs, urlparse
 import urllib.parse
 from dotenv import dotenv_values
+from flask import Blueprint, render_template, abort,jsonify, request, Response, make_response
 
 github_auth = dotenv_values(".env")
 
@@ -16,6 +17,11 @@ def get_user_access_token(github_code: str):
 
     response = requests.post(uri, data)
     parsed_dict = parse_qs(urllib.parse.unquote(response.text))
+    resp = make_response('Setting the cookie')  
+    resp.set_cookie('token',parsed_dict["access_token"]) 
+
+    print(request.cookies.get('token'))
+
     if('error' in parsed_dict):
         return 'error', parsed_dict
     else:
