@@ -22,15 +22,6 @@ use_interface = TARSmkIV
 # ===============================================================
 
 
-
-
-
-
-
-
-
-# =========================  STOP!  ===========================
-# This is the end of the basic configuration, proceed only if you know what you are doing
-
+# Post-config setup
 # nothing here lol
 print("(config) Configuration loaded")
