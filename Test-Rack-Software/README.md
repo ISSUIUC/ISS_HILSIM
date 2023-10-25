@@ -4,7 +4,7 @@
 In short, you can think of them as a black box, where you put in flight data and a git branch/git commit/other job configuration, and receive back a log of everything that the flight computer "thought of" during the flight.
 
 Below is the scheme of operations:
-![[Pasted image 20231022215331.png]]
+![Kamaji-Datastreamer scheme of operations](https://i.ibb.co/sV0qTsg/Pasted-image-20231022215331.png)
 
 The following documentation serves as a high level overview of the operations of the Test rack as a whole.
 
@@ -29,7 +29,7 @@ As a broad rule of thumb, `Datastreamer` does the *talking*, `Avionics Interface
 #### Lifetime / State
 Because of how predictable we need the Datastreamer server to be, the design choice has been made to lock the state of the server to a known, finite amount of states in which it can possibly be. This makes Datastreamer state part of a **Finite state machine** (https://en.wikipedia.org/wiki/Finite-state_machine). The structure of the state machine and all possible transitions are shown in the diagram below:
 
-![[Pasted image 20231022232038.png]]
+![Kamaji-FSM](https://i.ibb.co/kBwD8BX/Pasted-image-20231022232038.png)
 
 The server by default begins in the **INIT** state, and each arrow between a state describes a transition between those states (internally, these transitions are called **pipes**).
 
@@ -204,8 +204,6 @@ class HilsimRun(AVInterface.HilsimRunInterface):
     def get_current_log(self) -> str:
 		return super().get_current_log()
 
-  
-
     def job_setup(self):
 		return super().job_setup()
 
@@ -220,3 +218,5 @@ class HilsimRun(AVInterface.HilsimRunInterface):
 
 av_instance = MyAvionics(Datastreamer.instance) # Important!
 ```
+
+This should work out of the box, of course, until you implement the required methods, the base class will throw exceptions.
