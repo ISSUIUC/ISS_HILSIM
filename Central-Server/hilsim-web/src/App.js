@@ -7,9 +7,9 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-import Page404 from './components/Page404';
-import WebsocketStatus from './components/WebsocketStatus';
-import HomePage from './components/homepage';
+import Page404 from './pages/Page404';
+import WebsocketStatus from './pages/WebsocketStatus';
+import HomePage from './pages/homepage';
 
 const router = createBrowserRouter([
   {
