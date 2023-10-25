@@ -175,8 +175,6 @@ import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer
 
 class MyAvionics(AVInterface.AvionicsInterface):
-    TARS_port: serial.Serial = None
-
     def handle_init(self) -> None:
         return super().handle_init()
 
