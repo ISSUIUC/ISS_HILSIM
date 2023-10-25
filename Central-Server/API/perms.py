@@ -6,12 +6,15 @@ perms_blueprint = Blueprint('perms', __name__)
 
 #@perms_blueprint.route("/perms", methods=["GET"])
 def get_team_membership():
-    # TOKEN = request.cookies.get('token')
+    TOKEN = request.cookies.get('token')
+    TOKEN = ''
     url = "https://api.github.com/orgs/ISSUIUC/teams/iss-kamaji-administrators/memberships/mpkarpov-ui"
     x = requests.get(url=url,
-                     headers={"Accept": "application/vnd.github+json", 'Authorization':"Bearer <ACCESS CODE>", "Content-Type": "text/html; charset=utf-8", "X-GitHub-Api-Version":"2022-11-28"})
+                     headers={"Accept": "application/vnd.github+json", 'Authorization':f"Bearer {TOKEN}", "Content-Type": "text/html; charset=utf-8", "X-GitHub-Api-Version":"2022-11-28"})
     
     print(x)
-    print(x.content)
+    print(x.status_code)
+    # if(x.content.s)
+    return x.status_code==200
 
-get_team_membership()
+print(get_team_membership())
