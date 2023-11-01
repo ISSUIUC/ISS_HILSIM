@@ -8,6 +8,10 @@ from jobs import jobs_blueprint
 import random
 from job_queue import job_queue_blueprint
 from perms import perms_blueprint
+import threading
+from tent import t
+
+from board_checker import manager_thread
 
 argc = len(sys.argv)
 if(argc != 2):
@@ -57,6 +61,12 @@ def generate_jobs_table():
         return Response("Not Ok: " + str(e), 500)
 
 if __name__ == "__main__":
+    # m_thread = threading.Thread(target=manager_thread)
+    m_thread = manager_thread()
+    m_thread.start()
+    
+    # t()
+
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)
     if(sys.argv[1] == "dev"):
@@ -69,4 +79,3 @@ if __name__ == "__main__":
         print("Initialized production websocket server on ws://localhost:" + str(port))
         socketio = SocketIO(app)
         serve(app, port=port)
-        
