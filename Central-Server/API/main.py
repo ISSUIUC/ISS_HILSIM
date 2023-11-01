@@ -10,7 +10,7 @@ from job_queue import job_queue_blueprint
 from perms import perms_blueprint
 import threading
 
-from board_checker import manager_thread
+from board_threads import manager_thread
 
 argc = len(sys.argv)
 if(argc != 2):
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # m_thread = threading.Thread(target=manager_thread)
     m_thread = manager_thread()
     jobs = ["a", "b", "c", "d", "e"]
-    
+
     for j in jobs:
         m_thread.add_job(j)
 
