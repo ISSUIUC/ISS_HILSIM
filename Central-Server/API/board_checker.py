@@ -25,6 +25,8 @@ class board_thread(threading.Thread):
     def run(self): 
         while True:
             if self.has_job_config:
+                print(f"Sleeping thread {self.thread_ID} while completing job {self.cur_job_config}")
+                sleep(5)
                 print(f"completed job {self.cur_job_config} on thread {self.thread_ID}")
 
                 self.has_job_config = False
@@ -88,8 +90,10 @@ class manager_thread(threading.Thread):
                                 cur_job = self.queue.pop(0)
                                 t.take_job(cur_job)
 
+                                print(f"Gave {t.thread_ID} job {cur_job}")
+
                 sleep(0.2)
-                print(f"loop #{i}")
+                # print(f"loop #{i}")
                 i+=1
         
         print("exit")
