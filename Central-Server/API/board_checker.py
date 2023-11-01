@@ -37,7 +37,7 @@ class board_thread(threading.Thread):
                 self.cur_job_config = None
 
             sleep(0.2)
-            
+
         return
 
 class manager_thread(threading.Thread): 
@@ -49,6 +49,13 @@ class manager_thread(threading.Thread):
         self.queue = []
         self.running = True
         # helper function to execute the threads
+    
+    def some_thread_active(self):
+        for t in self.threads:
+            if not t.can_take_job():
+                return True
+        
+        return False
 
     def create_threads(self):
         for t in l:
