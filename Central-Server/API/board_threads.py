@@ -1,5 +1,6 @@
 import threading
 from time import sleep
+import random
 
 # Threads and names, replace with availible
 l = ["0", "1", "2", "3"]
@@ -29,16 +30,16 @@ class board_thread(threading.Thread):
     def run(self): 
         while self.running:
             if self.has_job_config:
-                print(f"Sleeping thread {self.thread_ID} while completing job {self.cur_job_config}")
-                sleep(10)
+                rand_time = round(random.random() * 15, 2)
+
+                print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}")
+                sleep(rand_time)
                 print(f"completed job {self.cur_job_config} on thread {self.thread_ID}")
 
                 self.has_job_config = False
                 self.cur_job_config = None
 
             sleep(0.2)
-
-        return
 
 class manager_thread(threading.Thread): 
     threads = []
@@ -69,7 +70,7 @@ class manager_thread(threading.Thread):
     
     # adds job to queue 
     def add_job(self, config):
-        print(f"added job {config}")
+        print(f"added job {config} to queues")
         self.queue.append(config)
         pass
     
