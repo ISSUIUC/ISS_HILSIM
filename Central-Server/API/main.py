@@ -9,7 +9,6 @@ import random
 from job_queue import job_queue_blueprint
 from perms import perms_blueprint
 import threading
-from tent import t
 
 from board_checker import manager_thread
 
