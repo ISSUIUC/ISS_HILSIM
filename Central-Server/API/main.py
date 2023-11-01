@@ -62,6 +62,11 @@ def generate_jobs_table():
 if __name__ == "__main__":
     # m_thread = threading.Thread(target=manager_thread)
     m_thread = manager_thread()
+    jobs = ["a", "b", "c", "d", "e"]
+    
+    for j in jobs:
+        m_thread.add_job(j)
+
     m_thread.start()
     
     # t()

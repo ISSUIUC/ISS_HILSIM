@@ -1,6 +1,7 @@
 import threading
 from time import sleep
 
+# Threads and names, replace with availible
 l = ["0", "1", "2", "3"]
 
 DEBUG = False
@@ -15,7 +16,7 @@ class board_thread(threading.Thread):
         self.has_job_config = False
  
     def can_take_job(self):
-        return self.has_job_config
+        return not self.has_job_config
 
     def take_job(self, config):
         self.cur_job_config = config
@@ -24,7 +25,7 @@ class board_thread(threading.Thread):
     def run(self): 
         while True:
             if self.has_job_config:
-
+                print(f"completed job {self.cur_job_config} on thread {self.thread_ID}")
 
                 self.has_job_config = False
                 self.cur_job_config = None
@@ -53,6 +54,7 @@ class manager_thread(threading.Thread):
     
     # adds job to queue 
     def add_job(self, config):
+        print(f"added job {config}")
         self.queue.append(config)
         pass
 
@@ -64,7 +66,8 @@ class manager_thread(threading.Thread):
         else:
             print("in run")
             self.create_threads()
-
+            print("after threads")
+            i = 0
             while True:
             #     print("Manager Running",i)
             #     i+=1
@@ -77,13 +80,16 @@ class manager_thread(threading.Thread):
                 #     print("a thing")
                 #     prev = self.num
 
-                if self.queue.__len__() > 0:
+                if len(self.queue) > 0:
                     # Find first open board
                     for t in self.threads:
                         if t.can_take_job():
-                            t.take_job(self.queue.pop())
+                            if len(self.queue) > 0:
+                                cur_job = self.queue.pop(0)
+                                t.take_job(cur_job)
 
                 sleep(0.2)
-                print("running")
+                print(f"loop #{i}")
+                i+=1
         
         print("exit")
