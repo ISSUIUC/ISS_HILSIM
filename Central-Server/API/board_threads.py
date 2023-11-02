@@ -32,9 +32,9 @@ class board_thread(threading.Thread):
             if self.has_job_config:
                 rand_time = round(random.random() * 15, 2)
 
-                print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}")
+                print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
                 sleep(rand_time)
-                print(f"completed job {self.cur_job_config} on thread {self.thread_ID}")
+                print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
 
                 self.has_job_config = False
                 self.cur_job_config = None
@@ -70,17 +70,17 @@ class manager_thread(threading.Thread):
     
     # adds job to queue 
     def add_job(self, config):
-        print(f"added job {config} to queues")
+        print(f"added job {config} to queues", flush=True)
         self.queue.append(config)
         pass
     
     def terminate_all(self):
         for t in self.threads:
             t.terminate()
-            print(f"terminated thread {t.thread_ID}")
+            print(f"terminated thread {t.thread_ID}", flush=True)
         
         self.running = False
-        print(f"terminated manager")
+        print(f"terminated manager", flush=True)
         
 
     def run(self): 
@@ -91,20 +91,9 @@ class manager_thread(threading.Thread):
         else:
             print("in run")
             self.create_threads()
-            print("after threads")
+            print("after threads", flush=True)
             i = 0
             while self.running:
-            #     print("Manager Running",i)
-            #     i+=1
-
-
-                # for t in self.threads:
-                #     t.update_id("ab")
-
-                # if self.num != prev:
-                #     print("a thing")
-                #     prev = self.num
-
                 if len(self.queue) > 0:
                     # Find first open board
                     for t in self.threads:
@@ -112,12 +101,12 @@ class manager_thread(threading.Thread):
                             if len(self.queue) > 0:
                                 cur_job = self.queue.pop(0)
                                 t.take_job(cur_job)
-                                print(f"Gave {t.thread_ID} job {cur_job}")
+                                print(f"Gave {t.thread_ID} job {cur_job}", flush=True)
 
                 sleep(0.2)
                 i+=1
 
                 if i%20==0:
-                    print("Current queue: ", self.queue)
+                    print("Current queue: ", self.queue, flush=True)
         
         print("exit")
