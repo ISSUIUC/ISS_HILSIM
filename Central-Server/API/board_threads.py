@@ -77,7 +77,7 @@ class manager_thread(threading.Thread):
     def terminate_all(self):
         for t in self.threads:
             t.terminate()
-            print(f"terminated {t.thread_ID}")
+            print(f"terminated thread {t.thread_ID}")
         
         self.running = False
         print(f"terminated manager")
@@ -115,7 +115,9 @@ class manager_thread(threading.Thread):
                                 print(f"Gave {t.thread_ID} job {cur_job}")
 
                 sleep(0.2)
-                # print(f"loop #{i}")
                 i+=1
+
+                if i%20==0:
+                    print("Current queue: ", self.queue)
         
         print("exit")
