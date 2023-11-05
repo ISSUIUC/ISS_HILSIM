@@ -8,12 +8,11 @@ import serial
 import os
 import time
 import json
-import util.communication.packets as pkt
+import util.packets as pkt
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-import util.communication.packets as pkt
 
 comport = "COM9"
 

@@ -212,7 +212,7 @@ class DataPacketBuffer:
         """
         Appends all current packets in the port's buffer into the DataPacketBuffer input buffer.
         """
-        in_buffer = DataPacketBuffer.serial_to_packet_list(port)
+        in_buffer = DataPacketBuffer.channel_to_packet_list(port)
         for in_packet in in_buffer:
             self.input_buffer.append(in_packet)
             

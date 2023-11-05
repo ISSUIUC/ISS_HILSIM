@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-import util.communication.packets as pkt
+import util.packets as pkt
 
 success = 0
 fails = 0

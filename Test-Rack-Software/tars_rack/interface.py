@@ -15,6 +15,7 @@ import io
 import time
 import serial
 import util.communication.packets as pkt
+import util.communication.ds_serial as serial_interface
 import traceback
 import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer
@@ -29,13 +30,15 @@ class TARSAvionics(AVInterface.AvionicsInterface):
     def detect(self) -> bool:
         # For TARS, we need to make sure that we're already connected to the server
         print("(detect_avionics) Attempting to detect avionics")
-        if(not self.server.server_port):
+        if(not self.server.server_comm_channel):
             print("(detect_avionics) No server detected!")
             self.ready = False
             return False
         
-
-        ignore_ports = [self.server.server_port]
+        ignore_ports = []
+        # We should ignore the server's comport if the chosen server communication channel is serial..
+        if type(self.server.server_comm_channel) == serial_interface.SerialChannel:
+            ignore_ports = [self.server.server_comm_channel]
 
         for comport in server.connected_comports:
             if not (comport in ignore_ports):
