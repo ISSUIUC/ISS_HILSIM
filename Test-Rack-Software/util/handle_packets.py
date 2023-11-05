@@ -1,7 +1,7 @@
 # This script handles all incoming packets as an ALWAYS action on the ANY state.
 
 import util.datastreamer_server as Datastreamer
-import util.packets as pkt
+import util.communication.packets as pkt
 import util.handle_jobs as jobs
 
 def add_transitions(statemachine: Datastreamer.ServerStateController):

@@ -1,5 +1,5 @@
 import util.datastreamer_server as Datastreamer
-import util.packets as pkt
+import util.communication.packets as pkt
 import config as test_board_config
 import util.avionics_interface as AVInterface
 import time

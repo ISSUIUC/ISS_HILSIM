@@ -5,7 +5,8 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-import util.packets as packet
+import util.communication.packets as packet
+import util.communication.communication_interface as communication_interface
 import time
 import serial
 from enum import Enum
@@ -199,7 +200,7 @@ class DatastreamerServer:
     state: ServerStateController = ServerStateController()
     """Datastreamer server's state machine reference"""
     board_type: str = ""
-    server_port: serial.Serial = None
+    server_comm_channel: communication_interface.CommunicationChannel = None
     """Serial port reference to the serial port that connects to the Kamaji server."""
     board_id = -1
     """Board ID assigned by the Kamaji server"""
@@ -234,12 +235,12 @@ class DatastreamerServer:
         """Generic single action on the server. Will perform all server actions by calling transition events and always events.
         
         This function will generally be run within an infinite while loop."""
-        if self.server_port != None:
+        if self.server_comm_channel != None:
             # We clear out output buffer and also populate our input buffer from the server
             if(len(self.packet_buffer.packet_buffer) > 0):
                 print(self.packet_buffer.to_serialized_string())
-            self.packet_buffer.write_buffer_to_serial(self.server_port)
-            self.packet_buffer.read_to_input_buffer(self.server_port)
+            self.packet_buffer.write_buffer_to_channel(self.server_comm_channel)
+            self.packet_buffer.read_to_input_buffer(self.server_comm_channel)
         
         self.state.update_always() # Run all `always` events
         self.state.update_transitions()  # Run all transition tests
@@ -250,10 +251,10 @@ class DatastreamerServer:
         This function allows a single execution of the server tick from any scope that has access to the server.
         This server tick does not do any transitions, since that control is held by the scope you call this function from.
         """
-        if self.server_port != None:
+        if self.server_comm_channel != None:
             # We clear out output buffer and also populate our input buffer from the server
-            self.packet_buffer.write_buffer_to_serial(self.server_port)
-            self.packet_buffer.read_to_input_buffer(self.server_port)
+            self.packet_buffer.write_buffer_to_channel(self.server_comm_channel)
+            self.packet_buffer.read_to_input_buffer(self.server_comm_channel)
         
         self.state.update_always() # Run all `always` events
         self.packet_buffer.clear_input_buffer()

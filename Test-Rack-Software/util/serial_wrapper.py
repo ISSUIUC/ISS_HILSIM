@@ -1,9 +1,10 @@
 # This script provides a few wrapper functions for PySerial
 import serial # Pyserial! Not serial
 import serial.tools.list_ports
-import util.packets as packet
+import util.communication.packets as packet
+import util.communication.ds_serial as serial_interface
 
-connected_comports: list[serial.Serial] = []
+connected_comports: list[serial_interface.SerialChannel] = []
 
 
 def get_com_ports():
@@ -20,22 +21,22 @@ def close_com_ports():
     for port in connected_comports:
         port.close()
 
-def close_port(port: serial.Serial):
+def close_port(port: serial_interface.SerialChannel):
     """Close a specific port"""
     port.close()
 
-def clear_port(port: serial.Serial):
+def clear_port(port: serial_interface.SerialChannel):
     """Clears all of the data in the port buffer"""
-    port.reset_input_buffer()
-    port.reset_output_buffer()
+    port.serial_port.reset_input_buffer()
+    port.serial_port.reset_output_buffer()
     print("(clear_port) Successfully cleared port " + port.name)
 
 
-def hard_reset(port: serial.Serial):
+def hard_reset(port: serial_interface.SerialChannel):
     """Clears all of the data in the port buffer by closing the port and opening it back up"""
     port.close()
     port.open()
-    print("(clear_port) Successfully hard reset port " + port.name)
+    print("(clear_port) Successfully hard reset port " + port.serial_port.name)
 
 
 alr_init = False
@@ -47,7 +48,7 @@ def t_init_com_ports():
     global alr_init
     init_com_ports()
     if alr_init == False:
-        port = serial.Serial("COM8", write_timeout=0)
+        port = serial_interface.SerialChannel(serial.Serial("COM8", write_timeout=0))
         connected_comports.append(port)
         alr_init = True
         print("(init_comports) Initialized port COM8")
@@ -61,13 +62,13 @@ def init_com_ports():
     print("(init_comports) Attempting to initialize all connected COM ports..")
     for port_data in get_com_ports():
         try:
-            port = serial.Serial(port_data.device, write_timeout=0)
+            port = serial_interface.SerialChannel(serial.Serial(port_data.device, write_timeout=0))
             connected_comports.append(port)
             print("(init_comports) Initialized port " + port_data.device)
         except serial.SerialException as err:
             if("denied" in str(err)):
                 for connected in connected_comports:
-                    if(connected.name == port_data.device):
+                    if(connected.serial_port.name == port_data.device):
                         print("(init_comports) " + port_data.device + " already initialized")
                 
             else:

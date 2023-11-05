@@ -4,6 +4,7 @@
 import json
 from enum import Enum
 import serial
+import util.communication.communication_interface as communication_interface
 
 class PacketDeserializeException(Exception):
     "Raised a packet fails to deserialize"
@@ -162,7 +163,7 @@ class DataPacketBuffer:
         """Adds a packet to the packet buffer"""
         self.packet_buffer.append(packet)
 
-    def write_buffer_to_serial(self, serial_port: serial.Serial) -> None:
+    def write_buffer_to_channel(self, channel: communication_interface.CommunicationChannel) -> None:
         """
         Writes the entire packet buffer to serial
         """
@@ -170,16 +171,14 @@ class DataPacketBuffer:
         if(len(self.packet_buffer) > 0):
             serialized_full += "[[pkt_end]]"
         self.packet_buffer = []
-        
-        serial_port.write(serialized_full.encode())
+        channel.write(serialized_full)
 
-
-    def write_packet(packet: DataPacket, serial_port: serial.Serial) -> None:
+    def write_packet(packet: DataPacket, channel: communication_interface.CommunicationChannel) -> None:
         """
         Writes a single packet to serial
         WARNING: using `write_packet` twice in a row will cause a deserialization error to be thrown due to a lack of a delimeter.
         """
-        serial_port.write(packet.serialize().encode())
+        channel.write(packet.serialize())
 
     def to_serialized_string(self) -> None:
         """
@@ -217,18 +216,12 @@ class DataPacketBuffer:
         for in_packet in in_buffer:
             self.input_buffer.append(in_packet)
             
-    def serial_to_packet_list(port: serial.Serial, safe_deserialize:bool=False) -> list[DataPacket]:
+    def channel_to_packet_list(channel: communication_interface.CommunicationChannel, safe_deserialize:bool=False) -> list[DataPacket]:
         """
-        Converts all packets in a serial port's input buffer into a list of packets.
+        Converts all packets in a channel's input buffer into a list of packets.
         """
-        if(port.in_waiting):
-            instr = ""
-            while(port.in_waiting):
-                data = port.read_all()
-                string = data.decode("utf8")   
-                if string:
-                    instr += string
-            return DataPacketBuffer.stream_to_packet_list(instr, safe_deserialize)
+        if(channel.waiting_in()):
+            return DataPacketBuffer.stream_to_packet_list(channel.read(), safe_deserialize)
         return []
 
     def clear_input_buffer(self):

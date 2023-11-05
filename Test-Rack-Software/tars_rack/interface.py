@@ -14,7 +14,7 @@ import pandas
 import io 
 import time
 import serial
-import util.packets as pkt
+import util.communication.packets as pkt
 import traceback
 import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer

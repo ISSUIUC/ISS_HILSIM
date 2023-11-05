@@ -6,7 +6,7 @@ import av_platform.csv_datastream as csv_datastream
 import pandas
 import traceback
 import io 
-import util.packets as packet
+import util.communication.packets as packet
 
 
 def raw_csv_to_dataframe(raw_csv):

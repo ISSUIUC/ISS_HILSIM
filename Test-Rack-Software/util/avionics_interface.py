@@ -1,5 +1,5 @@
 import util.datastreamer_server as Datastreamer
-import util.packets as pkt
+import util.communication.packets as pkt
 from abc import ABC, abstractmethod # ABC = Abstract Base Classes 
 import os
 

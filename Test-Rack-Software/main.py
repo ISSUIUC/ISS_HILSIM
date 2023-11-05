@@ -11,7 +11,7 @@
 
 import config as test_board_config
 import util.serial_wrapper as connection
-import util.packets as packet
+import util.communication.packets as packet
 import time
 import util.avionics_meta as AVMeta
 import util.handle_packets as handle_packets
@@ -54,11 +54,11 @@ def send_wide_ident(Server: Datastreamer.DatastreamerServer):
 
 def check_server_connection(Server: Datastreamer.DatastreamerServer):
     for port in connection.connected_comports:
-        in_packets = packet.DataPacketBuffer.serial_to_packet_list(port, True)
+        in_packets = packet.DataPacketBuffer.channel_to_packet_list(port, True)
         for pkt in in_packets:
             if pkt.packet_type == packet.DataPacketType.ACKNOWLEDGE:
                 Server.board_id = pkt.data['board_id']
-                Server.server_port = port
+                Server.server_comm_channel = port
                 return True
     return False
 
@@ -155,7 +155,7 @@ def main():
         Server.tick()
 
         # Actions that always happen:
-        if(Server.server_port != None and should_heartbeat(Server)):
+        if(Server.server_comm_channel != None and should_heartbeat(Server)):
             print("(heartbeat) Sent update at u+", time.time())
             Server.packet_buffer.add(packet.CL_HEARTBEAT(packet.HeartbeatServerStatus(Server.state.server_state, Server.server_start_time, False, False),
                                                   packet.HeartbeatAvionicsStatus(False, "")))
