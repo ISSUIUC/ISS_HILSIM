@@ -15,7 +15,7 @@ import io
 import time
 import serial
 import util.communication.packets as pkt
-import util.communication.ds_serial as serial_interface
+import util.communication.serial_channel as serial_interface
 import traceback
 import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer

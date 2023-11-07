@@ -2,7 +2,7 @@
 import serial # Pyserial! Not serial
 import serial.tools.list_ports
 import util.communication.packets as packet
-import util.communication.ds_serial as serial_interface
+import util.communication.serial_channel as serial_interface
 
 connected_comports: list[serial_interface.SerialChannel] = []
 

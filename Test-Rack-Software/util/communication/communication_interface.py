@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod # ABC = Abstract Base Classes 
 
 class CommunicationChannel(ABC):
-    is_open: bool = False
     """An extendable class representing a single communication channel. Exposes methods for 
     sending string-type data, reading string-type data, and other helper methods."""
+
+    is_open: bool = False
+    """Whether this communication channel is open"""
+
     @abstractmethod
     def write(self, data: str) -> None:
         """Writes data to the channel"""

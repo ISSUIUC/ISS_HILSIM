@@ -8,10 +8,14 @@ class SerialChannel(communication_interface.CommunicationChannel):
         self.is_open = serial_port.is_open
 
     def open(self) -> None:
-        self.serial_port.open()
+        if(not self.serial_port.is_open):
+            self.serial_port.open()
+            self.is_open = True
 
     def close(self) -> None:
-        self.serial_port.close()
+        if(self.serial_port.is_open):
+            self.serial_port.close()
+            self.is_open = False
 
     def waiting_in(self) -> bool:
         return self.serial_port.in_waiting > 0
