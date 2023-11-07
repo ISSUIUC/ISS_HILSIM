@@ -45,6 +45,9 @@ def should_heartbeat(Server: Datastreamer.DatastreamerServer):
 # Server connection
 def send_wide_ident(Server: Datastreamer.DatastreamerServer):
     if(time.time() > Server.last_server_connection_check):
+
+        # Check websockets
+
         connection.t_init_com_ports()
         for port in connection.connected_comports:
             packet.DataPacketBuffer.write_packet(packet.CL_IDENT(av_meta.board_type), port)
@@ -74,7 +77,9 @@ def detect_avionics(Server: Datastreamer.DatastreamerServer):
     try:
         return avionics.av_instance.detect()
     except Exception as e:
+        print("(detect_avionics) Detect_avionics encountered an error during the detection process:")
         print(e)
+        print()
 
 
 def on_ready(Server: Datastreamer.DatastreamerServer):
@@ -117,6 +122,10 @@ def handle_power_cycle(Server: Datastreamer.DatastreamerServer):
 
 def main():
     Server = Datastreamer.instance
+    # Server config setup
+    Server.server_preferred_comm_method = test_board_config.preferred_communication_channel # Sets up the priority communication channel
+
+    # END Server config setup
     SState = Datastreamer.ServerStateController.ServerState # SState alias
 
     # Make sure setup is done before any transition:

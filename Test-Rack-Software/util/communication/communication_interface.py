@@ -1,4 +1,12 @@
 from abc import ABC, abstractmethod # ABC = Abstract Base Classes 
+from enum import Enum
+
+class CommunicationChannelType(Enum):
+    """Enum storing all supported communication types. Communication type must be present here to be able to be prioritized"""
+    SERIAL = 0
+    """Serial interface (Wired: COM)"""
+    WEBSOCKET = 1
+    """Websocket interface (Wireless: ws://)"""
 
 class CommunicationChannel(ABC):
     """An extendable class representing a single communication channel. Exposes methods for 
