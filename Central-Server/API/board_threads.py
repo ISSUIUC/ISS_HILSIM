@@ -92,6 +92,12 @@ class manager_thread(threading.Thread):
         self.running = False
         print(f"terminated manager", flush=True)
         
+    def remove_dead_threads(self):
+        self.threads = [thr for thr in self.threads if thr.is_alive()]
+    
+    def kill_thr(self, idx):
+        if 0 <= idx < len(self.threads):
+            del self.threads[idx]
 
     def run(self): 
         if DEBUG:
@@ -101,6 +107,8 @@ class manager_thread(threading.Thread):
         else:
             i = 0
             while self.running:
+                
+                self.remove_dead_threads()
                 self.create_threads()
                 if len(self.queue) > 0:
                     # Find first open board
@@ -116,8 +124,9 @@ class manager_thread(threading.Thread):
 
                 sleep(0.2)
                 i+=1
-
+            
                 if i%20==0:
+                    print("Threads: ", self.threads, flush=True)
                     print("Current queue: ", self.queue, flush=True)
         
         print("exit")
