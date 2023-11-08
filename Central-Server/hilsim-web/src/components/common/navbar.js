@@ -1,12 +1,15 @@
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
+import { Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 function NavBar() {
   return (
     <>
       <Navbar bg="dark" data-bs-theme="dark">
-        <Container>
+        <Container fluid>
+          <Link to="/" style={{textDecoration: "none"}}>
           <Navbar.Brand href="#home">
             <img
               alt=""
@@ -17,11 +20,11 @@ function NavBar() {
             />{' '}
             HILSIM
           </Navbar.Brand>
+          </Link>
           <Nav className="me-auto">
-            <Nav.Link href="#home">Home</Nav.Link>
-            <Nav.Link href="#features">Queue</Nav.Link>
-            <Nav.Link href="#pricing">About</Nav.Link>
-            <Nav.Link href="#something">ISS</Nav.Link>
+            <Link to="/new_job">
+              <Button variant="success">Submit New Job</Button>
+            </Link>
           </Nav>
           <Navbar.Collapse className="justify-content-end">
           <Navbar.Text>

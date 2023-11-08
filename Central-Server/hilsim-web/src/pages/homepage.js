@@ -1,6 +1,6 @@
 import React from 'react';
 import NavBar from '../components/common/navbar';
-import Queue from '../components/queue';
+import Queue from './queue';
 
 function HomePage() {
   return (

@@ -7,13 +7,13 @@ function Status() {
       <Card.Body>
         <Card.Title>Server Status</Card.Title>
         <Card.Text style={{fontWeight: 'bold'}}>
-          Server 1 - Status
+          Server 1 - Ballin
         </Card.Text>
         <Card.Text style={{fontWeight: 'bold'}}>
-            Server 2 - Status
+            Server 2 - Trappin
         </Card.Text>
         <Card.Text style={{fontWeight: 'bold'}}>
-            Server 3 - Status
+            Server 3 - Aliv
         </Card.Text>
       </Card.Body>
     </Card>
