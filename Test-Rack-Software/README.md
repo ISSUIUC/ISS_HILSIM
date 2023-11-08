@@ -55,7 +55,14 @@ The way that peripherals are implemented and detected is left as an exercise to 
 
 As of now, all connections between systems are made with serial, this may be modified later on to allow for more board peripherals (since one of the serial ports is used for server communication).
 
-#### Packets
+#### Communication
+
+##### Communication interfaces
+Datastreamer provides an interface for implementing serial-like communication interfaces through the `./util/communication/communication_interface.py` interface. The definition of "serial-like" communication is quite abstract, but in short, the communication protocol you are trying to implement must be able to send and recieve strings in some manner. Whether the strings are encoded or not matters not, you must simply be able to implement `read()`, which will return a `str`, and `write(data: str)`, which takes in a string. The other methods are helper methods to work with string buffers.
+
+To see a simple example of a communication interface, take a look at `./util/communication/serial_channel.py`.
+
+##### Packets
 The datastreamer communicates to the Kamaji server through a system of packets. The purpose of each packet is well documented within `packets.py`, so it is recommended to check out what each packet does. In general, each packet has a **packet header** and an optional **raw_data** parameter. The packet header is encoded using JSON, while `raw_data` is usually encoded as a UTF-8 string.
 
 Packets are encoded to the serial buffer in the following manner as a string: `{packet_header}[[raw==>]]{raw_data}[[pkt_end]]`. This string can then be decoded back into the relevant packet, assuming that no data corruption happens.

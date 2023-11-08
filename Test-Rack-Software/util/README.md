@@ -20,8 +20,17 @@ A helper file for handling all job-related functions (Hooks into datastreamer fu
 `handle_packets.py`
 A helper file for handling all server packets (Hooks into datastreamer functionality)
 
-`packets.py`
+`communication/packets.py`
 Establishes packet communication protocol for datastreamer.
+
+`communication/communication_interface.py`
+Provides communication channel interfaces to be implemented for communication with Kamaji.
+
+`communication/serial_channel.py`
+Communication channel class for Serial (USB) communication
+
+`communication/ws_channel.py`
+Communication channel class for websocket communication
 
 `pio_commands.py`
 Wrapper for **platformio**
