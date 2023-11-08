@@ -65,7 +65,8 @@ class manager_thread(threading.Thread):
         return False
 
     def create_threads(self):
-        for t in l:
+        while len(l) > 0:
+            t = l.pop(0)
             thr = board_thread(t, t)
             thr.start()
             self.threads.append(thr)
@@ -78,6 +79,9 @@ class manager_thread(threading.Thread):
     def add_job(self, config):
         print(f"added job {config} to queues", flush=True)
         self.queue.append(config)
+    
+    def add_thread(self, thr):
+        l.append(thr)
     
     def terminate_all(self):
         for t in self.threads:
@@ -95,11 +99,9 @@ class manager_thread(threading.Thread):
                 print("debug")
                 # sleep(0.1)
         else:
-            print("in run")
-            self.create_threads()
-            print("after threads", flush=True)
             i = 0
             while self.running:
+                self.create_threads()
                 if len(self.queue) > 0:
                     # Find first open board
                     for t in self.threads:
