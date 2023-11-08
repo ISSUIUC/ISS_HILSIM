@@ -25,7 +25,7 @@ def handle_server_packets(Server: Datastreamer.DatastreamerServer):
                 Server.packet_buffer.add(pkt.CL_PONG())
             case pkt.DataPacketType.ACKNOWLEDGE:
                 # For an invalid ACK, we send back an invalid packet.
-                if(Server.server_port != None):
+                if(Server.server_comm_channel != None):
                     Server.packet_buffer.add(pkt.CL_INVALID(packet))
             case pkt.DataPacketType.REASSIGN:
                 # For REASSIGN, we check if the command is valid, reassign if yes, INVALID if no.

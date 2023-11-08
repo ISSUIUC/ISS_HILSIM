@@ -200,8 +200,12 @@ class DatastreamerServer:
     state: ServerStateController = ServerStateController()
     """Datastreamer server's state machine reference"""
     board_type: str = ""
+
+    # COMMUNICATION
     server_comm_channel: communication_interface.CommunicationChannel = None
     """Serial port reference to the serial port that connects to the Kamaji server."""
+    server_preferred_comm_method: communication_interface.CommunicationChannelType = communication_interface.CommunicationChannelType.SERIAL
+    """The preferred method for datastreamer boards to communicate to Kamaji. Defaults to `SERIAL`"""
     board_id = -1
     """Board ID assigned by the Kamaji server"""
 

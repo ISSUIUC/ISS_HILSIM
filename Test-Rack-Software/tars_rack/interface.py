@@ -38,12 +38,13 @@ class TARSAvionics(AVInterface.AvionicsInterface):
         ignore_ports = []
         # We should ignore the server's comport if the chosen server communication channel is serial..
         if type(self.server.server_comm_channel) == serial_interface.SerialChannel:
+            print("(detect_avionics) Server is using Serial Channel interface")
             ignore_ports = [self.server.server_comm_channel]
 
         for comport in server.connected_comports:
             if not (comport in ignore_ports):
-                print("(detect_avionics) Detected viable avionics target @ " + comport.name)
-                self.TARS_port = comport
+                print("(detect_avionics) Detected viable avionics target @ " + comport.serial_port.name)
+                self.TARS_port = comport.serial_port
                 self.ready = True
                 return True
 
@@ -141,10 +142,14 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                         return False, "Abort signal recieved"
                     
                     try:
+                        if(self.av_interface.TARS_port.is_open):
+                            return True, "Setup Complete"
                         self.av_interface.TARS_port.open()
-                        print("\n(job_setup) Successfully re-opened TARS port (" + self.av_interface.TARS_port.name + ")")
+                        print("\n(job_setup) Successfully re-opened TARS port (" + self.av_interface.TARS_port.serial_port.name + ")")
                         return True, "Setup Complete"
-                    except:
+                    except Exception as e:
+                        print(e)
+                        print("")
                         time_left = abs((start + 10) - time.time())
                         print(f"(job_setup) attempting to re-open tars port.. ({time_left:.1f}s)", end="\r")
                 return False, "Unable to re-open avionics COM Port"
