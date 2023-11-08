@@ -1,9 +1,10 @@
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
+import { Container } from 'react-bootstrap';
 
 function QueueItem() {
   return (
-    <Card style={{textAlign: 'left'}}>
+      <Card style={{textAlign: 'left', marginBottom: '10px'}}>
       <Card.Body>
         <Card.Title>Very Cool ISS Member</Card.Title>
         <Card.Text>

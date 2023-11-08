@@ -5,7 +5,7 @@ import { Container } from 'react-bootstrap';
 
 function QueueList() {
   return (
-    <Container>
+    <Container fluid>
       <QueueItem />
       <QueueItem />
       <QueueItem />
