@@ -29,17 +29,20 @@ class board_thread(threading.Thread):
 
     def run(self): 
         while self.running:
-            if self.has_job_config:
-                rand_time = round(random.random() * 15, 2)
+            try:
+                if self.has_job_config:
+                    rand_time = round(random.random() * 15, 2)
 
-                print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
-                sleep(rand_time)
-                print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
+                    print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
+                    sleep(rand_time)
+                    print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
 
-                self.has_job_config = False
-                self.cur_job_config = None
+                    self.has_job_config = False
+                    self.cur_job_config = None
 
-            sleep(0.2)
+                sleep(0.2)
+            except Exception:
+                print(f"Thread {self.thread_ID} has unexpectedly closed")
 
 class manager_thread(threading.Thread): 
     threads = []
@@ -53,8 +56,11 @@ class manager_thread(threading.Thread):
     
     def some_thread_active(self):
         for t in self.threads:
-            if not t.can_take_job():
-                return True
+            if t.is_alive():
+                if not t.can_take_job():
+                    return True
+            else:
+                del t
         
         return False
 
@@ -72,12 +78,12 @@ class manager_thread(threading.Thread):
     def add_job(self, config):
         print(f"added job {config} to queues", flush=True)
         self.queue.append(config)
-        pass
     
     def terminate_all(self):
         for t in self.threads:
-            t.terminate()
-            print(f"terminated thread {t.thread_ID}", flush=True)
+            if t.is_alive():
+                t.terminate()
+                print(f"terminated thread {t.thread_ID}", flush=True)
         
         self.running = False
         print(f"terminated manager", flush=True)
@@ -97,11 +103,14 @@ class manager_thread(threading.Thread):
                 if len(self.queue) > 0:
                     # Find first open board
                     for t in self.threads:
-                        if t.can_take_job():
-                            if len(self.queue) > 0:
-                                cur_job = self.queue.pop(0)
-                                t.take_job(cur_job)
-                                print(f"Gave {t.thread_ID} job {cur_job}", flush=True)
+                        if t.is_alive():
+                            if t.can_take_job():
+                                if len(self.queue) > 0:
+                                    cur_job = self.queue.pop(0)
+                                    t.take_job(cur_job)
+                                    print(f"Gave {t.thread_ID} job {cur_job}", flush=True)
+                        else:
+                            del t
 
                 sleep(0.2)
                 i+=1
