@@ -1,11 +1,52 @@
 import threading
 from time import sleep
 import random
-
-# Threads and names, replace with availible
-l = ["0", "1", "2", "3"]
+import socketio
+import eventlet
 
 DEBUG = False
+
+class DatastreamerConnection():
+    def __init__(self) -> None:
+        pass
+
+class WebsocketThread(threading.Thread):
+    socketio_server: socketio.Server = None
+    """Instance for the socket.io server for board communication"""
+    socketio_app: socketio.WSGIApp = None
+    """WSGI app for socket.io server"""
+    
+    def setup_callbacks(self, on_connect_callback):
+        @self.socketio_server.event
+        def connect(sid, environ):
+            on_connect_callback(sid, environ)
+
+        @self.socketio_server.event
+        def my_message(sid, data):
+            print('message ', data)
+
+        @self.socketio_server.event
+        def disconnect(sid):
+            print('disconnect ', sid)
+
+    def __init__(self, websocket_port): 
+        threading.Thread.__init__(self) 
+        self.thread_name = "Datastreamer-websocket" 
+        self.thread_ID = "M-ws" 
+        self.running = True
+        self.websocket_port = websocket_port
+        # Initialize socket communication to DS
+        self.socketio_server = socketio.Server(cors_allowed_origins='*')
+        self.socketio_app = socketio.WSGIApp(self.socketio_server, static_files={
+            '/': {'content_type': 'text/html', 'filename': './static/ws_page.html'}
+        })
+
+        print("DS-socketio server initializing")
+
+
+    def run(self):
+        print("DS Websocket enabled on " + str(self.websocket_port))
+        eventlet.wsgi.server(eventlet.listen(('', self.websocket_port)), self.socketio_app)
 
 
 class board_thread(threading.Thread): 
@@ -47,14 +88,19 @@ class board_thread(threading.Thread):
             except Exception:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
 
-class manager_thread(threading.Thread): 
+class manager_thread(threading.Thread):
     threads = []
+    spin_up_queue = []
+    """Queue that holds which threads need to be spun up."""
+
+    ws_thread: WebsocketThread = None
     def __init__(self): 
         threading.Thread.__init__(self) 
         self.thread_name = "Manager" 
         self.thread_ID = "M" 
         self.queue = []
         self.running = True
+
         # helper function to execute the threads
     
     def some_thread_active(self):
@@ -68,8 +114,8 @@ class manager_thread(threading.Thread):
         return False
 
     def create_threads(self):
-        while len(l) > 0:
-            t = l.pop(0)
+        while len(self.spin_up_queue) > 0:
+            t = self.spin_up_queue.pop(0)
             thr = board_thread(t, t)
             thr.start()
             self.threads.append(thr)
@@ -84,7 +130,7 @@ class manager_thread(threading.Thread):
         self.queue.append(config)
     
     def add_thread(self, thr):
-        l.append(thr)
+        self.spin_up_queue.append(thr)
     
     def terminate_all(self):
         for t in self.threads:
@@ -109,6 +155,16 @@ class manager_thread(threading.Thread):
                 # sleep(0.1)
         else:
             i = 0
+
+            # Datastreamer websocket implementation
+            def ws_on_connect(sid, environ):
+                self.add_thread(sid)
+
+
+            self.ws_thread = WebsocketThread(5001)
+            self.ws_thread.setup_callbacks(ws_on_connect)
+            self.ws_thread.start()
+
             while self.running:
                 
                 self.remove_dead_threads()
@@ -128,7 +184,7 @@ class manager_thread(threading.Thread):
                 sleep(0.2)
                 i+=1
             
-                if i%20==0:
+                if i%100==0:
                     print("Threads: ", self.threads, flush=True)
                     print("Current queue: ", self.queue, flush=True)
         
