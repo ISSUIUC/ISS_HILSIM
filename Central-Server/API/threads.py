@@ -26,19 +26,22 @@ class board_thread(threading.Thread):
     
     def terminate(self):
         self.running = False
+    
+    def run_job(self):
+        rand_time = round(random.random() * 15, 2)
+
+        print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
+        sleep(rand_time)
+        print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
+
+        self.has_job_config = False
+        self.cur_job_config = None
 
     def run(self): 
         while self.running:
             try:
                 if self.has_job_config:
-                    rand_time = round(random.random() * 15, 2)
-
-                    print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
-                    sleep(rand_time)
-                    print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
-
-                    self.has_job_config = False
-                    self.cur_job_config = None
+                    self.run_job()
 
                 sleep(0.2)
             except Exception:
