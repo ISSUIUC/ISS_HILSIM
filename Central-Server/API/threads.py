@@ -16,18 +16,18 @@ class WebsocketThread(threading.Thread):
     socketio_app: socketio.WSGIApp = None
     """WSGI app for socket.io server"""
     
-    def setup_callbacks(self, on_connect_callback):
+    def setup_callbacks(self, on_connect_callback, on_message_callback, on_disconnect_callback):
         @self.socketio_server.event
         def connect(sid, environ):
             on_connect_callback(sid, environ)
 
         @self.socketio_server.event
         def my_message(sid, data):
-            print('message ', data)
+            on_message_callback(sid, data)
 
         @self.socketio_server.event
         def disconnect(sid):
-            print('disconnect ', sid)
+            on_disconnect_callback(sid)
 
     def __init__(self, websocket_port): 
         threading.Thread.__init__(self) 
@@ -144,9 +144,15 @@ class manager_thread(threading.Thread):
     def remove_dead_threads(self):
         self.threads = [thr for thr in self.threads if thr.is_alive()]
     
-    def kill_thr(self, idx):
-        if 0 <= idx < len(self.threads):
-            del self.threads[idx]
+    def kill_thr(self, ident):
+        if 0 <= ident < len(self.threads):
+            self.threads[ident].terminate()
+            del self.threads[ident]
+        else:
+            for i, t in enumerate(self.threads):
+                if ident == t.thread_name:
+                    t.terminate()
+                    del self.threads[i]
 
     def run(self): 
         if DEBUG:
@@ -154,16 +160,26 @@ class manager_thread(threading.Thread):
                 print("debug")
                 # sleep(0.1)
         else:
+            for i in range(4):
+                self.spin_up_queue.append(i)
+
             i = 0
 
             # Datastreamer websocket implementation
             def ws_on_connect(sid, environ):
                 self.add_thread(sid)
+            
+            def ws_on_message(sid, data):
+                print(sid,": ",data)
 
+            def ws_on_disconnect(sid):
+                self.kill_thr(sid)
 
+            
             self.ws_thread = WebsocketThread(5001)
-            self.ws_thread.setup_callbacks(ws_on_connect)
+            self.ws_thread.setup_callbacks(ws_on_connect, ws_on_message, ws_on_disconnect)
             self.ws_thread.start()
+            self.threads.append(self.ws_thread)
 
             while self.running:
                 

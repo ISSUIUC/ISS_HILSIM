@@ -2,7 +2,8 @@ import util.communication.communication_interface as communication_interface
 from websockets.sync.client import connect, ClientConnection
 
 class ClientWebsocketConnection(communication_interface.CommunicationChannel):
-    pass
+    def __init__(self, websocket_uri: str) -> None:
+        pass
 
 class WebsocketChannel(communication_interface.CommunicationChannel):
     websocket_connection: ClientConnection = None
