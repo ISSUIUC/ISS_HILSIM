@@ -1,14 +1,19 @@
 import threading
 from time import sleep
+import traceback
 import random
 import socketio
 import eventlet
+import util.communication.communication_interface as communication_interface
+import util.communication.ws_channel as websocket_channel
+import util.communication.packets as packets
 
 DEBUG = False
 
 class DatastreamerConnection():
-    def __init__(self) -> None:
-        pass
+    def __init__(self, thread_name, communication_channel: communication_interface.CommunicationChannel) -> None:
+        self.thread_name = thread_name
+        self.communicaton_channel = communication_channel
 
 class WebsocketThread(threading.Thread):
     socketio_server: socketio.Server = None
@@ -50,9 +55,10 @@ class WebsocketThread(threading.Thread):
 
 
 class board_thread(threading.Thread): 
-    def __init__(self, thread_name, thread_ID): 
+    def __init__(self, thread_name, thread_ID, communication_channel: communication_interface.CommunicationChannel): 
         threading.Thread.__init__(self) 
         self.thread_name = thread_name 
+        self.communication_channel = communication_channel
         self.thread_ID = thread_ID 
         self.cur_job_config = None
         self.has_job_config = False
@@ -70,7 +76,7 @@ class board_thread(threading.Thread):
     
     def run_job(self):
         rand_time = round(random.random() * 15, 2)
-
+        self.communication_channel.write("ASDASFASFASFAWFAWAWD")
         print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
         sleep(rand_time)
         print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
@@ -79,14 +85,18 @@ class board_thread(threading.Thread):
         self.cur_job_config = None
 
     def run(self): 
+
+        self.communication_channel.write(packets.SV_ACKNOWLEDGE(0))
+
         while self.running:
             try:
                 if self.has_job_config:
                     self.run_job()
 
                 sleep(0.2)
-            except Exception:
+            except Exception as e:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
+                print(traceback.format_exc())
 
 class manager_thread(threading.Thread):
     threads = []
@@ -116,7 +126,7 @@ class manager_thread(threading.Thread):
     def create_threads(self):
         while len(self.spin_up_queue) > 0:
             t = self.spin_up_queue.pop(0)
-            thr = board_thread(t, t)
+            thr = board_thread(t.thread_name, t.thread_name, t.communicaton_channel)
             thr.start()
             self.threads.append(thr)
 
@@ -160,14 +170,14 @@ class manager_thread(threading.Thread):
                 print("debug")
                 # sleep(0.1)
         else:
-            for i in range(4):
-                self.spin_up_queue.append(i)
+            #for i in range(4):
+            #    self.spin_up_queue.append(i)
 
             i = 0
 
             # Datastreamer websocket implementation
             def ws_on_connect(sid, environ):
-                self.add_thread(sid)
+                self.add_thread(DatastreamerConnection(sid, websocket_channel.ClientWebsocketConnection(self.ws_thread.socketio_server, sid)))
             
             def ws_on_message(sid, data):
                 print(sid,": ",data)
@@ -179,7 +189,6 @@ class manager_thread(threading.Thread):
             self.ws_thread = WebsocketThread(5001)
             self.ws_thread.setup_callbacks(ws_on_connect, ws_on_message, ws_on_disconnect)
             self.ws_thread.start()
-            self.threads.append(self.ws_thread)
 
             while self.running:
                 
