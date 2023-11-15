@@ -9,6 +9,7 @@ import random
 from job_queue import job_queue_blueprint
 from perms import perms_blueprint
 import threading
+import util.communication.packets as packets
 
 from threads import manager_thread
 
@@ -63,10 +64,17 @@ if __name__ == "__main__":
     print("Attempting to initialize server..")
     # m_thread = threading.Thread(target=manager_thread)
     m_thread = manager_thread()
-    jobs = ["a", "b", "c", "d", "e"]
+    jobs = []
+
+    test_job = packets.JobData(1)
+    file = open(os.path.join(os.path.dirname(__file__), "./util/datastreamer_test_data.csv"), 'r')
+    csv_data = file.read()
+
+    new_job = packets.SV_JOB(test_job, csv_data)
+    jobs.append(new_job)
 
     for j in jobs:
-        m_thread.add_job(j)
+        m_thread.add_job(new_job)
 
     m_thread.start()
     

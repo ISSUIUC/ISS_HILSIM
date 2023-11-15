@@ -67,6 +67,7 @@ class board_thread(threading.Thread):
         self.running = True
         self.packet_buffer = packets.DataPacketBuffer()
         self.board_id = board_id
+        self.is_ready = False
         
  
     def can_take_job(self):
@@ -88,20 +89,29 @@ class board_thread(threading.Thread):
         self.has_job_config = False
         self.cur_job_config = None
 
+    def handle_communication(self, packet_buffer):
+        if(len(packet_buffer) > 0):
+            print("PB", packet_buffer)
+
     def run(self): 
         self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
     
 
         while self.running:
-            self.packet_buffer.write_buffer_to_channel(self.communication_channel)
             try:
+                self.packet_buffer.write_buffer_to_channel(self.communication_channel)
+                self.packet_buffer.read_to_input_buffer(self.communication_channel)
+                self.handle_communication(self.packet_buffer.input_buffer)
                 if self.has_job_config:
-                    self.run_job()
+                    pass
+                    # self.run_job()
 
                 sleep(0.2)
             except Exception as e:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
                 print(traceback.format_exc())
+
+            self.packet_buffer.clear_input_buffer()
 
 class manager_thread(threading.Thread):
     threads = []
