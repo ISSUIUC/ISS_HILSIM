@@ -1,5 +1,6 @@
 import util.communication.communication_interface as communication_interface
 import socketio
+from typing import List
 
 
 class ClientWebsocketConnection(communication_interface.CommunicationChannel):
@@ -91,4 +92,5 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         self.websocket_client.send(data)
 
 
-connected_websockets: list[WebsocketChannel] = []
+connected_websockets: List[WebsocketChannel] = []
+"""The connected websockets of this channel (Type: `WebsocketChannel`)"""
