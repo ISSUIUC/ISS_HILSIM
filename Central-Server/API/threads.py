@@ -9,6 +9,7 @@ import util.communication.ws_channel as websocket_channel
 import util.communication.packets as packets
 
 DEBUG = False
+GLOBAL_BOARD_ID = 0
 
 class DatastreamerConnection():
     def __init__(self, thread_name, communication_channel: communication_interface.CommunicationChannel) -> None:
@@ -41,7 +42,7 @@ class WebsocketThread(threading.Thread):
         self.running = True
         self.websocket_port = websocket_port
         # Initialize socket communication to DS
-        self.socketio_server = socketio.Server(cors_allowed_origins='*')
+        self.socketio_server = socketio.Server(cors_allowed_origins='*', async_mode="threading")
         self.socketio_app = socketio.WSGIApp(self.socketio_server, static_files={
             '/': {'content_type': 'text/html', 'filename': './static/ws_page.html'}
         })
@@ -55,7 +56,8 @@ class WebsocketThread(threading.Thread):
 
 
 class board_thread(threading.Thread): 
-    def __init__(self, thread_name, thread_ID, communication_channel: communication_interface.CommunicationChannel): 
+    packet_buffer = None
+    def __init__(self, thread_name, thread_ID, board_id, communication_channel: communication_interface.CommunicationChannel): 
         threading.Thread.__init__(self) 
         self.thread_name = thread_name 
         self.communication_channel = communication_channel
@@ -63,6 +65,9 @@ class board_thread(threading.Thread):
         self.cur_job_config = None
         self.has_job_config = False
         self.running = True
+        self.packet_buffer = packets.DataPacketBuffer()
+        self.board_id = board_id
+        
  
     def can_take_job(self):
         return not self.has_job_config
@@ -76,7 +81,6 @@ class board_thread(threading.Thread):
     
     def run_job(self):
         rand_time = round(random.random() * 15, 2)
-        self.communication_channel.write("ASDASFASFASFAWFAWAWD")
         print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
         sleep(rand_time)
         print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
@@ -85,10 +89,11 @@ class board_thread(threading.Thread):
         self.cur_job_config = None
 
     def run(self): 
-
-        self.communication_channel.write(packets.SV_ACKNOWLEDGE(0))
+        self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
+    
 
         while self.running:
+            self.packet_buffer.write_buffer_to_channel(self.communication_channel)
             try:
                 if self.has_job_config:
                     self.run_job()
@@ -124,9 +129,11 @@ class manager_thread(threading.Thread):
         return False
 
     def create_threads(self):
+        global GLOBAL_BOARD_ID
         while len(self.spin_up_queue) > 0:
             t = self.spin_up_queue.pop(0)
-            thr = board_thread(t.thread_name, t.thread_name, t.communicaton_channel)
+            thr = board_thread(t.thread_name, t.thread_name, GLOBAL_BOARD_ID, t.communicaton_channel)
+            GLOBAL_BOARD_ID += 1
             thr.start()
             self.threads.append(thr)
 
@@ -155,14 +162,15 @@ class manager_thread(threading.Thread):
         self.threads = [thr for thr in self.threads if thr.is_alive()]
     
     def kill_thr(self, ident):
-        if 0 <= ident < len(self.threads):
+        # TODO
+        """if 0 <= ident < len(self.threads):
             self.threads[ident].terminate()
             del self.threads[ident]
         else:
             for i, t in enumerate(self.threads):
                 if ident == t.thread_name:
                     t.terminate()
-                    del self.threads[i]
+                    del self.threads[i]"""
 
     def run(self): 
         if DEBUG:

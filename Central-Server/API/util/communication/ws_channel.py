@@ -1,5 +1,6 @@
 import util.communication.communication_interface as communication_interface
 import socketio
+from typing import List
 
 
 class ClientWebsocketConnection(communication_interface.CommunicationChannel):
@@ -33,7 +34,8 @@ class ClientWebsocketConnection(communication_interface.CommunicationChannel):
         return out_temp
     
     def write(self, data: str) -> None:
-        self.socketio_server.emit("wsdata", data, room=self.socket_id)
+        print("Sending", data, "to", self.socket_id)
+        self.socketio_server.emit("wsdata", data, to=self.socket_id)
 
 
 class WebsocketChannel(communication_interface.CommunicationChannel):
@@ -82,4 +84,5 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         self.websocket_client.send(data)
 
 
-connected_websockets: list[WebsocketChannel] = []
+connected_websockets: List[WebsocketChannel] = []
+"""The connected websockets of this channel (Type: `WebsocketChannel`)"""

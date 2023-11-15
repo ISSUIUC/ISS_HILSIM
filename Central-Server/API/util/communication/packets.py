@@ -5,6 +5,7 @@ import json
 from enum import Enum
 import serial
 import util.communication.communication_interface as communication_interface
+from typing import List
 
 class PacketDeserializeException(Exception):
     "Raised a packet fails to deserialize"
@@ -153,10 +154,10 @@ class DataPacketBuffer:
     """
     A utility class for encoding and decoding data streams with packets.
     """
-    packet_buffer: list[DataPacket] = []
-    input_buffer: list[DataPacket] = []
+    packet_buffer: List[DataPacket] = []
+    input_buffer: List[DataPacket] = []
 
-    def __init__(self, packet_list:list[DataPacket]=[]) -> None:
+    def __init__(self, packet_list:List[DataPacket]=[]) -> None:
         self.packet_buffer = packet_list
 
     def add(self, packet: DataPacket) -> None:
@@ -184,18 +185,18 @@ class DataPacketBuffer:
         """
         Serializes the packet buffer
         """
-        serialized_packets: list[str] = []
+        serialized_packets: List[str] = []
         for packet in self.packet_buffer:
             serialized_packets.append(packet.serialize())
         serialized_full: str = "[[pkt_end]]".join(serialized_packets)
         return serialized_full
 
-    def stream_to_packet_list(stream: str, safe_deserialize:bool=False) -> list[DataPacket]:
+    def stream_to_packet_list(stream: str, safe_deserialize:bool=False) -> List[DataPacket]:
         """
         Converts serialized packet buffer to a list of packets
         """
         serialized_packets = stream.split("[[pkt_end]]")
-        ds_packets: list[DataPacket] = []
+        ds_packets: List[DataPacket] = []
         for ser_pkt in serialized_packets:
             if(ser_pkt == ""):
                 continue
@@ -216,7 +217,7 @@ class DataPacketBuffer:
         for in_packet in in_buffer:
             self.input_buffer.append(in_packet)
             
-    def channel_to_packet_list(channel: communication_interface.CommunicationChannel, safe_deserialize:bool=False) -> list[DataPacket]:
+    def channel_to_packet_list(channel: communication_interface.CommunicationChannel, safe_deserialize:bool=False) -> List[DataPacket]:
         """
         Converts all packets in a channel's input buffer into a list of packets.
         """
@@ -459,40 +460,40 @@ class PacketValidator:
 
     def validate_server_packet(server_packet: DataPacket):
         """Returns whether a given packet is a valid server packet. Will return false for non-server packets"""
-        match server_packet.packet_type:
-            case DataPacketType.IDENT_PROBE:
-                return True
-            case DataPacketType.ACKNOWLEDGE:
-                return "board_id" in server_packet.data
-            case DataPacketType.REASSIGN:
-                return "board_id" in server_packet.data
-            case DataPacketType.TERMINATE:
-                return True
-            case DataPacketType.CYCLE:
-                return True
-            case DataPacketType.JOB:
-                return "job_data" in server_packet.data and server_packet.use_raw
-            case DataPacketType.PING:
+        p_type = server_packet
+        if p_type == DataPacketType.IDENT_PROBE:
+            return True
+        if p_type == DataPacketType.ACKNOWLEDGE:
+            return "board_id" in server_packet.data
+        if p_type == DataPacketType.REASSIGN:
+            return "board_id" in server_packet.data
+        if p_type == DataPacketType.TERMINATE:
+            return True
+        if p_type == DataPacketType.CYCLE:
+            return True
+        if p_type == DataPacketType.JOB:
+            return "job_data" in server_packet.data and server_packet.use_raw
+        if p_type == DataPacketType.PING:
                 return True
         return False
 
     def validate_client_packet(client_packet: DataPacket) -> bool:
         """Returns whether a given packet is a valid client packet. Will return false for non-client packets"""
-        match client_packet.packet_type:
-            case DataPacketType.IDENT:
-                return "board_type" in client_packet.data
-            case DataPacketType.ID_CONFIRM:
-                return "board_id" in client_packet.data and "board_type" in client_packet.data
-            case DataPacketType.READY:
-                return True
-            case DataPacketType.DONE:
-                return client_packet.use_raw and "job_data" in client_packet.data
-            case DataPacketType.JOB_UPDATE:
-                return client_packet.use_raw and "job_status" in client_packet.data
-            case DataPacketType.INVALID:
-                return client_packet.use_raw
-            case DataPacketType.BUSY:
-                return "job_data" in client_packet.data
-            case DataPacketType.PONG:
-                return True
+        p_type = client_packet.packet_type
+        if p_type == DataPacketType.IDENT:
+            return "board_type" in client_packet.data
+        if p_type == DataPacketType.ID_CONFIRM:
+            return "board_id" in client_packet.data and "board_type" in client_packet.data
+        if p_type == DataPacketType.READY:
+            return True
+        if p_type == DataPacketType.DONE:
+            return client_packet.use_raw and "job_data" in client_packet.data
+        if p_type == DataPacketType.JOB_UPDATE:
+            return client_packet.use_raw and "job_status" in client_packet.data
+        if p_type == DataPacketType.INVALID:
+            return client_packet.use_raw
+        if p_type == DataPacketType.BUSY:
+            return "job_data" in client_packet.data
+        if p_type == DataPacketType.PONG:
+            return True
         return False
