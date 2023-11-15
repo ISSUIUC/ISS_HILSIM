@@ -40,7 +40,7 @@ def run_hilsim(raw_csv: str, serial_port: serial.Serial, update_callback):
 
     while(True):   
         if(abs(watchdog_start - time.time()) > 3):
-            print("Watchdog timer tripped")
+            print("(stream_data) Watchdog timer tripped")
             return hilsim_return_log
         if time.time()*1000 > last_time + 10:
             last_time += 10

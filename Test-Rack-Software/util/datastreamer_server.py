@@ -208,6 +208,8 @@ class DatastreamerServer:
     """The preferred method for datastreamer boards to communicate to Kamaji. Defaults to `SERIAL`"""
     board_id = -1
     """Board ID assigned by the Kamaji server"""
+    do_wide_ident = True
+    """Should the Datastreamer be attempting to IDENT?"""
 
     current_job = None # HilsimRun
     """The job that is currently being setup/run"""
@@ -241,8 +243,6 @@ class DatastreamerServer:
         This function will generally be run within an infinite while loop."""
         if self.server_comm_channel != None:
             # We clear out output buffer and also populate our input buffer from the server
-            if(len(self.packet_buffer.packet_buffer) > 0):
-                print(self.packet_buffer.to_serialized_string())
             self.packet_buffer.write_buffer_to_channel(self.server_comm_channel)
             self.packet_buffer.read_to_input_buffer(self.server_comm_channel)
         

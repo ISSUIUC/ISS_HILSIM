@@ -91,7 +91,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         return "\n".join(self.return_log)
 
     def job_setup(self):
-        print("ABORT?", self.server.signal_abort)
+        print("(job_setup) ABORT flag: ", self.server.signal_abort)
         if (self.job == None):
             raise Exception("Setup error: Server.current_job is not defined.")
         
