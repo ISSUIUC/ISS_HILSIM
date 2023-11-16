@@ -172,7 +172,8 @@ class DataPacketBuffer:
         if(len(self.packet_buffer) > 0):
             serialized_full += "[[pkt_end]]"
         self.packet_buffer = []
-        channel.write(serialized_full)
+        if(serialized_full != ""):
+            channel.write(serialized_full)
 
     def write_packet(packet: DataPacket, channel: communication_interface.CommunicationChannel) -> None:
         """

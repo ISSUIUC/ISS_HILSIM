@@ -10,7 +10,6 @@ from job_queue import job_queue_blueprint
 from perms import perms_blueprint
 import threading
 import util.communication.packets as packets
-import job_balancer
 
 from threads import manager_thread
 
@@ -71,22 +70,14 @@ if __name__ == "__main__":
     file = open(os.path.join(os.path.dirname(__file__), "./util/datastreamer_test_data.csv"), 'r')
     csv_data = file.read()
 
-    new_job = packets.SV_JOB(test_job, csv_data)
-    jobs.append(new_job)
-
-    for j in jobs:
-        m_thread.add_job(new_job)
-
     m_thread.start()
-    balancer_thread = job_balancer.JobBalancer()
-    balancer_thread.start()
 
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)
     if(sys.argv[1] == "dev"):
         print("Initialized development websocket server on ws://localhost:" + str(port))
         socketio = SocketIO(app, cors_allowed_origins='*')
-        app.run(debug=True, host="0.0.0.0", port=port)
+        app.run(debug=True, host="0.0.0.0", port=port, use_reloader=False)
         socketio.run()
     else:
         print("Initialized production API on http://localhost:" + str(port))
