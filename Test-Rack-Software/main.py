@@ -86,7 +86,7 @@ def check_server_connection(Server: Datastreamer.DatastreamerServer):
 def reset_connection_data(Server: Datastreamer.DatastreamerServer):
     Server.last_server_connection_check = time.time()
     Server.next_heartbeat_time = time.time() + 3
-    connection.t_init_com_ports()
+    connection.init_com_ports()
     for port in connection.connected_comports:
         connection.hard_reset(port)
     return True

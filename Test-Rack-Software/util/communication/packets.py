@@ -165,13 +165,14 @@ class DataPacketBuffer:
 
     def write_buffer_to_channel(self, channel: communication_interface.CommunicationChannel) -> None:
         """
-        Writes the entire packet buffer to serial
+        Writes the entire packet buffer to a comm channel
         """
         serialized_full: str = self.to_serialized_string()
         if(len(self.packet_buffer) > 0):
             serialized_full += "[[pkt_end]]"
         self.packet_buffer = []
-        channel.write(serialized_full)
+        if(serialized_full != ""):
+            channel.write(serialized_full)
 
     def write_packet(packet: DataPacket, channel: communication_interface.CommunicationChannel) -> None:
         """
@@ -208,12 +209,13 @@ class DataPacketBuffer:
             ds_packets.append(new_packet)
         return ds_packets
     
-    def read_to_input_buffer(self, port: serial.Serial) -> None:
+    def read_to_input_buffer(self, port: communication_interface.CommunicationChannel) -> None:
         """
         Appends all current packets in the port's buffer into the DataPacketBuffer input buffer.
         """
-        in_buffer = DataPacketBuffer.channel_to_packet_list(port)
+        in_buffer = DataPacketBuffer.channel_to_packet_list(port, True)
         for in_packet in in_buffer:
+            print("PACKET IN: ", in_packet)
             self.input_buffer.append(in_packet)
             
     def channel_to_packet_list(channel: communication_interface.CommunicationChannel, safe_deserialize:bool=False) -> list[DataPacket]:

@@ -3,6 +3,7 @@ import util.communication.packets as pkt
 import config as test_board_config
 import util.avionics_interface as AVInterface
 import time
+import traceback
 import inspect
 
 avionics = test_board_config.use_interface
@@ -26,7 +27,9 @@ def run_setup_job(Server: Datastreamer.DatastreamerServer):
         else:
             raise Exception("Setup failed: " + setup_fail_reason)
     except Exception as e:
+        print("(job_setup) Error while setting up job")
         print(e)
+        print(traceback.format_exc())
         Server.state.force_transition(Datastreamer.ServerStateController.ServerState.JOB_ERROR)
         return False
     

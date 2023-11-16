@@ -259,6 +259,9 @@ class DatastreamerServer:
             # We clear out output buffer and also populate our input buffer from the server
             self.packet_buffer.write_buffer_to_channel(self.server_comm_channel)
             self.packet_buffer.read_to_input_buffer(self.server_comm_channel)
+            if(len(self.packet_buffer.input_buffer) > 0):
+                for p in self.packet_buffer.input_buffer:
+                    print("pbuf", p)
         
         self.state.update_always() # Run all `always` events
         self.packet_buffer.clear_input_buffer()

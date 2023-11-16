@@ -54,23 +54,25 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         self.websocket_path = websocket_path
         self.websocket_client = socketio.Client()
 
+
         @self.websocket_client.on('connect')
         def connect():
             print("(websocket_channel) Connected to ws at", self.websocket_location + self.websocket_path)
 
         @self.websocket_client.on('wsdata')
         def message(data):
+            print("wsin", data)
             self.in_buffer += data
+
+        @self.websocket_client.on('disconnect')
+        def dc(sid):
+            print("DCED!", sid)
 
         self.open()
 
     def open(self) -> None:
         self.websocket_client.connect(self.websocket_location, socketio_path=self.websocket_path)
         self.is_open = True
-        self.socket_wait()
-
-    async def socket_wait(self):
-        await self.websocket_client.wait()
 
     def close(self) -> None:
         self.websocket_client.disconnect()
@@ -89,7 +91,7 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         return out_temp
     
     def write(self, data: str) -> None:
-        self.websocket_client.send(data)
+        self.websocket_client.emit("wsdataresponse", data)
 
 
 connected_websockets: List[WebsocketChannel] = []
