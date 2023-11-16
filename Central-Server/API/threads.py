@@ -7,6 +7,7 @@ import eventlet
 import util.communication.communication_interface as communication_interface
 import util.communication.ws_channel as websocket_channel
 import util.communication.packets as packets
+from typing import List
 
 DEBUG = False
 GLOBAL_BOARD_ID = 0
@@ -62,16 +63,17 @@ class board_thread(threading.Thread):
         self.thread_name = thread_name 
         self.communication_channel = communication_channel
         self.thread_ID = thread_ID 
-        self.cur_job_config = None
+        self.cur_job_config: packets.DataPacket = None
         self.has_job_config = False
         self.running = True
         self.packet_buffer = packets.DataPacketBuffer()
         self.board_id = board_id
         self.is_ready = False
+        self.job_running = False
         
  
     def can_take_job(self):
-        return not self.has_job_config
+        return not self.has_job_config and self.is_ready
 
     def take_job(self, config):
         self.cur_job_config = config
@@ -81,41 +83,44 @@ class board_thread(threading.Thread):
         self.running = False
     
     def run_job(self):
-        rand_time = round(random.random() * 15, 2)
-        print(f"Sleeping thread {self.thread_ID} for {rand_time} seconds while completing job {self.cur_job_config}", flush=True)
-        sleep(rand_time)
-        print(f"completed job {self.cur_job_config} on thread {self.thread_ID}", flush=True)
+        print(f"(comm:#{self.thread_ID})", f"[run_job]", f"Using given config to initialize job on linked board")
+        self.packet_buffer.add(self.cur_job_config)
+        print(f"(comm:#{self.thread_ID})", f"[run_job]", f"Job initialization command sent")
+        self.job_running = True
 
-        self.has_job_config = False
-        self.cur_job_config = None
-
-    def handle_communication(self, packet_buffer):
-        if(len(packet_buffer) > 0):
-            print("PB", packet_buffer)
-
+    def handle_communication(self, packet_buffer: List[packets.DataPacket]):
+        for packet in packet_buffer:
+            print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Handling packet {packet}")
+            if(packet.packet_type == packets.DataPacketType.IDENT):
+                print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Sent ACK to linked board")
+                self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
+                print("sent job", self.cur_job_config)
+            if(packet.packet_type == packets.DataPacketType.READY):
+                print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Recieved READY signal from linked board")
+                self.is_ready = True
+            
     def run(self): 
-        self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
-    
-
         while self.running:
             try:
                 self.packet_buffer.write_buffer_to_channel(self.communication_channel)
                 self.packet_buffer.read_to_input_buffer(self.communication_channel)
                 self.handle_communication(self.packet_buffer.input_buffer)
-                if self.has_job_config:
-                    pass
-                    # self.run_job()
-
-                sleep(0.2)
+                if self.has_job_config and self.job_running == False and self.is_ready == True:
+                    self.job_running = True
+                    self.run_job()
+                
+                self.packet_buffer.clear_input_buffer()
+                sleep(1)
+                
             except Exception as e:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
                 print(traceback.format_exc())
 
-            self.packet_buffer.clear_input_buffer()
+            
 
 class manager_thread(threading.Thread):
-    threads = []
-    spin_up_queue = []
+    threads: List[board_thread] = []
+    spin_up_queue: List[DatastreamerConnection] = []
     """Queue that holds which threads need to be spun up."""
 
     ws_thread: WebsocketThread = None
@@ -203,7 +208,7 @@ class manager_thread(threading.Thread):
             def ws_on_disconnect(sid):
                 self.kill_thr(sid)
 
-            
+            print("(manager_thread) Creating websocket subthread")
             self.ws_thread = WebsocketThread(5001)
             self.ws_thread.setup_callbacks(ws_on_connect, ws_on_message, ws_on_disconnect)
             self.ws_thread.start()

@@ -6,14 +6,16 @@ from typing import List
 class ClientWebsocketConnection(communication_interface.CommunicationChannel):
     socketio_server: socketio.Server = None
     socket_id: str = ""
+    in_buffer: str = ""
+    """Buffer-type object storing input data for raw packets."""
+
     def __init__(self, websocket_server: socketio.Server, websocket_id: str) -> None:
         self.socketio_server = websocket_server
         self.socket_id = websocket_id
         self.is_open = True
-
-    in_buffer: str = ""
-    """Buffer-type object storing input data for raw packets."""
-
+        @self.socketio_server.on('wsdataresponse')
+        def message(sid, data):
+            self.in_buffer += data
 
     def open(self) -> None:
         raise NotImplementedError("L. This function being called doesn't make sense. Something went very wrong.")
@@ -34,7 +36,6 @@ class ClientWebsocketConnection(communication_interface.CommunicationChannel):
         return out_temp
     
     def write(self, data: str) -> None:
-        print("Sending", data, "to", self.socket_id)
         self.socketio_server.emit("wsdata", data, to=self.socket_id)
 
 
@@ -54,7 +55,12 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         self.websocket_location = websocket_location
         self.websocket_path = websocket_path
         self.websocket_client = socketio.Client()
-        @self.websocket_client.event
+
+        @self.websocket_client.on('connect')
+        def connect():
+            print("(websocket_channel) Connected to ws at", self.websocket_location + self.websocket_path)
+
+        @self.websocket_client.on('wsdata')
         def message(data):
             self.in_buffer += data
 
@@ -63,6 +69,10 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
     def open(self) -> None:
         self.websocket_client.connect(self.websocket_location, socketio_path=self.websocket_path)
         self.is_open = True
+        self.socket_wait()
+
+    async def socket_wait(self):
+        await self.websocket_client.wait()
 
     def close(self) -> None:
         self.websocket_client.disconnect()
@@ -81,7 +91,8 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         return out_temp
     
     def write(self, data: str) -> None:
-        self.websocket_client.send(data)
+        print("emit", data)
+        self.websocket_client.emit("wsdata", data)
 
 
 connected_websockets: List[WebsocketChannel] = []

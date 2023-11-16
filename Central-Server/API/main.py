@@ -70,7 +70,7 @@ if __name__ == "__main__":
     file = open(os.path.join(os.path.dirname(__file__), "./util/datastreamer_test_data.csv"), 'r')
     csv_data = file.read()
 
-    new_job = packets.SV_JOB(test_job, csv_data)
+    new_job = packets.SV_JOB(test_job, "")
     jobs.append(new_job)
 
     for j in jobs:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     if(sys.argv[1] == "dev"):
         print("Initialized development websocket server on ws://localhost:" + str(port))
         socketio = SocketIO(app, cors_allowed_origins='*')
-        app.run(debug=True, host="0.0.0.0", port=port)
+        app.run(debug=True, host="0.0.0.0", port=port, use_reloader=False)
         socketio.run()
     else:
         print("Initialized production API on http://localhost:" + str(port))
