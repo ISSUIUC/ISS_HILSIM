@@ -89,10 +89,7 @@ def queue_job():
         return jsonify({"status": "Missing arguments"}), 400
     # Sanitize input
     if not sanitizers.is_hex(request.args["commit"]) or not sanitizers.is_github_username(request.args["username"]) or not sanitizers.is_alphanum(request.args["branch"]):
-        return jsonify({
-            "status": "Invalid arguments",
-            "out": [sanitizers.is_hex(request.args["commit"]), sanitizers.is_github_username(request.args["username"]), sanitizers.is_alphanum(request.args["branch"])]
-            }), 400
+        return jsonify({"status": "Invalid arguments"}), 400
     conn = database.connect()
     cursor = conn.cursor()
     cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status) VALUES ('{request.args['username']}', '{request.args['branch']}', '{request.args['commit']}', now(), 'output.csv', 0)")
