@@ -10,6 +10,7 @@ from job_queue import job_queue_blueprint
 from perms import perms_blueprint
 import threading
 import util.communication.packets as packets
+import job_balancer
 
 from threads import manager_thread
 
@@ -77,8 +78,8 @@ if __name__ == "__main__":
         m_thread.add_job(new_job)
 
     m_thread.start()
-    
-    # t()
+    balancer_thread = job_balancer.JobBalancer()
+    balancer_thread.start()
 
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)

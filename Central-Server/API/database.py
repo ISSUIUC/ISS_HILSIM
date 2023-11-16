@@ -16,7 +16,6 @@ def get_db_name():
 db_host = get_db_name()
 
 def connect():
-    print(db_secret, flush=True)
     conn = psycopg2.connect(database="postgres",
                     host=db_host,
                     user="postgres",
