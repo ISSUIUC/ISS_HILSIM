@@ -6,7 +6,7 @@ import av_platform.csv_datastream as csv_datastream
 import pandas
 import traceback
 import io 
-import util.packets as packet
+import util.communication.packets as packet
 
 
 def raw_csv_to_dataframe(raw_csv):
@@ -38,7 +38,7 @@ def run_hilsim(raw_csv: str, serial_port: serial.Serial, update_callback):
     watchdog_start = time.time()
     cur_line = 0
 
-    while(True):      
+    while(True):   
         if(abs(watchdog_start - time.time()) > 3):
             print("Watchdog timer tripped")
             return hilsim_return_log
