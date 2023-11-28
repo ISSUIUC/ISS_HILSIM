@@ -1,12 +1,13 @@
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import { useState, useEffect } from 'react';
+import { api_url } from '../dev_config';
 
 function Status() {
   const [currentBoards, setCurrentBoards] = useState([]);
 
   useEffect(() => {
-    let status_url = "https://d725-130-126-255-215.ngrok-free.app/api/list/"
+    let status_url = api_url + "/api/list/"
     fetch(status_url, {headers: {
         "ngrok-skip-browser-warning": "true"
       }
