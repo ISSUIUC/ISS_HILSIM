@@ -4,6 +4,7 @@ import Row from 'react-bootstrap/esm/Row';
 import Col from 'react-bootstrap/esm/Col';
 import { Form } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
+import { api_url } from '../dev_config';
 
 
 function NewJob() {
@@ -43,7 +44,13 @@ function NewJob() {
 
   function submitJob() {
     console.log(avionics, selectedBranch)
-    // TODO: add api request
+    fetch(api_url + `/api/jobs/queue?commit=0000&username=test_usear&branch=${selectedBranch}`, {headers: {
+      "ngrok-skip-browser-warning": "true"
+    }}).then((data) => {
+      data.json((json_data) => {
+        console.log("submitted", json_data)
+      })
+    })
   }
 
   return (
