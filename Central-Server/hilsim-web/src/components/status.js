@@ -1,20 +1,61 @@
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
+import { useState, useEffect } from 'react';
 
 function Status() {
+  const [currentBoards, setCurrentBoards] = useState([]);
+
+  useEffect(() => {
+    let status_url = "https://d725-130-126-255-215.ngrok-free.app/api/list/"
+    fetch(status_url, {headers: {
+        "ngrok-skip-browser-warning": "true"
+      }
+    }).then((data) => {
+      data.json().then((json_data) => {
+        setCurrentBoards(json_data)
+      })
+      
+    }).catch((err) => {
+      console.log("Error fetching resource", err);
+    });
+    
+  }, []);
+
+  let noneText = <></>
+  if(currentBoards.length === 0) {
+    noneText = <div className='board-status-no-boards'>No avionics boards are connected to the Kamaji service.</div>
+  }
+
   return (
     <Card style={{textAlign: 'left'}}>
       <Card.Body>
-        <Card.Title>Server Status</Card.Title>
-        <Card.Text style={{fontWeight: 'bold'}}>
-          Server 1 - Ballin
-        </Card.Text>
-        <Card.Text style={{fontWeight: 'bold'}}>
-            Server 2 - Trappin
-        </Card.Text>
-        <Card.Text style={{fontWeight: 'bold'}}>
-            Server 3 - Aliv
-        </Card.Text>
+        <Card.Title>Board Status</Card.Title>
+
+        {noneText}
+
+        {currentBoards.map((board) => {
+        
+          if(board.job_running) {
+            return (<div className='board-status-wrapper'>
+              <span className='board-status-id'>({board.id})</span> 
+              <span style={{fontWeight: 'bold'}}>{board.board_type}</span>
+              <span className='v-center'>
+                <span class="board-busy-dot"></span>   
+              </span>
+              <span className='board-status-busy-tag'>BUSY</span>
+            </div>)
+          } else {
+            return (<div className='board-status-wrapper'>
+              <span className='board-status-id'>({board.id})</span> 
+              <span style={{fontWeight: 'bold'}}>{board.board_type}</span>
+              <span className='v-center'>
+                <span class="board-ready-dot"></span>   
+              </span>
+              <span className='board-status-ready-tag'>READY</span>
+            </div>)
+          }
+        })}
+
       </Card.Body>
     </Card>
   );
