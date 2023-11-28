@@ -11,6 +11,7 @@ from typing import List
 import database
 import jobs
 import datetime
+import time
 
 DEBUG = False
 GLOBAL_BOARD_ID = 0
@@ -68,12 +69,14 @@ class board_thread(threading.Thread):
         self.thread_ID = thread_ID 
         self.cur_job_config: packets.DataPacket = None
         self.has_job_config = False
-        self.running = True
+        self.running = True # 
         self.packet_buffer = packets.DataPacketBuffer()
         self.board_id = board_id
         self.is_ready = False
-        self.job_running = False
-        
+        self.job_running = False # True when actively running job
+        self.board_type = ""
+        self.last_check = time.time()
+
  
     def can_take_job(self):
         return not self.has_job_config and self.is_ready
@@ -97,10 +100,13 @@ class board_thread(threading.Thread):
             if(packet.packet_type == packets.DataPacketType.IDENT):
                 print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Sent ACK to linked board")
                 self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
+                self.board_type = packet.data["board_type"]
                 print("sent job", self.cur_job_config)
             if(packet.packet_type == packets.DataPacketType.READY):
                 print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Recieved READY signal from linked board")
                 self.is_ready = True
+            if(packet.packet_type == packets.DataPacketType.HEARTBEAT):
+                self.last_check = time.time()
             
     def run(self): 
         while self.running:
@@ -111,14 +117,17 @@ class board_thread(threading.Thread):
                 if self.has_job_config and self.job_running == False and self.is_ready == True:
                     self.job_running = True
                     self.run_job()
-                
+
                 self.packet_buffer.clear_input_buffer()
+
                 sleep(1)
-                
+                if (time.time() - self.last_check > 30):
+                    # Remove tars if we can't detect it
+                    self.running = False
             except Exception as e:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
                 print(traceback.format_exc())
-
+                self.running = False
             
 
 class manager_thread(threading.Thread):
@@ -176,10 +185,6 @@ class manager_thread(threading.Thread):
             thr.start()
             self.threads.append(thr)
 
-        # for t in self.threads:
-        #     t.start()
-        #     sleep(0.3)
-    
     # adds job to queue 
     def add_job(self, config):
         print(f"added job {config} to queues", flush=True)

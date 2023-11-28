@@ -28,7 +28,7 @@ def convert_job_info(job):
           "date_start": job[6],
           "date_end": job[7],
           "status": JobStatus(job[8]).name,
-          }
+        }
 
 jobs_blueprint = Blueprint('jobs', __name__)
 @jobs_blueprint.route('/jobs/list')
@@ -56,7 +56,7 @@ def job_information(job_id):
     cursor.execute(f"SELECT * FROM hilsim_runs where run_id={job_id}")
     data = cursor.fetchone()
 
-    return jsonify(data)
+    return jsonify(convert_job_info(data)), 200
 
 @jobs_blueprint.route('/jobs/data/<int:job_id>')
 def job_data(job_id):
@@ -76,7 +76,7 @@ def job_data(job_id):
         except Exception as e:
             return "Error with file: " + Exception(e), 500
     else:
-        return file_name + " does not exist", 404
+        return jsonify({"status": file_name + " does not exist"}), 404
 
 @jobs_blueprint.route('/jobs/queue', methods=["GET"])
 def queue_job():

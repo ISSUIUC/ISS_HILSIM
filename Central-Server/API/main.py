@@ -10,6 +10,7 @@ from job_queue import job_queue_blueprint
 from perms import perms_blueprint
 import threading
 import util.communication.packets as packets
+from flask_cors import CORS
 
 from threads import manager_thread
 
@@ -22,23 +23,12 @@ app = Flask(__name__, static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(job_queue_blueprint)
 app.register_blueprint(perms_blueprint)
+CORS(app)
+m_thread = manager_thread()
 
 @app.route("/")
 def api_index():
     return "OK"
-
-@app.route("/get-list", methods=["GET"])
-def get_generic():
-    return jsonify([1,3,5,100])
-
-@app.route("/ping", methods=["GET"])
-def ping():
-    conn = database.connect()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM ping")
-    web = cursor.fetchone()
-    st = "<h1 style=\"font-size:108\">" + str(web[1]) + "</h1>"
-    return st
 
 @app.errorhandler(403)
 def access_forbidden_error(e):
@@ -60,13 +50,24 @@ def generate_jobs_table():
     except Exception as e:
         return Response("Not Ok: " + str(e), 500)
 
+@app.route('/list/')
+def list_boards():
+    board_list = []
+    for board in m_thread.threads:
+        board_list.append({
+            "id": board.board_id,
+            "is_ready": board.is_ready,
+            "job_running": board.job_running,
+            "board_type": board.board_type,
+            "running": board.running
+        })
+    return jsonify(board_list), 200
+
 if __name__ == "__main__":
     print("Attempting to initialize server..")
     # m_thread = threading.Thread(target=manager_thread)
-    m_thread = manager_thread()
     jobs = []
 
-    test_job = packets.JobData(1)
     file = open(os.path.join(os.path.dirname(__file__), "./util/datastreamer_test_data.csv"), 'r')
     csv_data = file.read()
 
