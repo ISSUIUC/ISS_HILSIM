@@ -18,7 +18,7 @@ function NavBar() {
               height="30"
               className="d-inline-block align-top"
             />{' '}
-            HILSIM
+            HILSIM - Illinois Space Society
           </Navbar.Brand>
           </Link>
           <Nav className="me-auto">
