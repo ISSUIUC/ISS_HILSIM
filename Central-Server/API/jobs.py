@@ -92,8 +92,12 @@ def queue_job():
         return jsonify({"status": "Invalid arguments"}), 400
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status) VALUES ('{request.args['username']}', '{request.args['branch']}', '{request.args['commit']}', now(), 'output.csv', 0)")
+    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status) VALUES ('{request.args['username']}', '{request.args['branch']}', '{request.args['commit']}', now(), 'output.csv', 0) RETURNING run_id")
+    st = cursor.fetchall()
     conn.commit()
     conn.close()
     cursor.close()
-    return jsonify({"status": "Ok"}), 200
+    if len(st) > 0:
+        return jsonify({"status": "Ok", "run_id": st[0][0]}), 200
+    else:
+        return jsonify({"status": "Error"}), 400
