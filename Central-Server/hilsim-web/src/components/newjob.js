@@ -9,8 +9,9 @@ import { useState, useEffect } from 'react';
 function NewJob() {
   const [avionics, setAvionics] = useState("none");
   const [avionicsRepo, setAvionicsRepo] = useState("")
-  const [branches, setBranches] = useState(["master", "AV-1045"]);
+  const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState("none")
+  const [defaultBranch, setDefaultBranch] = useState("none")
 
   useEffect(() => {
     if(avionics == "none") {
@@ -33,6 +34,7 @@ function NewJob() {
       setSelectedBranch(event.target.value)
     }}>
     <option value="none">Select a branch for {avionics}</option>
+    <option key={defaultBranch} value={defaultBranch}>{defaultBranch}</option>
     {branches.map((branch) => {
       return <option key={branch.name} value={branch.name}>{branch.name}</option>
     })}
@@ -70,14 +72,14 @@ function NewJob() {
         <Form.Label column sm={2}>Avionics Platform</Form.Label>
         <Col sm={10}>
           <Form.Select aria-label="Branch-select" onChange={(event) => {
-              const [avName, repo] = event.target.value.split(":");
+              const [avName, repo, defaultBranch] = event.target.value.split(":");
               setAvionics(avName);
               setAvionicsRepo(repo);
-
+              setDefaultBranch(defaultBranch);
             }}>
             <option value="none" data-repo="none">Select an avionics stack</option>
-            <option value="TARS mkIV:TARS-Software">TARSmkIV</option>
-            <option value="MIDAS mkI:MIDAS-Software">MIDASmkI</option>
+            <option value="TARS mkIV:TARS-Software:master">TARSmkIV</option>
+            <option value="MIDAS mkI:MIDAS-Software:main">MIDASmkI</option>
           </Form.Select>
         </Col> 
       </Form.Group>
