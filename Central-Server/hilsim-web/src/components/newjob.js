@@ -3,12 +3,50 @@ import Card from 'react-bootstrap/Card';
 import Row from 'react-bootstrap/esm/Row';
 import Col from 'react-bootstrap/esm/Col';
 import { Form } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
 
 
 function NewJob() {
+  const [avionics, setAvionics] = useState("none");
+  const [avionicsRepo, setAvionicsRepo] = useState("")
+  const [branches, setBranches] = useState(["master", "AV-1045"]);
+  const [selectedBranch, setSelectedBranch] = useState("none")
+
+  useEffect(() => {
+    if(avionics == "none") {
+      return;
+    }
+    let branch_url = `https://api.github.com/repos/ISSUIUC/${avionicsRepo}/branches`
+    fetch(branch_url).then((data) => {
+      data.json().then((json_data) => {
+        setBranches(json_data)
+      })
+    })
+  }, [avionics])
+
+  let branchSelect = (<Form.Select aria-label="Branch-Select" disabled>
+      <option>Select an avionics system first</option>
+    </Form.Select>);
+
+  if(avionics != "none") {
+    branchSelect = (<Form.Select aria-label="Branch-Select" onChange={(event) => {
+      setSelectedBranch(event.target.value)
+    }}>
+    <option value="none">Select a branch for {avionics}</option>
+    {branches.map((branch) => {
+      return <option key={branch.name} value={branch.name}>{branch.name}</option>
+    })}
+  </Form.Select>);
+  }
+
+  function submitJob() {
+    console.log(avionics, selectedBranch)
+    // TODO: add api request
+  }
+
   return (
     <Card style={{textAlign: 'left', marginTop: '20px'}}>
-      <Card.Header style={{fontWeight: 'bold', textAlign: 'left'}}>Submit Job</Card.Header>
+      <Card.Header style={{fontWeight: 'wbold', textAlign: 'left'}}>Submit Job</Card.Header>
       <Card.Body>
       <Form>
       <Form.Group as={Row} className="mb-3" controlId="formHorizontalEmail">
@@ -25,25 +63,35 @@ function NewJob() {
           Description
         </Form.Label>
         <Col sm={10}>
-          <Form.Control as="textarea" rows={3} placeholder="Something about the job idk" />
+          <Form.Control as="textarea" rows={1} placeholder="(Optional) A description of what this job does" />
         </Col>
+      </Form.Group>
+      <Form.Group as={Row} className="mb-3">
+        <Form.Label column sm={2}>Avionics Platform</Form.Label>
+        <Col sm={10}>
+          <Form.Select aria-label="Branch-select" onChange={(event) => {
+              const [avName, repo] = event.target.value.split(":");
+              setAvionics(avName);
+              setAvionicsRepo(repo);
+
+            }}>
+            <option value="none" data-repo="none">Select an avionics stack</option>
+            <option value="TARS mkIV:TARS-Software">TARSmkIV</option>
+            <option value="MIDAS mkI:MIDAS-Software">MIDASmkI</option>
+          </Form.Select>
+        </Col> 
       </Form.Group>
 
       <Form.Group as={Row} className="mb-3">
         <Form.Label column sm={2}>Select Branch</Form.Label>
         <Col sm={10}>
-          <Form.Select aria-label="Default select example">
-            <option>Choose a brach to run</option>
-            <option value="1">AV-1044</option>
-            <option value="2">AV-1045</option>
-            <option value="3">AV-1046</option>
-        </Form.Select>
+          {branchSelect}
         </Col> 
       </Form.Group>
 
       <Form.Group as={Row} className="mb-3">
         <Col sm={{ span: 10, offset: 2 }}>
-          <Button type="submit">Submit</Button>
+          {(avionics != "none" && selectedBranch != "none") ? <Button onClick={submitJob}>Submit</Button> : <Button disabled>Submit</Button>}
         </Col>
       </Form.Group>
     </Form>
