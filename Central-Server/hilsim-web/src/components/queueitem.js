@@ -6,12 +6,15 @@ function QueueItem() {
   return (
       <Card style={{textAlign: 'left', marginBottom: '10px'}}>
       <Card.Body>
-        <Card.Title>Very Cool ISS Member</Card.Title>
+        <Card.Title>John Smith</Card.Title>
         <Card.Text>
-          Some sort of description about the job
+          Testing midas code
+        </Card.Text>
+        <Card.Text>
+          Branch: AV-1045
         </Card.Text>
         <Card.Text style={{textEmphasis: 'GrayText'}}>
-            when the job was submitted
+            Submitted at 10:15am
         </Card.Text>
       </Card.Body>
     </Card>
