@@ -270,10 +270,9 @@ class manager_thread(threading.Thread):
                     for t in self.threads:
                         if t.is_alive():
                             if t.can_take_job():
-                                if len(self.queue) > 0:
-                                    cur_job = self.queue.pop(0)
-                                    t.take_job(cur_job)
-                                    print(f"Gave {t.thread_ID} job {cur_job}", flush=True)
+                                cur_job = self.queue.pop(0)
+                                t.take_job(cur_job)
+                                print(f"Gave {t.thread_ID} job {cur_job}", flush=True)
                         else:
                             del t
 
