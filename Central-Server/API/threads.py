@@ -85,6 +85,12 @@ class board_thread(threading.Thread):
     def take_job(self, config):
         self.cur_job_config = config
         self.has_job_config = True
+        # Set database that it's running
+        conn = database.connect()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE hilsim_runs set run_status = {} where run_id = {} "
+                        .format(jobs.JobStatus.RUNNING.value, config.data["job_data"]["job_id"]))
+        conn.commit()
     
     def terminate(self) -> packets.DataPacket:
         # TODO push current job to front of queue
@@ -143,7 +149,7 @@ class board_thread(threading.Thread):
                 self.packet_buffer.clear_input_buffer()
 
                 sleep(1)
-                if (time.time() - self.last_check > 30):
+                if (time.time() - self.last_check > 120):
                     # Remove tars if we can't detect it
                     self.terminate()
             except Exception as e:
@@ -261,51 +267,49 @@ class manager_thread(threading.Thread):
         for job in jobs_to_add:
             print(job, flush=True)
             job_data = packets.JobData(job[0], pull_target=job[2])
-            self.add_job(packets.SV_JOB(job_data, ""))
+            packet = packets.SV_JOB(job_data, "")
+            self.add_job(packet)
 
     def run(self): 
-        if DEBUG:
-            for _ in range(1000):
-                print("debug")
-                # sleep(0.1)
-        else:
-            i = 0
+        i = 0
 
-            # Datastreamer websocket implementation
-            def ws_on_connect(sid, environ):
-                self.add_thread(DatastreamerConnection(sid, websocket_channel.ClientWebsocketConnection(self.ws_thread.socketio_server, sid)))
-            
-            def ws_on_message(sid, data):
-                print(sid,": ",data)
-
-            def ws_on_disconnect(sid):
-                self.kill_thr(sid)
-
-            print("(manager_thread) Creating websocket subthread")
-            self.ws_thread = WebsocketThread(5001)
-            self.ws_thread.setup_callbacks(ws_on_connect, ws_on_message, ws_on_disconnect)
-            self.ws_thread.start()
-
-            while self.running:
-                self.check_jobs()
-                self.remove_dead_threads()
-                self.create_threads()
-                if len(self.queue) > 0:
-                    # Find first open board
-                    for t in self.threads:
-                        if t.is_alive():
-                            if t.can_take_job():
-                                cur_job = self.queue.pop(0)
-                                t.take_job(cur_job)
-                                print(f"Gave {t.thread_ID} job {cur_job}", flush=True)
-                        else:
-                            del t
-
-                sleep(0.2)
-                i+=1
-            
-                if i%100==0:
-                    print("Threads: ", self.threads, flush=True)
-                    print("Current queue: ", self.queue, flush=True)
+        # Datastreamer websocket implementation
+        def ws_on_connect(sid, environ):
+            self.add_thread(DatastreamerConnection(sid, websocket_channel.ClientWebsocketConnection(self.ws_thread.socketio_server, sid)))
         
+        def ws_on_message(sid, data):
+            print(sid,": ",data)
+
+        def ws_on_disconnect(sid):
+            self.kill_thr(sid)
+
+        print("(manager_thread) Creating websocket subthread")
+        self.ws_thread = WebsocketThread(5001)
+        self.ws_thread.setup_callbacks(ws_on_connect, ws_on_message, ws_on_disconnect)
+        self.ws_thread.start()
+
+        while self.running:
+            sleep(0.2)
+            self.check_jobs()
+            self.remove_dead_threads()
+            self.create_threads()
+            if len(self.queue) == 0:
+                continue
+
+            # Find first open board
+            for t in self.threads:
+                if t.is_alive():
+                    if t.can_take_job():
+                        cur_job = self.queue.pop(0)
+                        t.take_job(cur_job)
+                        print(f"Gave {t.thread_ID} job {cur_job}", flush=True)
+                else:
+                    del t
+
+            i+=1
+
+            if i%100==0:
+                print("Threads: ", self.threads, flush=True)
+                print("Current queue: ", self.queue, flush=True)
+    
         print("exit")
