@@ -62,7 +62,7 @@ class WebsocketThread(threading.Thread):
 
 class board_thread(threading.Thread): 
     packet_buffer = None
-    def __init__(self, thread_name, thread_ID, board_id, communication_channel: communication_interface.CommunicationChannel): 
+    def __init__(self, thread_name, thread_ID, board_id, communication_channel: communication_interface.CommunicationChannel, callback): 
         threading.Thread.__init__(self) 
         self.thread_name = thread_name 
         self.communication_channel = communication_channel
@@ -76,6 +76,7 @@ class board_thread(threading.Thread):
         self.job_running = False # True when actively running job
         self.board_type = ""
         self.last_check = time.time()
+        self.callback = callback
 
  
     def can_take_job(self):
@@ -85,8 +86,11 @@ class board_thread(threading.Thread):
         self.cur_job_config = config
         self.has_job_config = True
     
-    def terminate(self):
+    def terminate(self) -> packets.DataPacket:
+        # TODO push current job to front of queue
         self.running = False
+        if self.has_job_config:
+            self.callback(self.cur_job_config)
     
     def run_job(self):
         print(f"(comm:#{self.thread_ID})", f"[run_job]", f"Using given config to initialize job on linked board")
@@ -110,6 +114,21 @@ class board_thread(threading.Thread):
                 self.job_running = False
             if(packet.packet_type == packets.DataPacketType.HEARTBEAT):
                 self.last_check = time.time()
+            if(packet.packet_type == packets.DataPacketType.BUSY):
+                pass
+                """in theory we should never run into this issue, but it is here so that we do not run into errors"""
+            if(packet.packet_type == packets.DataPacketType.ID_CONFIRM):
+                pass
+            if(packet.packet_type == packets.DataPacketType.DONE):
+                self.job_running = False
+                """Most likey the done packet will not be sent, but if it does, it signifies the board has finished a job and is moving into cleanup"""
+            if(packet.packet_type == packets.DataPacketType.JOB_UPDATE):
+                pass 
+                """to be implemented, this is just the board giving updates on the status of a job"""
+            if(packet.packet_type == packets.DataPacketType.PONG):
+                pass
+                """will probably not be used"""
+            
             
     def run(self): 
         while self.running:
@@ -126,7 +145,7 @@ class board_thread(threading.Thread):
                 sleep(1)
                 if (time.time() - self.last_check > 30):
                     # Remove tars if we can't detect it
-                    self.running = False
+                    self.terminate()
             except Exception as e:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
                 print(traceback.format_exc())
@@ -148,6 +167,9 @@ class manager_thread(threading.Thread):
         self.last_time = None
 
         # helper function to execute the threads
+    
+    def pop_killed_job_back_to_queue(self, job: packets.DataPacket):
+        self.queue.insert(0, job)
     
     def get_no_last_time_queue(self):
         # then
@@ -183,7 +205,7 @@ class manager_thread(threading.Thread):
         global GLOBAL_BOARD_ID
         while len(self.spin_up_queue) > 0:
             t = self.spin_up_queue.pop(0)
-            thr = board_thread(t.thread_name, t.thread_name, GLOBAL_BOARD_ID, t.communicaton_channel)
+            thr = board_thread(t.thread_name, t.thread_name, GLOBAL_BOARD_ID, t.communicaton_channel, self.pop_killed_job_back_to_queue)
             GLOBAL_BOARD_ID += 1
             thr.start()
             self.threads.append(thr)
