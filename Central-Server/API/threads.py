@@ -105,6 +105,9 @@ class board_thread(threading.Thread):
             if(packet.packet_type == packets.DataPacketType.READY):
                 print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Recieved READY signal from linked board")
                 self.is_ready = True
+                self.cur_job_config = None
+                self.has_job_config = False
+                self.job_running = False
             if(packet.packet_type == packets.DataPacketType.HEARTBEAT):
                 self.last_check = time.time()
             
