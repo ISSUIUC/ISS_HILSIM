@@ -84,6 +84,12 @@ class board_thread(threading.Thread):
     def take_job(self, config):
         self.cur_job_config = config
         self.has_job_config = True
+        # Set database that it's running
+        conn = database.connect()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE hilsim_runs set run_status = {} where run_id = {} "
+                        .format(jobs.JobStatus.RUNNING.value, config.data["job_data"]["job_id"]))
+        conn.commit()
     
     def terminate(self):
         self.running = False
@@ -108,8 +114,7 @@ class board_thread(threading.Thread):
                 self.cur_job_config = None
                 self.has_job_config = False
                 self.job_running = False
-            if(packet.packet_type == packets.DataPacketType.HEARTBEAT):
-                self.last_check = time.time()
+            self.last_check = time.time()
             
     def run(self): 
         while self.running:
@@ -124,7 +129,7 @@ class board_thread(threading.Thread):
                 self.packet_buffer.clear_input_buffer()
 
                 sleep(1)
-                if (time.time() - self.last_check > 30):
+                if (time.time() - self.last_check > 120):
                     # Remove tars if we can't detect it
                     self.running = False
             except Exception as e:
@@ -239,7 +244,8 @@ class manager_thread(threading.Thread):
         for job in jobs_to_add:
             print(job, flush=True)
             job_data = packets.JobData(job[0], pull_target=job[2])
-            self.add_job(packets.SV_JOB(job_data, ""))
+            packet = packets.SV_JOB(job_data, "")
+            self.add_job(packet)
 
     def run(self): 
         if DEBUG:
