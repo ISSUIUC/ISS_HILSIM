@@ -77,6 +77,7 @@ class board_thread(threading.Thread):
         self.board_type = ""
         self.last_check = time.time()
         self.callback = callback
+        self.job_status: packets.JobStatus = None
 
  
     def can_take_job(self):
@@ -112,27 +113,29 @@ class board_thread(threading.Thread):
                 self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
                 self.board_type = packet.data["board_type"]
                 print("sent job", self.cur_job_config)
-            if(packet.packet_type == packets.DataPacketType.READY):
+            elif(packet.packet_type == packets.DataPacketType.READY):
                 print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Recieved READY signal from linked board")
                 self.is_ready = True
                 self.cur_job_config = None
                 self.has_job_config = False
                 self.job_running = False
-            if(packet.packet_type == packets.DataPacketType.HEARTBEAT):
+            elif(packet.packet_type == packets.DataPacketType.HEARTBEAT):
                 self.last_check = time.time()
-            if(packet.packet_type == packets.DataPacketType.BUSY):
-                pass
+            elif(packet.packet_type == packets.DataPacketType.BUSY):
+                raise RuntimeError("Tried to give job when a board already had a packet")
                 """in theory we should never run into this issue, but it is here so that we do not run into errors"""
-            if(packet.packet_type == packets.DataPacketType.ID_CONFIRM):
-                pass
-            if(packet.packet_type == packets.DataPacketType.DONE):
+            elif(packet.packet_type == packets.DataPacketType.ID_CONFIRM):
+                self.board_id = packet.data["board_id"]
+                self.board_type = packet.data["board_type"]
+            elif(packet.packet_type == packets.DataPacketType.DONE):
                 self.job_running = False
                 """Most likey the done packet will not be sent, but if it does, it signifies the board has finished a job and is moving into cleanup"""
-            if(packet.packet_type == packets.DataPacketType.JOB_UPDATE):
-                pass 
+            elif(packet.packet_type == packets.DataPacketType.JOB_UPDATE):
+                self.job_status.current_action = packet.data["job_status"]["current_action"]
+                self.job_status.status_text = packet.data["job_status"]["status_text"]
                 """to be implemented, this is just the board giving updates on the status of a job"""
-            if(packet.packet_type == packets.DataPacketType.PONG):
-                pass
+            elif(packet.packet_type == packets.DataPacketType.PONG):
+                self.last_check = time.time()
                 """will probably not be used"""
             
             
