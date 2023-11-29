@@ -108,6 +108,8 @@ class board_thread(threading.Thread):
     def handle_communication(self, packet_buffer: List[packets.DataPacket]):
         for packet in packet_buffer:
             print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Handling packet {packet}")
+            self.last_check = time.time()
+
             if(packet.packet_type == packets.DataPacketType.IDENT):
                 print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Sent ACK to linked board")
                 self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
@@ -137,8 +139,8 @@ class board_thread(threading.Thread):
             elif(packet.packet_type == packets.DataPacketType.PONG):
                 self.last_check = time.time()
                 """will probably not be used"""
-            
-            
+
+
     def run(self): 
         while self.running:
             try:
