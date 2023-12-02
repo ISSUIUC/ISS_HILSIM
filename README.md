@@ -1,4 +1,4 @@
-# HILSIM Server
+# Kamaji
 The Remote Testing Platform of the Future
 
 ## Development
