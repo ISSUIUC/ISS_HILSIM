@@ -124,7 +124,8 @@ class board_thread(threading.Thread):
             elif(packet.packet_type == packets.DataPacketType.HEARTBEAT):
                 self.last_check = time.time()
             elif(packet.packet_type == packets.DataPacketType.BUSY):
-                raise RuntimeError("Tried to give job when a board already had a packet")
+                #raise RuntimeError("Tried to give job when a board already had a packet")
+                pass
                 """in theory we should never run into this issue, but it is here so that we do not run into errors"""
             elif(packet.packet_type == packets.DataPacketType.ID_CONFIRM):
                 self.board_id = packet.data["board_id"]
@@ -133,8 +134,9 @@ class board_thread(threading.Thread):
                 self.job_running = False
                 """Most likey the done packet will not be sent, but if it does, it signifies the board has finished a job and is moving into cleanup"""
             elif(packet.packet_type == packets.DataPacketType.JOB_UPDATE):
-                self.job_status.current_action = packet.data["job_status"]["current_action"]
-                self.job_status.status_text = packet.data["job_status"]["status_text"]
+                print(packet.data, flush=True)
+                #self.job_status.current_action = packet.data["job_status"]["current_action"]
+                #self.job_status.status_text = packet.data["job_status"]["status_text"]
                 """to be implemented, this is just the board giving updates on the status of a job"""
             elif(packet.packet_type == packets.DataPacketType.PONG):
                 self.last_check = time.time()
@@ -156,11 +158,13 @@ class board_thread(threading.Thread):
                 sleep(1)
                 if (time.time() - self.last_check > 120):
                     # Remove tars if we can't detect it
+                    print("Terminated", flush=True)
                     self.terminate()
             except Exception as e:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
                 print(traceback.format_exc())
                 self.running = False
+        print("Thread has died", flush=True)
             
 
 class manager_thread(threading.Thread):

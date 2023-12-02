@@ -64,6 +64,10 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         def message(data):
             self.in_buffer += data
 
+        @self.websocket_client.on('disconnect')
+        def disconnect():
+            print("(websocket_channel) Disconnected to ws at", self.websocket_location + self.websocket_path)
+
         self.open()
 
     def open(self) -> None:
