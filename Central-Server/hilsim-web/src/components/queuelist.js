@@ -11,17 +11,13 @@ function QueueList() {
   useEffect(() => {
     fetch(api_url + `/api/jobs/list`, {headers: {
       "ngrok-skip-browser-warning": "true"
-    }}).then((data) => {
-      console.log(data)
-      data.json((json_data) => {
-        
-        console.log(json_data)
-        setJobQueue(json_data)
-      }).catch((err) => {
-        console.log("err", err)
-      })
+    }})
+    .then(response => response.json())
+    .then(json_data => {
+      console.log("to json", json_data);
+      setJobQueue(json_data);
     }).catch((err) => {
-      console.log("err", err)
+      console.log("err fetch", err)
     })
   }, [setJobQueue])
 
@@ -43,7 +39,7 @@ function QueueList() {
   return (
     <Container fluid>
       {jobQueue.map((job_data) => {
-        <QueueItem username={job_data.username} branch={job_data.branch} description={"N/A"} submit_time={job_data.date_queue} />
+        return <QueueItem username={job_data.username} branch={job_data.branch} description={job_data.description} submit_time={job_data.date_queue} />
       })}
     </Container>
   );
