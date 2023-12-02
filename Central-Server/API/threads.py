@@ -89,10 +89,10 @@ class board_thread(threading.Thread):
         # Set database that it's running
         conn = database.connect()
         cursor = conn.cursor()
-        cursor.execute("UPDATE hilsim_runs set run_status = {} where run_id = {} "
+        cursor.execute("UPDATE hilsim_runs set run_status = {}, run_start = now() where run_id = {} "
                         .format(jobs.JobStatus.RUNNING.value, config.data["job_data"]["job_id"]))
         conn.commit()
-    
+
     def terminate(self) -> packets.DataPacket:
         # TODO push current job to front of queue
         self.running = False

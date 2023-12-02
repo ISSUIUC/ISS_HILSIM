@@ -28,6 +28,7 @@ def convert_job_info(job):
           "date_start": job[6],
           "date_end": job[7],
           "status": JobStatus(job[8]).name,
+          "description": job[9]
         }
 
 jobs_blueprint = Blueprint('jobs', __name__)
@@ -90,9 +91,13 @@ def queue_job():
     # Sanitize input
     if not sanitizers.is_hex(request.args["commit"]) or not sanitizers.is_github_username(request.args["username"]) or not sanitizers.is_alphanum(request.args["branch"]):
         return jsonify({"status": "Invalid arguments"}), 400
+    desc = ""
+    if "description" in request.args:
+        desc = request.args["description"]
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status) VALUES ('{request.args['username']}', '{request.args['branch']}', '{request.args['commit']}', now(), 'output.csv', 0) RETURNING run_id")
+    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status, description) VALUES (%s, %s, %s, now(), %s, %s, %s) RETURNING run_id",
+                   (request.args['username'], request.args['branch'], request.args['commit'], 'output.csv', 0, desc))
     st = cursor.fetchall()
     conn.commit()
     conn.close()

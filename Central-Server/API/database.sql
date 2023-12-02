@@ -17,5 +17,6 @@ CREATE TABLE "hilsim_runs" (
   "submitted_time" timestamp NOT NULL,
   "run_start" timestamp NULL,
   "run_end" timestamp NULL,
-  "run_status" smallint NOT NULL
+  "run_status" smallint NOT NULL,
+  "description" varchar(512) NULL
 );

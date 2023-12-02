@@ -50,7 +50,7 @@ def generate_jobs_table():
     except Exception as e:
         return Response("Not Ok: " + str(e), 500)
 
-@app.route('/list/')
+@app.route('/boards/')
 def list_boards():
     board_list = []
     for board in m_thread.threads:
@@ -65,7 +65,6 @@ def list_boards():
 
 if __name__ == "__main__":
     print("Attempting to initialize server..")
-    # m_thread = threading.Thread(target=manager_thread)
     jobs = []
 
     file = open(os.path.join(os.path.dirname(__file__), "./util/datastreamer_test_data.csv"), 'r')
