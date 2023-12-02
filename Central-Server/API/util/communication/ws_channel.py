@@ -17,6 +17,11 @@ class ClientWebsocketConnection(communication_interface.CommunicationChannel):
         def message(sid, data):
             self.in_buffer += data
 
+        @self.socketio_server.event
+        def disconnect(sid):
+            print("(websocket_channel) Disconnected to ws at ", sid, flush=True)
+            self.is_open = False
+
     def open(self) -> None:
         raise NotImplementedError("L. This function being called doesn't make sense. Something went very wrong.")
 
@@ -38,7 +43,8 @@ class ClientWebsocketConnection(communication_interface.CommunicationChannel):
     def write(self, data: str) -> None:
         self.socketio_server.emit("wsdata", data, to=self.socket_id)
 
-
+    def socket_open(self):
+        return self.is_open
 class WebsocketChannel(communication_interface.CommunicationChannel):
     websocket_client: socketio.Client = None
     """websocket ClientConnection which handles the basic communication layer"""

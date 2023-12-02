@@ -17,7 +17,7 @@ DEBUG = False
 GLOBAL_BOARD_ID = 0
 
 class DatastreamerConnection():
-    def __init__(self, thread_name, communication_channel: communication_interface.CommunicationChannel) -> None:
+    def __init__(self, thread_name, communication_channel: websocket_channel.ClientWebsocketConnection) -> None:
         self.thread_name = thread_name
         self.communicaton_channel = communication_channel
 
@@ -105,6 +105,13 @@ class board_thread(threading.Thread):
         print(f"(comm:#{self.thread_ID})", f"[run_job]", f"Job initialization command sent")
         self.job_running = True
 
+    def complete_job(self, packet: packets.DataPacket):
+        conn = database.connect()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE hilsim_runs set run_status = %s, run_end = now() where run_id = %s ",
+                       (jobs.JobStatus.SUCCESS.value, packet.data["job_data"]["job_id"]))
+        conn.commit()
+
     def handle_communication(self, packet_buffer: List[packets.DataPacket]):
         for packet in packet_buffer:
             print(f"(comm:#{self.thread_ID})", f"[handle_packet]", f"Handling packet {packet}")
@@ -132,6 +139,8 @@ class board_thread(threading.Thread):
                 self.board_type = packet.data["board_type"]
             elif(packet.packet_type == packets.DataPacketType.DONE):
                 self.job_running = False
+                self.complete_job(packet)
+                print("Paackkeett", packet.data, flush=True)
                 """Most likey the done packet will not be sent, but if it does, it signifies the board has finished a job and is moving into cleanup"""
             elif(packet.packet_type == packets.DataPacketType.JOB_UPDATE):
                 print(packet.data, flush=True)
@@ -159,6 +168,9 @@ class board_thread(threading.Thread):
                 if (time.time() - self.last_check > 120):
                     # Remove tars if we can't detect it
                     print("Terminated", flush=True)
+                    self.terminate()
+                if not self.communication_channel.socket_open():
+                    print("Terminated due to communication channel termination", flush=True)
                     self.terminate()
             except Exception as e:
                 print(f"Thread {self.thread_ID} has unexpectedly closed")
