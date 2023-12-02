@@ -12,10 +12,16 @@ services:
       dockerfile: ./Dockerfile.prod
     ports:
       - "443:443"
+      - "5001:5001"
     environment:
       - PORT=443
+      - DB_PASSWORD_FILE=/run/secrets/db_password
+      - DB_NAME=prod_db
     volumes:
       - ./Central-Server/API:/src/api
+    secrets:
+      - db_password
+
   proxy:
     build:
       context: ./nginx
@@ -23,3 +29,19 @@ services:
     ports:
       - "80:80"
 
+  prod_db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+
+  adminer:
+    image: adminer
+    restart: always
+
+# Ask someone responsible for the secrets folder
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
