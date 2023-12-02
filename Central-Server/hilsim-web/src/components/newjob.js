@@ -6,6 +6,7 @@ import { Form } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import { api_url } from '../dev_config';
 import { useNavigate } from "react-router-dom"
+import Spinner from 'react-bootstrap/Spinner';
 
 function NewJob() {
   const [avionics, setAvionics] = useState("none");
@@ -13,6 +14,8 @@ function NewJob() {
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState("none")
   const [defaultBranch, setDefaultBranch] = useState("none")
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate()
 
@@ -46,15 +49,18 @@ function NewJob() {
 
   function submitJob() {
     console.log(avionics, selectedBranch)
+    setSubmitting(true)
     fetch(api_url + `/api/jobs/queue?commit=0000&username=test_usear&branch=${selectedBranch}`, {headers: {
       "ngrok-skip-browser-warning": "true"
     }}).then((data) => {
       data.json((json_data) => {
-        console.log("submitted", json_data)
+        // at one point we'll redirect to a job page, so we want to keep this here
+        // TODO: add redirects to job page
       })
       navigate("/")
-    }).catch(() => {
-      console.log("Failed to send request")
+    }).catch((err) => {
+      setError(err.message);
+      setSubmitting(false)
     })
   }
 
@@ -105,7 +111,9 @@ function NewJob() {
 
       <Form.Group as={Row} className="mb-3">
         <Col sm={{ span: 10, offset: 2 }}>
-          {(avionics != "none" && selectedBranch != "none") ? <Button onClick={submitJob}>Submit</Button> : <Button disabled>Submit</Button>}
+          {(avionics != "none" && selectedBranch != "none" && !submitting) ? <Button onClick={submitJob}>Submit</Button> : <Button disabled>Submit</Button>}
+          {submitting ? <Spinner size="sm" className='submission-spinner' animation="border" role="status"></Spinner> : <></>}
+          {error == "" ? <></> : <span className='error-text-submission'>Error while submitting job: {error}</span>}
         </Col>
       </Form.Group>
     </Form>

@@ -6,8 +6,6 @@ import Col from 'react-bootstrap/esm/Col';
 import QueueList from '../components/queuelist';
 import QueueItem from '../components/queueitem';
 import Status from '../components/status';
-import NewJob from '../components/newjob';
-import NavBar from '../components/common/navbar';
 
 function Queue() {
   return (

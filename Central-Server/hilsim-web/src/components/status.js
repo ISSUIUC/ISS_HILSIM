@@ -7,12 +7,13 @@ function Status() {
   const [currentBoards, setCurrentBoards] = useState([]);
 
   useEffect(() => {
-    let status_url = api_url + "/api/list/"
+    let status_url = api_url + "/api/boards/"
     fetch(status_url, {headers: {
         "ngrok-skip-browser-warning": "true"
       }
     }).then((data) => {
       data.json().then((json_data) => {
+        
         setCurrentBoards(json_data)
       })
       

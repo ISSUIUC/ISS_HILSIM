@@ -92,3 +92,12 @@
   pointer-events: none;
   background-color: #ccc;
 }
+
+.error-text-submission {
+  margin-left: 15px;
+  color: #c00;
+}
+
+.submission-spinner {
+  margin-left: 15px;
+}

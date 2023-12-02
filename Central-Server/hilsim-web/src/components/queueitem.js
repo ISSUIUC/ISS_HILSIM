@@ -2,19 +2,16 @@ import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import { Container } from 'react-bootstrap';
 
-function QueueItem() {
+function QueueItem(props) {
   return (
       <Card style={{textAlign: 'left', marginBottom: '10px'}}>
       <Card.Body>
-        <Card.Title>John Smith</Card.Title>
+        <Card.Title>{props.username}</Card.Title>
         <Card.Text>
-          Testing midas code
+          {props.description}
         </Card.Text>
         <Card.Text>
-          Branch: AV-1045
-        </Card.Text>
-        <Card.Text style={{textEmphasis: 'GrayText'}}>
-            Submitted at 10:15am
+          Branch: {props.branch} | Submit time {props.submit_time}
         </Card.Text>
       </Card.Body>
     </Card>
