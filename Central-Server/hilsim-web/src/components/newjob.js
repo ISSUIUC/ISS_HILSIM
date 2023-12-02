@@ -5,7 +5,7 @@ import Col from 'react-bootstrap/esm/Col';
 import { Form } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import { api_url } from '../dev_config';
-
+import { useNavigate } from "react-router-dom"
 
 function NewJob() {
   const [avionics, setAvionics] = useState("none");
@@ -13,6 +13,8 @@ function NewJob() {
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState("none")
   const [defaultBranch, setDefaultBranch] = useState("none")
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     if(avionics == "none") {
@@ -50,6 +52,9 @@ function NewJob() {
       data.json((json_data) => {
         console.log("submitted", json_data)
       })
+      navigate("/")
+    }).catch(() => {
+      console.log("Failed to send request")
     })
   }
 
