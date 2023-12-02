@@ -21,7 +21,7 @@ import tars_rack.interface as TARSmkIV
 use_interface = TARSmkIV
 """Which interface should this testing rack use?"""
 # ===================== OTHER CONFIGURATION =====================
-preferred_communication_channel = CommunicationChannelType.SERIAL
+preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 """The preferred channel of communication between the datastreamer and server. This method will be tried first. Defaults to `SERIAL`"""
 
 

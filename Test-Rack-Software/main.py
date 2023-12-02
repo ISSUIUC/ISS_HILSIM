@@ -16,6 +16,8 @@ import time
 import util.avionics_meta as AVMeta
 import util.handle_packets as handle_packets
 import util.datastreamer_server as Datastreamer
+import util.communication.ws_channel as ws_channel
+import util.communication.communication_interface as comm
 
 # Set up interface defined in config
 avionics = test_board_config.use_interface
@@ -44,31 +46,47 @@ def should_heartbeat(Server: Datastreamer.DatastreamerServer):
 
 # Server connection
 def send_wide_ident(Server: Datastreamer.DatastreamerServer):
+    if(not Server.do_wide_ident):
+        return True
     if(time.time() > Server.last_server_connection_check):
+        if(Server.server_preferred_comm_method == comm.CommunicationChannelType.WEBSOCKET):
+            # Check websockets
+            try:
+                websocket = ws_channel.WebsocketChannel("http://localhost", "/api/dscomm/ws/socket.io")
+                # We've connected, we haven't sent an IDENT, but we know we're in theory good to go.
+                Server.do_wide_ident = False
+                print("(send_wide_ident:websocket) Successfully connected to websocket at ", websocket.websocket_location + websocket.websocket_path)
+                ws_channel.connected_websockets.append(websocket)
+                packet.DataPacketBuffer.write_packet(packet.CL_IDENT(av_meta.board_type), websocket)
+            except Exception as e:
+                print(e)
 
-        # Check websockets
+        #Check comports
+        if(Server.server_preferred_comm_method == comm.CommunicationChannelType.SERIAL):
+            connection.t_init_com_ports()
+            for port in connection.connected_comports:
+                packet.DataPacketBuffer.write_packet(packet.CL_IDENT(av_meta.board_type), port)
 
-        connection.t_init_com_ports()
-        for port in connection.connected_comports:
-            packet.DataPacketBuffer.write_packet(packet.CL_IDENT(av_meta.board_type), port)
+
         Server.last_server_connection_check += 0.25
     return True    
     
 
 def check_server_connection(Server: Datastreamer.DatastreamerServer):
-    for port in connection.connected_comports:
-        in_packets = packet.DataPacketBuffer.channel_to_packet_list(port, True)
+    all_channels: comm.CommunicationChannel = connection.connected_comports + ws_channel.connected_websockets
+    for channel in all_channels:
+        in_packets = packet.DataPacketBuffer.channel_to_packet_list(channel, True)
         for pkt in in_packets:
             if pkt.packet_type == packet.DataPacketType.ACKNOWLEDGE:
                 Server.board_id = pkt.data['board_id']
-                Server.server_comm_channel = port
+                Server.server_comm_channel = channel
                 return True
     return False
 
 def reset_connection_data(Server: Datastreamer.DatastreamerServer):
     Server.last_server_connection_check = time.time()
     Server.next_heartbeat_time = time.time() + 3
-    connection.t_init_com_ports()
+    connection.init_com_ports()
     for port in connection.connected_comports:
         connection.hard_reset(port)
     return True

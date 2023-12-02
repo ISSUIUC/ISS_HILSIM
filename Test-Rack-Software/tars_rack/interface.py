@@ -91,7 +91,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         return "\n".join(self.return_log)
 
     def job_setup(self):
-        print("ABORT?", self.server.signal_abort)
+        print("(job_setup) ABORT flag: ", self.server.signal_abort)
         if (self.job == None):
             raise Exception("Setup error: Server.current_job is not defined.")
         
@@ -155,7 +155,9 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                 return False, "Unable to re-open avionics COM Port"
                 
             except Exception as e:
+                print("(job_setup) Job setup failed")
                 print(e)
+                print(traceback.format_exc())
                 return False, "Setup failed: " + str(e)
         elif (self.job.pull_type == pkt.JobData.GitPullType.COMMIT):
             raise NotImplementedError("Commit-based pulls are not implemented yet.")
