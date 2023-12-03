@@ -20,6 +20,7 @@ class JobStatus(Enum):
 
 def sanitize_job_info(job):
     del job["output_path"]
+    job["run_status"] = JobStatus(job["run_status"]).name
     return job
 
 jobs_blueprint = Blueprint('jobs', __name__)
@@ -40,7 +41,7 @@ def list_jobs():
     structs = [job._asdict() for job in structs]
     for job in structs:
         # Additional formatting
-        del job["output_path"]
+        sanitize_job_info(job)
 
     return jsonify(structs), 200
 
@@ -77,7 +78,7 @@ def job_data(job_id):
         except Exception as e:
             return "Error with file: " + Exception(e), 500
     else:
-        return jsonify({"error": file_name + " does not exist"}), 404
+        return jsonify({"error": "Output file does not exist"}), 404
 
 @jobs_blueprint.route('/job', methods=["POST"])
 def queue_job():
