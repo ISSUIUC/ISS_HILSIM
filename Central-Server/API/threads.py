@@ -153,52 +153,54 @@ class BoardThread(threading.Thread):
                        (jobs.JobStatus.SUCCESS.value, packet.data["job_data"]["job_id"]))
         conn.commit()
 
+    def handle_packet(self, packet):
+        if(packet.packet_type == packets.DataPacketType.IDENT):
+            # Identify this board to the server, send ACK packet.
+            print(f"(comm:#{self.thread_id})", f"[handle_packet]", f"Sent ACK to linked board")
+            self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
+            self.board_type = packet.data["board_type"]
+        elif(packet.packet_type == packets.DataPacketType.READY):
+            # The board is ready for a job
+            print(f"(comm:#{self.thread_id})", f"[handle_packet]", f"Recieved READY signal from linked board")
+            # Reset all job flags
+            self.is_ready = True
+            self.cur_job_config = None
+            self.has_job_config = False
+            self.job_running = False
+        elif(packet.packet_type == packets.DataPacketType.HEARTBEAT):
+            # Datastreamer packet containing server data.
+            # self.last_check = time.time()
+            pass
+        elif(packet.packet_type == packets.DataPacketType.BUSY):
+            #raise RuntimeError("Tried to give job when a board already had a packet")
+            # TODO: Figure out why jobs are sent twice (BUSY packet recieved from every board)
+            pass
+            """in theory we should never run into this issue, but it is here so that we do not run into errors"""
+        elif(packet.packet_type == packets.DataPacketType.ID_CONFIRM):
+            # This packet will only be recieved in the case of server failure.
+            self.board_id = packet.data["board_id"]
+            self.board_type = packet.data["board_type"]
+        elif(packet.packet_type == packets.DataPacketType.DONE):
+            # This packet signifies that a job has finished running
+            self.job_running = False
+            self.complete_job(packet)
+            print(f"(comm:#{self.thread_id})", f"[job done]", f"This board has finished a job and has moved into cleanup")
+        elif(packet.packet_type == packets.DataPacketType.JOB_UPDATE):
+            print(packet.data, flush=True)
+            #self.job_status.current_action = packet.data["job_status"]["current_action"]
+            #self.job_status.status_text = packet.data["job_status"]["status_text"]
+            """to be implemented, this is just the board giving updates on the status of a job"""
+        elif(packet.packet_type == packets.DataPacketType.PONG):
+            self.last_check = time.time()
+            """will probably not be used, a relic of the early packet system."""
+
     def handle_communication(self, packet_buffer: List[packets.DataPacket]):
         """Handles Datastreamer communication with the packet system"""
         for packet in packet_buffer:
             # For every incoming packet:
             print(f"(comm:#{self.thread_id})", f"[handle_packet]", f"Handling packet {packet}")
-            self.last_check = time.time() # Reset the thread watchdog timer
-
-            if(packet.packet_type == packets.DataPacketType.IDENT):
-                # Identify this board to the server, send ACK packet.
-                print(f"(comm:#{self.thread_id})", f"[handle_packet]", f"Sent ACK to linked board")
-                self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
-                self.board_type = packet.data["board_type"]
-            elif(packet.packet_type == packets.DataPacketType.READY):
-                # The board is ready for a job
-                print(f"(comm:#{self.thread_id})", f"[handle_packet]", f"Recieved READY signal from linked board")
-                # Reset all job flags
-                self.is_ready = True
-                self.cur_job_config = None
-                self.has_job_config = False
-                self.job_running = False
-            elif(packet.packet_type == packets.DataPacketType.HEARTBEAT):
-                # Datastreamer packet containing server data.
-                # self.last_check = time.time()
-                pass
-            elif(packet.packet_type == packets.DataPacketType.BUSY):
-                #raise RuntimeError("Tried to give job when a board already had a packet")
-                # TODO: Figure out why jobs are sent twice (BUSY packet recieved from every board)
-                pass
-                """in theory we should never run into this issue, but it is here so that we do not run into errors"""
-            elif(packet.packet_type == packets.DataPacketType.ID_CONFIRM):
-                # This packet will only be recieved in the case of server failure.
-                self.board_id = packet.data["board_id"]
-                self.board_type = packet.data["board_type"]
-            elif(packet.packet_type == packets.DataPacketType.DONE):
-                # This packet signifies that a job has finished running
-                self.job_running = False
-                self.complete_job(packet)
-                print(f"(comm:#{self.thread_id})", f"[job done]", f"This board has finished a job and has moved into cleanup")
-            elif(packet.packet_type == packets.DataPacketType.JOB_UPDATE):
-                print(packet.data, flush=True)
-                #self.job_status.current_action = packet.data["job_status"]["current_action"]
-                #self.job_status.status_text = packet.data["job_status"]["status_text"]
-                """to be implemented, this is just the board giving updates on the status of a job"""
-            elif(packet.packet_type == packets.DataPacketType.PONG):
-                self.last_check = time.time()
-                """will probably not be used, a relic of the early packet system."""
+            self.last_check = time.time()
+            self.handle_packet(packet)
 
     def job_runner_loop(self):
         while self.running:
