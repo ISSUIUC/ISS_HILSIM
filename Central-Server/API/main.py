@@ -12,7 +12,7 @@ import threading
 import util.communication.packets as packets
 from flask_cors import CORS
 
-from threads import manager_thread
+from threads import BoardManagerThread
 
 argc = len(sys.argv)
 if(argc != 2):
@@ -24,7 +24,7 @@ app.register_blueprint(jobs_blueprint)
 app.register_blueprint(job_queue_blueprint)
 app.register_blueprint(perms_blueprint)
 CORS(app)
-m_thread = manager_thread()
+m_thread = BoardManagerThread()
 
 @app.route("/")
 def api_index():
