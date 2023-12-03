@@ -20,7 +20,7 @@ function NewJob() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if(avionics == "none") {
+    if(avionics === "none") {
       return;
     }
     let branch_url = `https://api.github.com/repos/ISSUIUC/${avionicsRepo}/branches`
@@ -121,7 +121,7 @@ function NewJob() {
         <Col sm={{ span: 10, offset: 2 }}>
           {(avionics != "none" && selectedBranch != "none" && !submitting) ? <Button onClick={submitJob}>Submit</Button> : <Button disabled>Submit</Button>}
           {submitting ? <Spinner size="sm" className='submission-spinner' animation="border" role="status"></Spinner> : <></>}
-          {error == "" ? <></> : <span className='error-text-submission'>Error while submitting job: {error}</span>}
+          {error === "" ? <></> : <span className='error-text-submission'>Error while submitting job: {error}</span>}
         </Col>
       </Form.Group>
     </Form>

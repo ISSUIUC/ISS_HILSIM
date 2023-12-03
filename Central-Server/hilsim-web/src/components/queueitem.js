@@ -7,26 +7,33 @@ import Collapse from 'react-bootstrap/Collapse';
 function QueueItem(props) {
   const [open, setOpen] = useState(false);
   let borderColor = ''
+  let showStartTime = 'hidden'
+
   
-  if(props.status=="RUNNING"){
+  if(props.job_data.status=="RUNNING"){
     borderColor = "border-warning"
   }
 
-  if(props.status=="SUCCESS"){
-    return <div key={props.id}></div>
+  if(props.job_data.date_start!==null) {
+    showStartTime = ''
+  }
+
+  if(props.job_data.status=="SUCCESS"){
+    return <div key={props.job_data.id}></div>
   }
   return (
       <Card style={{textAlign: 'left', marginBottom: '10px'}}
             className={"border-3 rounded " + borderColor}
       >
         <Card.Body>
-          <Card.Title>{props.username}</Card.Title>
+          <Card.Title>{props.job_data.user_id}</Card.Title>
           <Card.Text>
-            {props.id}
+            {props.job_data.run_id}
           </Card.Text>
           <Card.Text>
-            Branch: {props.branch}
+            Branch: {props.job_data.branch}
           </Card.Text>
+          <hr/>
           <Button
             onClick={() => setOpen(!open)}
             aria-controls="example-collapse-text"
@@ -37,7 +44,7 @@ function QueueItem(props) {
           </Button>
           <Collapse in={open}>
             <Card.Text>
-              Submit time {props.submit_time}
+              Submit time: {props.job_data.submitted_time}
             </Card.Text>
           </Collapse>
         </Card.Body>

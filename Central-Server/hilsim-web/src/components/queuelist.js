@@ -40,7 +40,7 @@ function QueueList() {
   return (
     <Container fluid>
       {jobQueue.map((job_data) => {
-        return <QueueItem username={job_data.username} branch={job_data.branch} description={job_data.description} id={job_data.id} submit_time={job_data.date_queue} status={job_data.status} key={job_data.id}/>
+        return <QueueItem job_data={job_data} key={job_data.run_id}/>
       })}
     </Container>
   );
