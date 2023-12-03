@@ -10,7 +10,7 @@ function QueueList() {
   const [jobQueue, setJobQueue] = useState([]);
 
   useEffect(() => {
-    fetch(api_url + `/api/jobs/list`, {headers: {
+    fetch(api_url + `/api/jobs`, {headers: {
       "ngrok-skip-browser-warning": "true"
     }})
     .then(response => response.json())

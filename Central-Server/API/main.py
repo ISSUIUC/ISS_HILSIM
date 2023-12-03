@@ -36,21 +36,20 @@ def access_forbidden_error(e):
         return "<html><h1>Access forbidden :(</h1><img src=\"/api/static/image_480.png\"/></html>", 200
     return jsonify(error=str(e)), 403
 
-@app.route("/generate_database", methods=["GET"])
 def generate_jobs_table():
+    # Generate database if it doesn't exist
     conn = database.connect()
     cursor = conn.cursor()
-    try:
+    cursor.execute("SELECT 1 FROM pg_tables WHERE tablename='hilsim_runs'")
+    exists = cursor.fetchone()
+    if not exists:
         with open("database.sql") as f:
             cursor.execute(f.read())
         conn.commit()
         conn.close()
         cursor.close()
-        return "Ok", 200
-    except Exception as e:
-        return Response("Not Ok: " + str(e), 500)
 
-@app.route('/boards/')
+@app.route('/boards/', methods=["GET"])
 def list_boards():
     board_list = []
     for board in m_thread.threads:
@@ -63,9 +62,11 @@ def list_boards():
         })
     return jsonify(board_list), 200
 
-@app.route('/internal/queue')
+@app.route('/internal/queue', methods=["GET"])
 def list_internal_queue():
-    return jsonify({"size": len(m_thread.queue)}), 200
+    # Debug function to index the size of the current queue
+    return jsonify({"size": len(m_thread.queue), "content": [str(e) for e in m_thread.queue]}), 200
+
 if __name__ == "__main__":
     print("Attempting to initialize server..")
     jobs = []
@@ -74,6 +75,8 @@ if __name__ == "__main__":
     csv_data = file.read()
 
     m_thread.start()
+
+    generate_jobs_table()
 
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)

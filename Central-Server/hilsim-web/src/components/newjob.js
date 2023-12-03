@@ -50,9 +50,17 @@ function NewJob() {
   function submitJob() {
     console.log(avionics, selectedBranch)
     setSubmitting(true)
-    fetch(api_url + `/api/jobs/queue?commit=0000&username=test_usear&branch=${selectedBranch}`, {headers: {
-      "ngrok-skip-browser-warning": "true"
-    }}).then((data) => {
+    fetch(api_url + `/api/job`, {
+      method: "POST",
+      headers: {
+        "ngrok-skip-browser-warning": "true"
+      },
+      body: {
+        commit: "0000",
+        username: "test_usear",
+        branch: selectedBranch
+      }
+    }).then((data) => {
       data.json((json_data) => {
         // at one point we'll redirect to a job page, so we want to keep this here
         // TODO: add redirects to job page

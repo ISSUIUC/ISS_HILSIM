@@ -7,5 +7,5 @@ def is_hex(s):
 def is_github_username(s):
     return re.fullmatch(r"^[a-zA-Z0-9\-\_]+$", s or "") is not None
 
-def is_alphanum(s):
+def is_branch_name(s):
     return re.fullmatch(r"^[a-zA-Z0-9\-\_]+$", s or "") is not None
