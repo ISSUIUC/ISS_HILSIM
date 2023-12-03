@@ -122,12 +122,12 @@ class BoardThread(threading.Thread):
         # Set all flags
         self.cur_job_config = config
         self.has_job_config = True
-        
+
         # Update the job status in the database
         conn = database.connect()
         cursor = conn.cursor()
-        cursor.execute("UPDATE hilsim_runs set run_status = {}, run_start = now() where run_id = {} "
-                        .format(jobs.JobStatus.RUNNING.value, config.data["job_data"]["job_id"]))
+        cursor.execute("UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
+                       (jobs.JobStatus.RUNNING.value, config.data["job_data"]["job_id"]))
         conn.commit()
 
     def terminate(self) -> packets.DataPacket:
@@ -200,36 +200,38 @@ class BoardThread(threading.Thread):
                 self.last_check = time.time()
                 """will probably not be used, a relic of the early packet system."""
 
+    def job_runner_loop(self):
+        while self.running:
+            # Handle packet buffer, reading and writing
+            self.packet_buffer.write_buffer_to_channel(self.communication_channel)
+            self.packet_buffer.read_to_input_buffer(self.communication_channel)
+
+            # Handle all recieved packets
+            self.handle_communication(self.packet_buffer.input_buffer)
+
+            # If a board is primed to run a job, run it.
+            if self.has_job_config and self.job_running == False and self.is_ready == True:
+                self.job_running = True
+                self.run_job()
+
+            self.packet_buffer.clear_input_buffer()
+
+            time.sleep(1)
+            if (time.time() - self.last_check > 120):
+                # Remove tars if we can't detect it
+                print("Terminated", flush=True)
+                self.terminate()
+            if not self.communication_channel.socket_open():
+                print("Terminated due to communication channel termination", flush=True)
+                self.terminate()
 
     def run(self): 
-        while self.running:
-            try:
-                # Handle packet buffer, reading and writing
-                self.packet_buffer.write_buffer_to_channel(self.communication_channel)
-                self.packet_buffer.read_to_input_buffer(self.communication_channel)
-
-                # Handle all recieved packets
-                self.handle_communication(self.packet_buffer.input_buffer)
-
-                # If a board is primed to run a job, run it.
-                if self.has_job_config and self.job_running == False and self.is_ready == True:
-                    self.job_running = True
-                    self.run_job()
-
-                self.packet_buffer.clear_input_buffer()
-
-                time.sleep(1)
-                if (time.time() - self.last_check > 120):
-                    # Remove tars if we can't detect it
-                    print("Terminated", flush=True)
-                    self.terminate()
-                if not self.communication_channel.socket_open():
-                    print("Terminated due to communication channel termination", flush=True)
-                    self.terminate()
-            except Exception as e:
-                print(f"Thread {self.thread_id} has unexpectedly closed")
-                print(traceback.format_exc())
-                self.running = False
+        try:
+            self.job_runner_loop()
+        except Exception as e:
+            print(f"Thread {self.thread_id} has unexpectedly closed")
+            print(traceback.format_exc())
+            self.running = False
         print("Thread has died", flush=True)
             
 
@@ -247,7 +249,7 @@ class BoardManagerThread(threading.Thread):
         self.thread_id = "M" 
         self.queue = []
         self.running = True
-        self.last_time = None
+        self.last_time = datetime.datetime(2005, 7, 2)
     
     def pop_killed_job_back_to_queue(self, job: packets.DataPacket):
         """Used as a callback for board threads, makes unfinished/errored jobs pop back into the queue instead of going into limbo/being discarded"""
@@ -257,8 +259,8 @@ class BoardManagerThread(threading.Thread):
         # Update the status of the job in the database.
         conn = database.connect()
         cursor = conn.cursor()
-        cursor.execute("UPDATE hilsim_runs set run_status = {}, run_start = now() where run_id = {} "
-                        .format(jobs.JobStatus.QUEUED.value, job.data["job_data"]["job_id"]))
+        cursor.execute("UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
+                        (jobs.JobStatus.QUEUED.value, job.data["job_data"]["job_id"]))
         cursor.close()
     
     def get_full_queue(self) -> List: # List of what? TODO: check
@@ -266,7 +268,7 @@ class BoardManagerThread(threading.Thread):
         conn = database.connect()
         cursor = conn.cursor()
         db_query = "SELECT * from hilsim_runs where hilsim_runs.run_status = %s"
-        cursor.execute(db_query, (jobs.JobStatus.QUEUED.value))
+        cursor.execute(db_query, (jobs.JobStatus.QUEUED.value,))
         queue = cursor.fetchall()
 
         # Get the current datetime, and don't check after that
@@ -278,11 +280,14 @@ class BoardManagerThread(threading.Thread):
         conn = database.connect()
         cursor = conn.cursor()
         delta_t = (datetime.datetime.now() - self.last_time).total_seconds()
-        db_query = "SELECT * from hilsim_runs where hilsim_runs.run_status = %s and hilsim_runs.submitted_time > now() - interval '%ss'"
-        cursor.execute(db_query, (jobs.JobStatus.QUEUED.value, delta_t))
-        queue = cursor.fetchall()
-        self.last_time = datetime.datetime.now()
-        return queue
+        db_query = "SELECT * from hilsim_runs where hilsim_runs.run_status = %s and hilsim_runs.submitted_time > %s ORDER BY submitted_time"
+        cursor.execute(db_query, (jobs.JobStatus.QUEUED.value, self.last_time))
+        queued_jobs = cursor.fetchall()
+        if len(queued_jobs) > 0:
+            # Then get the last one
+            struct = database.set_db_struct(cursor, queued_jobs[-1])
+            self.last_time = struct.submitted_time
+        return database.get_data_struct(cursor, queued_jobs)
 
     def some_thread_active(self) -> bool:
         """Returns TRUE if there exists a thread capable of taking a job. Otherwise FALSE"""
@@ -341,20 +346,13 @@ class BoardManagerThread(threading.Thread):
     def check_jobs(self):
         """Check the queue for jobs to add to the 'active queue'"""
         jobs_to_add = []
-        if self.last_time == None: # If the queue was never checked, get all items in the queue
-            try:
-                jobs_to_add = self.get_full_queue()
-            except Exception as e:
-                print(e, flush=True)
-                # Ignore error :(
-                pass
-        else: # Otherwise, we only check queue items that have appeared since we last checked.
-            try:
-                jobs_to_add = self.get_recent_queue()
-            except Exception as e:
-                print(e, flush=True)
-                # Ignore error :( #TODO: why?
-                pass
+        try:
+            jobs_to_add = self.get_recent_queue()
+        except Exception as e:
+            print(e, flush=True)
+            # Most likely, we were unable to connect to the db.
+            # maybe the database is down for now, so we will just wait until it's up 
+            pass
 
         # Then add to queue
         for job in jobs_to_add:

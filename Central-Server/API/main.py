@@ -63,6 +63,9 @@ def list_boards():
         })
     return jsonify(board_list), 200
 
+@app.route('/internal/queue')
+def list_internal_queue():
+    return jsonify({"size": len(m_thread.queue)}), 200
 if __name__ == "__main__":
     print("Attempting to initialize server..")
     jobs = []
