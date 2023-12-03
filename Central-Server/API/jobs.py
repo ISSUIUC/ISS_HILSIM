@@ -90,15 +90,21 @@ def queue_job():
     # Sanitize input
     if not sanitizers.is_hex(request.args["commit"]) or not sanitizers.is_github_username(request.args["username"]) or not sanitizers.is_alphanum(request.args["branch"]):
         return jsonify({"error": "Invalid arguments"}), 400
+    
+    data_uri = "/api/temp/data"
+
+    if "data_uri" in request.args:
+        data_uri = request.args["data_uri"]
+
     desc = ""
     if "description" in request.args:
         desc = request.args["description"]
     conn = database.connect()
     cursor = conn.cursor()
 
-    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status, description) \
-                    VALUES (%s, %s, %s, now(), %s || currval ('hilsim_runs_run_id_seq'), %s, %s) RETURNING run_id",
-                   (request.args['username'], request.args['branch'], request.args['commit'], JOB_OUTPUT_PREFIX, 0, desc))
+    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status, description, data_uri) \
+                    VALUES (%s, %s, %s, now(), %s || currval ('hilsim_runs_run_id_seq'), %s, %s, %s) RETURNING run_id",
+                   (request.args['username'], request.args['branch'], request.args['commit'], JOB_OUTPUT_PREFIX, 0, desc, data_uri))
     # TODO: Directory will be consructed later when the work actually starts
     st = cursor.fetchall()
     conn.commit()
@@ -114,5 +120,4 @@ def queue_job():
 def get_data():
     with open("./temp-data/flight_computer.csv") as f:
         lines = f.read()
-        
         return lines
