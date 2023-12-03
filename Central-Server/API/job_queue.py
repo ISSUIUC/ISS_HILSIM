@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, abort,jsonify, request, Response
-import database
+import internal.database as database
 from enum import Enum
-import auth
+import internal.auth as auth
 
 job_queue_blueprint = Blueprint('job_queue', __name__)
 """

@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, abort,jsonify, request, Response
+from apiflask import APIBlueprint
+from flask import render_template, abort,jsonify, request, Response
 import requests
 
 
-perms_blueprint = Blueprint('perms', __name__)
+perms_blueprint = APIBlueprint('perms', __name__)
 
 @perms_blueprint.route("/perms/<string:username>", methods=["GET"])
 def get_team_membership(username):

@@ -21,3 +21,4 @@ eventlet==0.33.3
 greenlet==3.0.1
 pyserial==3.5
 Flask-Cors==4.0.0
+APIFlask==2.0.2

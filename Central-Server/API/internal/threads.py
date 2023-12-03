@@ -22,8 +22,8 @@ import eventlet
 import util.communication.communication_interface as communication_interface
 import util.communication.ws_channel as websocket_channel
 import util.communication.packets as packets
-import database
-import jobs
+import internal.database as database
+import internal.jobs as jobs
 
 
 GLOBAL_BOARD_ID = 0 # Tracking ID for board numbers

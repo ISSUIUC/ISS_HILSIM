@@ -1,29 +1,19 @@
-from flask import Blueprint, render_template, abort,jsonify, request, Response
-import database
-import auth
+from apiflask import APIBlueprint
+from flask import abort,jsonify, request, Response
+import internal.database as database
+import internal.auth as auth
 import os.path
-from enum import Enum
-import sanitizers
+import internal.sanitizers as sanitizers
+from internal.jobs import JobStatus
 
 import os
-
-class JobStatus(Enum):
-    QUEUED = 0 # Job is queued and will be run on the next available TARS
-    RUNNING = 1 # Job is currently running on TARS
-    CANCELED = 2 # Job was canceled by someone #cancelculture
-    SUCCESS = 3 # Job was successfully run
-    FAILED_CRASHED = 4 # Job crashed on TARS
-    FAILED_COMPILE_ERROR = 5 # Job failed to compile
-    FAILED_TIMEOUT = 6 # Job timed out, cancelled #cancelculturestrikesagain
-    FAILED_OTHER = 7 # Job failed for some other reason
-    SETUP = 8
 
 def sanitize_job_info(job):
     del job["output_path"]
     job["run_status"] = JobStatus(job["run_status"]).name
     return job
 
-jobs_blueprint = Blueprint('jobs', __name__)
+jobs_blueprint = APIBlueprint('jobs', __name__)
 
 JOB_OUTPUT_DIR = "output/"
 JOB_OUTPUT_PREFIX = JOB_OUTPUT_DIR + "job_"
@@ -35,7 +25,7 @@ def list_jobs():
     # List out all the jobs in the database
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id ASC")
+    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id DESC limit 10")
     # Sort through the json and set status
     structs = database.convert_database_list(cursor, cursor.fetchall())
     structs = [job._asdict() for job in structs]

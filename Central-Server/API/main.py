@@ -3,28 +3,32 @@ from flask_socketio import SocketIO
 import sys
 from waitress import serve
 import os
-import database
-from jobs import jobs_blueprint
+import internal.database as database
+from blueprints.jobs_blueprint import jobs_blueprint
 import random
 from job_queue import job_queue_blueprint
-from perms import perms_blueprint
+from blueprints.perms import perms_blueprint
 import threading
 import util.communication.packets as packets
+from apiflask import APIFlask
+
 from flask_cors import CORS
 
-from threads import BoardManagerThread
+from internal.threads import BoardManagerThread
 
 argc = len(sys.argv)
 if(argc != 2):
     print("Usage: main.py [environment]")
     exit(1)
 
-app = Flask(__name__, static_url_path="/static", static_folder="./static")
+app = APIFlask("Kamaji")#Flask(__name__, static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(job_queue_blueprint)
 app.register_blueprint(perms_blueprint)
 CORS(app)
 m_thread = BoardManagerThread()
+
+app.config['SPEC_FORMAT'] = 'json'
 
 @app.route("/")
 def api_index():
