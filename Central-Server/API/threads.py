@@ -262,19 +262,7 @@ class BoardManagerThread(threading.Thread):
         cursor.execute("UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
                         (jobs.JobStatus.QUEUED.value, job.data["job_data"]["job_id"]))
         cursor.close()
-    
-    def get_full_queue(self) -> List: # List of what? TODO: check
-        """Get all jobs in the queue. Used when the manager thread DOES NOT have a 'last_time' set (the server has not yet checked the queue)"""
-        conn = database.connect()
-        cursor = conn.cursor()
-        db_query = "SELECT * from hilsim_runs where hilsim_runs.run_status = %s"
-        cursor.execute(db_query, (jobs.JobStatus.QUEUED.value,))
-        queue = cursor.fetchall()
 
-        # Get the current datetime, and don't check after that
-        self.last_time = datetime.datetime.now()
-        return queue
-    
     def get_recent_queue(self) -> List: # List of what? TODO: check
         """Gets all jobs in the queue that happened after the last time the queue was checked by the server"""
         conn = database.connect()
@@ -357,7 +345,7 @@ class BoardManagerThread(threading.Thread):
         # Then add to queue
         for job in jobs_to_add:
             print(job, flush=True)
-            job_data = packets.JobData(job[0], pull_target=job[2])
+            job_data = packets.JobData(job.run_id, pull_target=job.branch, job_author_id=job.user_id)
             packet = packets.SV_JOB(job_data, "")
             self.add_job(packet)
 

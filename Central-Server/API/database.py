@@ -24,7 +24,7 @@ def connect():
                     port=5432)
     return conn
 
-def set_db_struct(cursor: psycopg2.cursor, data: tuple):
+def set_db_struct(cursor: psycopg2.extensions.cursor, data: tuple):
     """
     @param data Tuple of data from the psycopg2 function cursor.fetchall()[0] or its equivalent
     @returns struct of the record in a namedtuple
@@ -33,7 +33,7 @@ def set_db_struct(cursor: psycopg2.cursor, data: tuple):
     Record = collections.namedtuple("JobRecord", cols)
     return Record(**dict(zip(cols, data)))
 
-def get_data_struct(cursor: psycopg2.cursor, data: list) -> list:
+def get_data_struct(cursor: psycopg2.extensions.cursor, data: list) -> list:
     """
     @param data List of data from the psycopg2 function cursor.fetchall()
     @returns struct of the record in a namedtuple

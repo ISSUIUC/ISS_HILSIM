@@ -17,22 +17,12 @@ class JobStatus(Enum):
     FAILED_OTHER = 7 # Job failed for some other reason
     SETUP = 8
 
-def convert_job_info(job):
-    if job[8] > 7 or job[8] < 0:
-        job[8] = 7
-
-    return {"id": job[0],
-          "username": job[1],
-          "branch": job[2],
-          "hash": job[3],
-          "date_queue": job[5],
-          "date_start": job[6],
-          "date_end": job[7],
-          "status": JobStatus(job[8]).name,
-          "description": job[9]
-        }
+def sanitize_job_info(job):
+    del job["output_path"]
+    return job
 
 jobs_blueprint = Blueprint('jobs', __name__)
+
 @jobs_blueprint.route('/jobs/list')
 def list_jobs():
     if not (auth.authenticate_request(request)):
@@ -42,10 +32,12 @@ def list_jobs():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id ASC")
     # Sort through the json and set status
-    job_list = []
-    for job in cursor.fetchall():
-        job_list.append(convert_job_info(job))
-    return jsonify(job_list)
+    structs = database.get_data_struct(cursor, cursor.fetchall())
+    structs = [job._asdict() for job in structs]
+    for job in structs:
+        # Additional formatting
+        del job["output_path"]
+    return jsonify(structs), 200
 
 @jobs_blueprint.route('/jobs/<int:job_id>')
 def job_information(job_id):
@@ -57,8 +49,9 @@ def job_information(job_id):
     cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM hilsim_runs where run_id={job_id}")
     data = cursor.fetchone()
-
-    return jsonify(convert_job_info(data)), 200
+    if data == None:
+        return jsonify({"error": "Job not found"})
+    return jsonify(sanitize_job_info(database.set_db_struct(cursor, data)._asdict())), 200
 
 @jobs_blueprint.route('/jobs/data/<int:job_id>')
 def job_data(job_id):
@@ -78,7 +71,7 @@ def job_data(job_id):
         except Exception as e:
             return "Error with file: " + Exception(e), 500
     else:
-        return jsonify({"status": file_name + " does not exist"}), 404
+        return jsonify({"error": file_name + " does not exist"}), 404
 
 @jobs_blueprint.route('/jobs/queue', methods=["GET"])
 def queue_job():
@@ -88,10 +81,10 @@ def queue_job():
     if "commit" in request.args and "username" in request.args and "branch" in request.args:
         pass
     else:
-        return jsonify({"status": "Missing arguments"}), 400
+        return jsonify({"error": "Missing arguments"}), 400
     # Sanitize input
     if not sanitizers.is_hex(request.args["commit"]) or not sanitizers.is_github_username(request.args["username"]) or not sanitizers.is_alphanum(request.args["branch"]):
-        return jsonify({"status": "Invalid arguments"}), 400
+        return jsonify({"error": "Invalid arguments"}), 400
     desc = ""
     if "description" in request.args:
         desc = request.args["description"]
@@ -104,9 +97,9 @@ def queue_job():
     conn.close()
     cursor.close()
     if len(st) > 0:
-        return jsonify({"status": "Ok", "run_id": st[0][0]}), 200
+        return jsonify({"status": "Job was created", "run_id": st[0][0]}), 201
     else:
-        return jsonify({"status": "Error"}), 400
+        return jsonify({"error":  "Error"}), 400
 
 # TODO: delete this and replace with proper api stuff
 @jobs_blueprint.route('/temp/data', methods=["GET"])
