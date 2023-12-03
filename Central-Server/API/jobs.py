@@ -52,7 +52,7 @@ def job_information(job_id):
     # List out all the jobs in the database
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM hilsim_runs where run_id={job_id}")
+    cursor.execute(f"SELECT * FROM hilsim_runs where run_id=%s", (job_id,))
     data = cursor.fetchone()
     if data == None:
         return jsonify({"error": "Job not found"})
@@ -66,7 +66,7 @@ def job_data(job_id):
     # List out all the jobs in the database
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM hilsim_runs where run_id={job_id}")
+    cursor.execute("SELECT * FROM hilsim_runs where run_id=%s", (job_id,))
     data = cursor.fetchone()
     data = database.convert_database_tuple(cursor, data)
     file_name = data.output_path
@@ -97,7 +97,7 @@ def queue_job():
         return jsonify({"error": "Missing arguments"}), 400
 
     # Sanitize input
-    if (not sanitizers.is_hex(request_args["commit"]) or
+    if (not sanitizers.is_git_hash(request_args["commit"]) or
         not sanitizers.is_github_username(request_args["username"]) or
         not sanitizers.is_branch_name(request_args["branch"])):
         return jsonify({"error": "Invalid arguments"}), 400
