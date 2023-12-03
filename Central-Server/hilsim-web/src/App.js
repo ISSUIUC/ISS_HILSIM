@@ -14,6 +14,7 @@ import WebsocketStatus from './pages/WebsocketStatus';
 import Queue from './pages/queue';
 import HomePage from './pages/homepage';
 import New_Job from './pages/newjob';
+import SwaggerUIPage from './pages/swagger';
 
 const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
     path: "/wsstatus",
     element: <WebsocketStatus />,
   },
+  {
+    path: "/docs",
+    element: <SwaggerUIPage />,
+  }
 ]);
 
 

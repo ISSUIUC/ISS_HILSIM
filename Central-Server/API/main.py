@@ -61,8 +61,8 @@ def generate_jobs_table():
         conn.close()
         cursor.close()
 
-@app.route('/boards/', methods=["GET"])
-@app.output(internal.boards.BoardOuputSchema())
+@app.route('/boards', methods=["GET"])
+@app.output(internal.boards.BoardList())
 def list_boards():
     """
     List all the boards that are connected to the server
@@ -76,7 +76,9 @@ def list_boards():
             "board_type": board.board_type,
             "running": board.running
         })
-    return jsonify(board_list), 200
+    return {
+        "boards": board_list
+    }, 200
 
 @app.route('/internal/queue', methods=["GET"])
 def list_internal_queue():

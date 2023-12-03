@@ -14,7 +14,8 @@
     "react-router-dom": "^6.18.0",
     "react-scripts": "^5.0.1",
     "socket.io-client": "^4.7.2",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "swagger-ui-react": "^5.10.3"
   },
   "scripts": {
     "start": "WATCHPACK_POLLING=true react-scripts start",

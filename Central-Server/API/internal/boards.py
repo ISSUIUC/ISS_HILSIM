@@ -1,5 +1,5 @@
 from apiflask import Schema
-from apiflask.fields import Integer, String, Boolean
+from apiflask.fields import Integer, String, Boolean, List, Nested
 
 class BoardOuputSchema(Schema):
     id = Integer() # The id of the board
@@ -7,3 +7,7 @@ class BoardOuputSchema(Schema):
     job_running = Boolean() # True when actively running job
     board_type = String() # The type of board
     running = Boolean() # Is the thread currently running
+
+class BoardList(Schema):
+    boards = List(Nested(BoardOuputSchema))
+                  
