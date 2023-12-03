@@ -24,7 +24,7 @@ use_interface = TARSmkIV
 preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 """The preferred channel of communication between the datastreamer and server. This method will be tried first. Defaults to `SERIAL`"""
 
-
+api_url = "https://541f-130-126-255-135.ngrok-free.app"
 # ===============================================================
 
 

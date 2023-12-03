@@ -52,7 +52,7 @@ def send_wide_ident(Server: Datastreamer.DatastreamerServer):
         if(Server.server_preferred_comm_method == comm.CommunicationChannelType.WEBSOCKET):
             # Check websockets
             try:
-                websocket = ws_channel.WebsocketChannel("http://localhost", "/api/dscomm/ws/socket.io")
+                websocket = ws_channel.WebsocketChannel(test_board_config.api_url, "/api/dscomm/ws/socket.io")
                 # We've connected, we haven't sent an IDENT, but we know we're in theory good to go.
                 Server.do_wide_ident = False
                 print("(send_wide_ident:websocket) Successfully connected to websocket at ", websocket.websocket_location + websocket.websocket_path)

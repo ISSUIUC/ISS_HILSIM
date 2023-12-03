@@ -19,6 +19,7 @@ import util.communication.serial_channel as serial_interface
 import traceback
 import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer
+import requests
 
 class TARSAvionics(AVInterface.AvionicsInterface):
     TARS_port: serial.Serial = None
@@ -94,6 +95,16 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         print("(job_setup) ABORT flag: ", self.server.signal_abort)
         if (self.job == None):
             raise Exception("Setup error: Server.current_job is not defined.")
+        
+        # get csv data
+        print("(job_setup TEMP) Retrieving sample datastreamer data")
+        csv_object = requests.get("https://541f-130-126-255-135.ngrok-free.app/api/temp/data")
+        csv = csv_object.text
+        self.flight_data_raw = csv
+        self.flight_data_dataframe = self.raw_csv_to_dataframe(self.flight_data_raw)
+        self.flight_data_rows = self.flight_data_dataframe.iterrows()
+        print("(job_setup TEMP) Successfully retrieved sample data")
+
         
         # Temporarily close port so code can flash
         self.av_interface.TARS_port.close()
