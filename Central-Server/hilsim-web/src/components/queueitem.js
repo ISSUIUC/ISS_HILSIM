@@ -12,6 +12,8 @@ function QueueItem(props) {
   
   if(props.job_data.status=="RUNNING"){
     borderColor = "border-warning"
+  } else if(props.job_data.status=="SUCCESS") {
+    borderColor = "border-success"
   }
 
   if(props.job_data.date_start!==null) {

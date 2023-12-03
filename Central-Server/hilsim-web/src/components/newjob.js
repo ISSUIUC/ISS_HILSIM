@@ -20,7 +20,7 @@ function NewJob() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if(avionics === "none") {
+    if(avionics == "none") {
       return;
     }
     let branch_url = `https://api.github.com/repos/ISSUIUC/${avionicsRepo}/branches`
@@ -53,18 +53,18 @@ function NewJob() {
     fetch(api_url + `/api/job`, {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "true"
       },
-      body: {
+      body: JSON.stringify({
         commit: "0000",
         username: "test_usear",
         branch: selectedBranch
-      }
-    }).then((data) => {
-      data.json((json_data) => {
+      })
+    }).then((data) => data[0].json())
+    .then((json_data) => {
         // at one point we'll redirect to a job page, so we want to keep this here
         // TODO: add redirects to job page
-      })
       navigate("/")
     }).catch((err) => {
       setError(err.message);
