@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 
 function QueueList() {
   const [jobQueue, setJobQueue] = useState([]);
+
   useEffect(() => {
     fetch(api_url + `/api/jobs/list`, {headers: {
       "ngrok-skip-browser-warning": "true"
@@ -21,7 +22,7 @@ function QueueList() {
     })
   }, [setJobQueue])
 
-  if(jobQueue.length == 0) {
+  if(jobQueue.filter((job_data) => job_data.status!=="SUCCESS").length == 0) {
     return (
       <Container fluid>
         <Card style={{textAlign: 'left', marginBottom: '10px'}}>
@@ -39,7 +40,7 @@ function QueueList() {
   return (
     <Container fluid>
       {jobQueue.map((job_data) => {
-        return <QueueItem username={job_data.username} branch={job_data.branch} description={job_data.id} submit_time={job_data.date_queue} />
+        return <QueueItem username={job_data.username} branch={job_data.branch} description={job_data.description} id={job_data.id} submit_time={job_data.date_queue} status={job_data.status} key={job_data.id}/>
       })}
     </Container>
   );

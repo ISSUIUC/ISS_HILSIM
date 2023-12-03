@@ -42,7 +42,7 @@ function Status() {
               <span className='board-status-id'>({board.id})</span> 
               <span style={{fontWeight: 'bold'}}>{board.board_type}</span>
               <span className='v-center'>
-                <span class="board-busy-dot"></span>   
+                <span className="board-busy-dot"></span>   
               </span>
               <span className='board-status-busy-tag'>BUSY</span>
             </div>)
@@ -51,7 +51,7 @@ function Status() {
               <span className='board-status-id'>({board.id})</span> 
               <span style={{fontWeight: 'bold'}}>{board.board_type}</span>
               <span className='v-center'>
-                <span class="board-ready-dot"></span>   
+                <span className="board-ready-dot"></span>   
               </span>
               <span className='board-status-ready-tag'>READY</span>
             </div>)

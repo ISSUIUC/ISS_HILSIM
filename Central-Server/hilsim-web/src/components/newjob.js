@@ -74,7 +74,7 @@ function NewJob() {
           Email/User
         </Form.Label>
         <Col sm={10}>
-          <Form.Control disabled readonly type="email" placeholder=" * This field will be automatically filled in *" />
+          <Form.Control disabled readOnly type="email" placeholder=" * This field will be automatically filled in *" />
         </Col>
       </Form.Group>
 

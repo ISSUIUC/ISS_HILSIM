@@ -196,7 +196,13 @@ class manager_thread(threading.Thread):
         # helper function to execute the threads
     
     def pop_killed_job_back_to_queue(self, job: packets.DataPacket):
+        print(f"Inserted job with job_id {job.data['job_data']['job_id']} back to the queue", flush=True)
         self.queue.insert(0, job)
+        conn = database.connect()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE hilsim_runs set run_status = {}, run_start = now() where run_id = {} "
+                        .format(jobs.JobStatus.QUEUED.value, job.data["job_data"]["job_id"]))
+        cursor.close()
     
     def get_no_last_time_queue(self):
         # then
