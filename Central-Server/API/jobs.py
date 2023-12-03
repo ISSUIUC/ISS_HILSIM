@@ -5,6 +5,7 @@ import os.path
 from enum import Enum
 import sanitizers
 
+import os
 
 class JobStatus(Enum):
     QUEUED = 0 # Job is queued and will be run on the next available TARS
@@ -23,6 +24,9 @@ def sanitize_job_info(job):
 
 jobs_blueprint = Blueprint('jobs', __name__)
 
+JOB_OUTPUT_DIR = "output/"
+JOB_OUTPUT_PREFIX = JOB_OUTPUT_DIR + "job_"
+
 @jobs_blueprint.route('/jobs/list')
 def list_jobs():
     if not (auth.authenticate_request(request)):
@@ -32,11 +36,12 @@ def list_jobs():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id ASC")
     # Sort through the json and set status
-    structs = database.get_data_struct(cursor, cursor.fetchall())
+    structs = database.convert_database_list(cursor, cursor.fetchall())
     structs = [job._asdict() for job in structs]
     for job in structs:
         # Additional formatting
         del job["output_path"]
+
     return jsonify(structs), 200
 
 @jobs_blueprint.route('/jobs/<int:job_id>')
@@ -51,7 +56,7 @@ def job_information(job_id):
     data = cursor.fetchone()
     if data == None:
         return jsonify({"error": "Job not found"})
-    return jsonify(sanitize_job_info(database.set_db_struct(cursor, data)._asdict())), 200
+    return jsonify(sanitize_job_info(database.convert_database_tuple(cursor, data)._asdict())), 200
 
 @jobs_blueprint.route('/jobs/data/<int:job_id>')
 def job_data(job_id):
@@ -90,8 +95,11 @@ def queue_job():
         desc = request.args["description"]
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status, description) VALUES (%s, %s, %s, now(), %s, %s, %s) RETURNING run_id",
-                   (request.args['username'], request.args['branch'], request.args['commit'], 'output.csv', 0, desc))
+
+    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status, description) \
+                    VALUES (%s, %s, %s, now(), %s || currval ('hilsim_runs_run_id_seq'), %s, %s) RETURNING run_id",
+                   (request.args['username'], request.args['branch'], request.args['commit'], JOB_OUTPUT_PREFIX, 0, desc))
+    # TODO: Directory will be consructed later when the work actually starts
     st = cursor.fetchall()
     conn.commit()
     conn.close()

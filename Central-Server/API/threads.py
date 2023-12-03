@@ -275,9 +275,9 @@ class BoardManagerThread(threading.Thread):
         queued_jobs = cursor.fetchall()
         if len(queued_jobs) > 0:
             # Then get the last one
-            struct = database.set_db_struct(cursor, queued_jobs[-1])
+            struct = database.convert_database_tuple(cursor, queued_jobs[-1])
             self.last_time = struct.submitted_time
-        return database.get_data_struct(cursor, queued_jobs)
+        return database.convert_database_list(cursor, queued_jobs)
 
     def some_thread_active(self) -> bool:
         """Returns TRUE if there exists a thread capable of taking a job. Otherwise FALSE"""
