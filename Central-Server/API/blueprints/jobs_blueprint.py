@@ -4,7 +4,7 @@ import internal.database as database
 import internal.auth as auth
 import os.path
 import internal.sanitizers as sanitizers
-from internal.jobs import JobStatus
+from internal.jobs import *
 
 import os
 
@@ -20,12 +20,23 @@ JOB_OUTPUT_PREFIX = JOB_OUTPUT_DIR + "job_"
 
 @jobs_blueprint.route('/jobs', methods=["GET"])
 def list_jobs():
+    """
+    List all the latest 10 jobs
+
+    Additional parameters:
+    size: Size of page
+    page: the page
+    
+    This will return an empty array if there is no available job for that page.
+    """
     if not (auth.authenticate_request(request)):
         abort(403)
     # List out all the jobs in the database
+    size = request.args.get("size", default=10, type=str)
+    page = request.args.get("page", default=0, type=int)
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id DESC limit 10")
+    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id DESC limit %s offset %s", (size, page * size))
     # Sort through the json and set status
     structs = database.convert_database_list(cursor, cursor.fetchall())
     structs = [job._asdict() for job in structs]
@@ -36,7 +47,11 @@ def list_jobs():
     return jsonify(structs), 200
 
 @jobs_blueprint.route('/job/<int:job_id>', methods=["GET"])
+@jobs_blueprint.output(JobOutSchema())
 def job_information(job_id):
+    """
+    Gets the details of a job
+    """
     # Get the jobs data from the job id
     if (auth.authenticate_request(request) == False):
         abort(403)
@@ -46,11 +61,14 @@ def job_information(job_id):
     cursor.execute(f"SELECT * FROM hilsim_runs where run_id=%s", (job_id,))
     data = cursor.fetchone()
     if data == None:
-        return jsonify({"error": "Job not found"})
-    return jsonify(sanitize_job_info(database.convert_database_tuple(cursor, data)._asdict())), 200
+        return jsonify({"error": "Job not found"}), 404
+    return sanitize_job_info(database.convert_database_tuple(cursor, data)._asdict())
 
 @jobs_blueprint.route('/job/<int:job_id>/data', methods=["GET"])
 def job_data(job_id):
+    """
+    Gets the results of a job
+    """
     # Get the jobs data from the job id
     if (auth.authenticate_request(request) == False):
         abort(403)
@@ -71,28 +89,19 @@ def job_data(job_id):
         return jsonify({"error": "Output file does not exist"}), 404
 
 @jobs_blueprint.route('/job', methods=["POST"])
-def queue_job():
+@jobs_blueprint.input(JobRequestSchema, location="json")
+def queue_job(json_data):
+    """
+    Adds a job to the queue
+    """
     # Queue a job
     if not (auth.authenticate_request(request)):
         abort(403)
         return
     # Sometimes we need to get the form request (such as debugging from postman)
     # Other times we output json
-    request_args = request.form
-    if request.content_type == "application/json":
-        request_args = request.json
+    request_args = json_data
 
-    if "commit" in request_args and "username" in request_args and "branch" in request_args:
-        pass
-    else:
-        return jsonify({"error": "Missing arguments"}), 400
-
-    # Sanitize input
-    if (not sanitizers.is_git_hash(request_args["commit"]) or
-        not sanitizers.is_github_username(request_args["username"]) or
-        not sanitizers.is_branch_name(request_args["branch"])):
-        return jsonify({"error": "Invalid arguments"}), 400
-    
     data_uri = "/api/temp/data"
 
     if "data_uri" in request_args:
@@ -120,6 +129,9 @@ def queue_job():
 # TODO: delete this and replace with proper api stuff
 @jobs_blueprint.route('/temp/data', methods=["GET"])
 def get_data():
+    """
+    Temporary data reader
+    """
     with open("./temp-data/flight_computer.csv") as f:
         lines = f.read()
         return lines

@@ -11,6 +11,7 @@ from blueprints.perms import perms_blueprint
 import threading
 import util.communication.packets as packets
 from apiflask import APIFlask
+import internal.boards
 
 from flask_cors import CORS
 
@@ -21,7 +22,7 @@ if(argc != 2):
     print("Usage: main.py [environment]")
     exit(1)
 
-app = APIFlask("Kamaji")#Flask(__name__, static_url_path="/static", static_folder="./static")
+app = APIFlask(__name__, title="Kamaji", static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(job_queue_blueprint)
 app.register_blueprint(perms_blueprint)
@@ -29,6 +30,13 @@ CORS(app)
 m_thread = BoardManagerThread()
 
 app.config['SPEC_FORMAT'] = 'json'
+app.config['SERVERS'] = [
+    {
+        'name': 'Dev Server',
+        'url': 'http://localhost/api/'
+    }
+    # TODO: Add prod
+]
 
 @app.route("/")
 def api_index():
@@ -54,7 +62,11 @@ def generate_jobs_table():
         cursor.close()
 
 @app.route('/boards/', methods=["GET"])
+@app.output(internal.boards.BoardOuputSchema())
 def list_boards():
+    """
+    List all the boards that are connected to the server
+    """
     board_list = []
     for board in m_thread.threads:
         board_list.append({
@@ -68,7 +80,9 @@ def list_boards():
 
 @app.route('/internal/queue', methods=["GET"])
 def list_internal_queue():
-    # Debug function to index the size of the current queue
+    """
+    Debug function to index the size of the current queue
+    """
     return jsonify({"size": len(m_thread.queue), "content": [str(e) for e in m_thread.queue]}), 200
 
 if __name__ == "__main__":

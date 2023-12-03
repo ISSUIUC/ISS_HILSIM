@@ -235,7 +235,6 @@ class BoardThread(threading.Thread):
             print(traceback.format_exc())
             self.running = False
         print("Thread has died", flush=True)
-            
 
 class BoardManagerThread(threading.Thread):
     """This thread is the main export of `threads.py`, it handles all datastreamer communication internally."""
