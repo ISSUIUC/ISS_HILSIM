@@ -5,6 +5,7 @@ import os.path
 from enum import Enum
 import sanitizers
 
+
 class JobStatus(Enum):
     QUEUED = 0 # Job is queued and will be run on the next available TARS
     RUNNING = 1 # Job is currently running on TARS
@@ -39,7 +40,7 @@ def list_jobs():
     # List out all the jobs in the database
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hilsim_runs")
+    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id ASC")
     # Sort through the json and set status
     job_list = []
     for job in cursor.fetchall():
@@ -106,3 +107,11 @@ def queue_job():
         return jsonify({"status": "Ok", "run_id": st[0][0]}), 200
     else:
         return jsonify({"status": "Error"}), 400
+
+# TODO: delete this and replace with proper api stuff
+@jobs_blueprint.route('/temp/data', methods=["GET"])
+def get_data():
+    with open("./temp-data/flight_computer.csv") as f:
+        lines = f.read()
+        
+        return lines

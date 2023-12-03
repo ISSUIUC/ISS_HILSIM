@@ -1,2 +1,2 @@
-export const api_url = "https://9a95-130-126-255-215.ngrok-free.app"
+export const api_url = "http://localhost"
 // /api/jobs/list
