@@ -22,7 +22,7 @@ function QueueList() {
     })
   }, [setJobQueue])
 
-  if(jobQueue.filter((job_data) => job_data.status!=="SUCCESS").length == 0) {
+  if(jobQueue.filter((job_data) => job_data.run_status!="SUCCESS").length == 0) {
     return (
       <Container fluid>
         <Card style={{textAlign: 'left', marginBottom: '10px'}}>

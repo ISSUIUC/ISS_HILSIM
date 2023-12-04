@@ -61,7 +61,7 @@ function NewJob() {
         username: "test_usear",
         branch: selectedBranch
       })
-    }).then((data) => data[0].json())
+    }).then((data) => data.json())
     .then((json_data) => {
         // at one point we'll redirect to a job page, so we want to keep this here
         // TODO: add redirects to job page

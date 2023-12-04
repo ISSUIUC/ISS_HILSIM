@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import Button from 'react-bootstrap/Button';
 import Collapse from 'react-bootstrap/Collapse';
 
-function QueueItem(props) {
+function JobItem(props) {
   const [open, setOpen] = useState(false);
   let borderColor = ''
   let showStartTime = 'hidden'
@@ -12,15 +12,14 @@ function QueueItem(props) {
   
   if(props.job_data.run_status=="RUNNING"){
     borderColor = "border-warning"
+  } else if(props.job_data.run_status=="SUCCESS") {
+    borderColor = "border-success"
   }
 
   if(props.job_data.date_start!==null) {
     showStartTime = ''
   }
 
-  if(props.job_data.run_status=="SUCCESS"){
-    return <div key={props.job_data.id}></div>
-  }
   return (
       <Card style={{textAlign: 'left', marginBottom: '10px'}}
             className={"border-3 rounded " + borderColor}
@@ -52,4 +51,4 @@ function QueueItem(props) {
   );
 }
 
-export default QueueItem;
+export default JobItem;

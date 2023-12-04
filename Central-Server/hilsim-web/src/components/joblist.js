@@ -5,6 +5,7 @@ import { Container } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import { api_url } from '../dev_config';
 import { Link } from "react-router-dom";
+import JobItem from './jobitem';
 
 function JobList() {
   const [jobQueue, setJobQueue] = useState([]);
@@ -37,16 +38,18 @@ function JobList() {
     );
   }
 
+  console.log("success jobs", jobQueue.filter((job_data) => job_data.run_status=="SUCCESS"))
+
   return (
     <Container fluid>
-      {jobQueue.filter((job_data) => job_data.status==="RUNNING").map((job_data) => {
-        return <QueueItem job_data={job_data} key={job_data.run_id}/>
+      {jobQueue.filter((job_data) => job_data.run_status=="RUNNING").map((job_data) => {
+        return <JobItem job_data={job_data} key={job_data.run_id}/>
       })}
-      {jobQueue.filter((job_data) => job_data.status==="QUEUED").map((job_data) => {
-        return <QueueItem job_data={job_data} key={job_data.run_id}/>
+      {jobQueue.filter((job_data) => job_data.run_status=="QUEUED").map((job_data) => {
+        return <JobItem job_data={job_data} key={job_data.run_id}/>
       })}
-      {jobQueue.filter((job_data) => job_data.status==="SUCCESS").map((job_data) => {
-        return <QueueItem job_data={job_data} key={job_data.run_id}/>
+      {jobQueue.filter((job_data) => job_data.run_status=="SUCCESS").map((job_data) => {
+        return <JobItem job_data={job_data} key={job_data.run_id}/>
       })}
     </Container>
   );
