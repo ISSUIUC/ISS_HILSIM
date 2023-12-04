@@ -20,7 +20,7 @@ from internal.threads import BoardManagerThread
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("run_mode", help="Enter the mode you want to run in", type=str)
+parser.add_argument("--runmode", help="Enter the mode you want to run in: dev or prod", type=str)
 args = parser.parse_args()
 
 app = APIFlask(__name__, title="Kamaji", static_url_path="/static", static_folder="./static")
