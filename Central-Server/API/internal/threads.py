@@ -17,8 +17,7 @@ import traceback
 from typing import List
 
 import socketio
-import eventlet
-from eventlet import wsgi
+import eventlet.wsgi
 
 import util.communication.communication_interface as communication_interface
 import util.communication.ws_channel as websocket_channel
@@ -82,7 +81,7 @@ class WebsocketThread(threading.Thread):
     def run(self):
         """This function is called to initialize the thread."""
         print("(DS-socketio) DS Websocket initialized on " + str(self.websocket_port), flush=True)
-        wsgi.server(eventlet.listen(('', self.websocket_port)), self.socketio_app) # Start WSGI server for websocket
+        eventlet.wsgi.server(eventlet.listen(('', self.websocket_port)), self.socketio_app) # Start WSGI server for websocket
 
 
 class BoardThread(threading.Thread): 
