@@ -20,7 +20,7 @@ from internal.threads import BoardManagerThread
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--runmode", help="Enter the mode you want to run in: dev or prod", type=str)
+parser.add_argument("runmode", help="Enter the mode you want to run in: dev or prod", type=str)
 args = parser.parse_args()
 
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)
-    if(args.run_mode=="dev"):
+    if(args.runmode=="dev"):
         print("Initialized development websocket server on ws://localhost:" + str(port))
         socketio = SocketIO(app, cors_allowed_origins='*')
         app.run(debug=True, host="0.0.0.0", port=port, use_reloader=False)
