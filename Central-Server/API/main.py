@@ -12,15 +12,16 @@ import threading
 import util.communication.packets as packets
 from apiflask import APIFlask
 import internal.boards
+import argparse
 
 from flask_cors import CORS
 
 from internal.threads import BoardManagerThread
 
-argc = len(sys.argv)
-if(argc != 2):
-    print("Usage: main.py [environment]")
-    exit(1)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("run_mode", help="Enter the mode you want to run in", type=str)
+args = parser.parse_args()
 
 app = APIFlask(__name__, title="Kamaji", static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
@@ -100,7 +101,7 @@ if __name__ == "__main__":
 
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)
-    if(sys.argv[1] == "dev"):
+    if(args.run_mode=="dev"):
         print("Initialized development websocket server on ws://localhost:" + str(port))
         socketio = SocketIO(app, cors_allowed_origins='*')
         app.run(debug=True, host="0.0.0.0", port=port, use_reloader=False)
