@@ -16,6 +16,7 @@ function NewJob() {
   const [defaultBranch, setDefaultBranch] = useState("none")
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [description, setDescription] = useState("");
 
   const navigate = useNavigate()
 
@@ -53,18 +54,19 @@ function NewJob() {
     fetch(api_url + `/api/job`, {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "true"
       },
-      body: {
+      body: JSON.stringify({
         commit: "0000",
         username: "test_usear",
-        branch: selectedBranch
-      }
-    }).then((data) => {
-      data.json((json_data) => {
+        branch: selectedBranch,
+        description: description
+      })
+    }).then((data) => data.json())
+    .then((json_data) => {
         // at one point we'll redirect to a job page, so we want to keep this here
         // TODO: add redirects to job page
-      })
       navigate("/")
     }).catch((err) => {
       setError(err.message);
@@ -91,7 +93,7 @@ function NewJob() {
           Description
         </Form.Label>
         <Col sm={10}>
-          <Form.Control as="textarea" rows={1} placeholder="(Optional) A description of what this job does" />
+          <Form.Control as="textarea" rows={1} value={description} onChange={e=>setDescription(e.target.value)} placeholder="(Optional) A description of what this job does" />
         </Col>
       </Form.Group>
       <Form.Group as={Row} className="mb-3">
@@ -121,7 +123,7 @@ function NewJob() {
         <Col sm={{ span: 10, offset: 2 }}>
           {(avionics != "none" && selectedBranch != "none" && !submitting) ? <Button onClick={submitJob}>Submit</Button> : <Button disabled>Submit</Button>}
           {submitting ? <Spinner size="sm" className='submission-spinner' animation="border" role="status"></Spinner> : <></>}
-          {error == "" ? <></> : <span className='error-text-submission'>Error while submitting job: {error}</span>}
+          {error === "" ? <></> : <span className='error-text-submission'>Error while submitting job: {error}</span>}
         </Col>
       </Form.Group>
     </Form>
