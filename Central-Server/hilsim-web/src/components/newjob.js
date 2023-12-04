@@ -16,6 +16,7 @@ function NewJob() {
   const [defaultBranch, setDefaultBranch] = useState("none")
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [description, setDescription] = useState("");
 
   const navigate = useNavigate()
 
@@ -59,7 +60,8 @@ function NewJob() {
       body: JSON.stringify({
         commit: "0000",
         username: "test_usear",
-        branch: selectedBranch
+        branch: selectedBranch,
+        description: description
       })
     }).then((data) => data.json())
     .then((json_data) => {
@@ -91,7 +93,7 @@ function NewJob() {
           Description
         </Form.Label>
         <Col sm={10}>
-          <Form.Control as="textarea" rows={1} placeholder="(Optional) A description of what this job does" />
+          <Form.Control as="textarea" rows={1} value={description} onChange={e=>setDescription(e.target.value)} placeholder="(Optional) A description of what this job does" />
         </Col>
       </Form.Group>
       <Form.Group as={Row} className="mb-3">

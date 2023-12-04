@@ -33,6 +33,9 @@ function QueueItem(props) {
           <Card.Text>
             Branch: {props.job_data.branch}
           </Card.Text>
+          <Card.Text>
+            {props.job_data.description}
+          </Card.Text>
           <hr/>
           <Button
             onClick={() => setOpen(!open)}
