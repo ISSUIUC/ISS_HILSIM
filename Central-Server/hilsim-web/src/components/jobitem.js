@@ -4,23 +4,27 @@ import { useState, useRef } from 'react';
 import Button from 'react-bootstrap/Button';
 import Collapse from 'react-bootstrap/Collapse';
 
-function QueueItem(props) {
+function JobItem(props) {
   const [open, setOpen] = useState(false);
   let borderColor = ''
-  let showStartTime = 'hidden'
+  let has_start_time = false
+  let has_end_time = true
 
   
   if(props.job_data.run_status=="RUNNING"){
     borderColor = "border-warning"
+  } else if(props.job_data.run_status=="SUCCESS") {
+    borderColor = "border-success"
   }
 
-  if(props.job_data.date_start!==null) {
-    showStartTime = ''
+  if(props.job_data.run_start != null) {
+    has_start_time = true
   }
 
-  if(props.job_data.run_status=="SUCCESS"){
-    return <div key={props.job_data.id}></div>
+  if(props.job_data.run_end != null) {
+    has_end_time = true
   }
+
   return (
       <Card style={{textAlign: 'left', marginBottom: '10px'}}
             className={"border-3 rounded " + borderColor}
@@ -32,9 +36,6 @@ function QueueItem(props) {
           </Card.Text>
           <Card.Text>
             Branch: {props.job_data.branch}
-          </Card.Text>
-          <Card.Text>
-            {props.job_data.description}
           </Card.Text>
           <hr/>
           <Button
@@ -55,4 +56,4 @@ function QueueItem(props) {
   );
 }
 
-export default QueueItem;
+export default JobItem;

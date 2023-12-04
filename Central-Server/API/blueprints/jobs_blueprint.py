@@ -36,7 +36,7 @@ def list_jobs():
     page = request.args.get("page", default=0, type=int)
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_id DESC limit %s offset %s", (size, page * size))
+    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_status DESC limit %s offset %s", (size, page * size))
     # Sort through the json and set status
     structs = database.convert_database_list(cursor, cursor.fetchall())
     structs = [job._asdict() for job in structs]
