@@ -1,22 +1,29 @@
-import psycopg2
+"""This file exposes functions that abstract certain database functions"""
+import os
 import collections
 
-import os
-def get_db_secret():
+import psycopg2
+
+
+
+def get_db_secret() -> str:
+    """Returns the database secret (password)"""
     with open(os.getenv("DB_PASSWORD_FILE")) as f:
         return(str(f.read()))
 
 db_secret = get_db_secret().strip()
 
-def get_db_name():
+def get_db_name() -> str:
+    """Returns the name of the database used to store Kamaji data"""
     val = os.getenv("DB_NAME")
     if val == None:
         return "db"
     return val
 
-db_host = get_db_name()
+db_host = get_db_name() # Exposed variable for getting database
 
 def connect():
+    """Returns a database connection after connecting with the DB credentials"""
     conn = psycopg2.connect(database="postgres",
                     host=db_host,
                     user="postgres",
