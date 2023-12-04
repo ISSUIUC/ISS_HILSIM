@@ -14,8 +14,8 @@ Michael Karpov (2027)
 Zyun Lam (2027)
 Surag Nuthulapaty (2027)
 Carson Sprague (2025)
-Deeya Bodas (2024)
-Anthony Smykalov (?)   
+Deeya Bodas (2025)
+Anthony Smykalov (2025)   
 
 Under oversight of   
 Aidan Costello (2026)
