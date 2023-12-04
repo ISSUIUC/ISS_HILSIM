@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--runmode", help="Enter the mode you want to run in: dev or prod", type=str)
 args = parser.parse_args()
 
+
 app = APIFlask(__name__, title="Kamaji", static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(job_queue_blueprint)

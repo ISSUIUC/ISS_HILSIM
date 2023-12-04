@@ -17,7 +17,7 @@ import traceback
 from typing import List
 
 import socketio
-import eventlet
+import eventlet.wsgi
 
 import util.communication.communication_interface as communication_interface
 import util.communication.ws_channel as websocket_channel

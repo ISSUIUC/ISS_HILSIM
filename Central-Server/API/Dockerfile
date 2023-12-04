@@ -5,4 +5,4 @@ COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 COPY . .
 EXPOSE 443
-CMD ["python3", "main.py", "dev"]
+CMD ["python3", "main.py", "--runmode", "dev"]
