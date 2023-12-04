@@ -7,7 +7,8 @@ import Collapse from 'react-bootstrap/Collapse';
 function JobItem(props) {
   const [open, setOpen] = useState(false);
   let borderColor = ''
-  let showStartTime = 'hidden'
+  let has_start_time = false
+  let has_end_time = true
 
   
   if(props.job_data.run_status=="RUNNING"){
@@ -16,8 +17,12 @@ function JobItem(props) {
     borderColor = "border-success"
   }
 
-  if(props.job_data.date_start!==null) {
-    showStartTime = ''
+  if(props.job_data.run_start != null) {
+    has_start_time = true
+  }
+
+  if(props.job_data.run_end != null) {
+    has_end_time = true
   }
 
   return (
