@@ -65,7 +65,7 @@ def job_information(job_id):
     # List out all the jobs in the database
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM hilsim_runs where run_id=%s", (job_id,))
+    cursor.execute("SELECT * FROM hilsim_runs where run_id=%s", (job_id,))
     data = cursor.fetchone()
     if data is None:
         return jsonify({"error": "Job not found"}), 404
@@ -89,9 +89,9 @@ def job_data(job_id):
     data = cursor.fetchone()
     data = database.convert_database_tuple(cursor, data)
     file_name = data.output_path
-    if os.path.exists(f"{file_name}"):
+    if os.path.exists(file_name):
         try:
-            with open(f"{file_name}") as f:
+            with open(file_name) as f:
                 return Response(str(f.read()), mimetype='text/csv')
         except Exception as e:
             return "Error with file: " + Exception(e), 500
