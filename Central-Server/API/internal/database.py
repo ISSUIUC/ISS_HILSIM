@@ -4,33 +4,39 @@ import collections
 
 import psycopg2
 
-DATABASE_PORT = 5432 # Default postgres port
+DATABASE_PORT = 5432  # Default postgres port
+
 
 def get_db_secret() -> str:
     """Returns the database secret (password)"""
     with open(os.getenv("DB_PASSWORD_FILE")) as f:
-        return(str(f.read()))
+        return (str(f.read()))
+
 
 db_secret = get_db_secret().strip()
+
 
 def get_db_name() -> str:
     """Returns the name of the database used to store Kamaji data"""
     val = os.getenv("DB_NAME")
-    if val == None:
+    if val is None:
         return "db"
     return val
 
-db_host = get_db_name() # Exposed variable for getting database
+
+db_host = get_db_name()  # Exposed variable for getting database
+
 
 def connect():
     """Returns a database connection after connecting with the DB credentials"""
     global DATABASE_PORT
     conn = psycopg2.connect(database="postgres",
-                    host=db_host,
-                    user="postgres",
-                    password=db_secret,
-                    port=DATABASE_PORT)
+                            host=db_host,
+                            user="postgres",
+                            password=db_secret,
+                            port=DATABASE_PORT)
     return conn
+
 
 def convert_database_tuple(cursor: psycopg2.extensions.cursor, data: tuple):
     """
@@ -42,7 +48,10 @@ def convert_database_tuple(cursor: psycopg2.extensions.cursor, data: tuple):
     Record = collections.namedtuple("JobRecord", cols)
     return Record(**dict(zip(cols, data)))
 
-def convert_database_list(cursor: psycopg2.extensions.cursor, data: list) -> list:
+
+def convert_database_list(
+        cursor: psycopg2.extensions.cursor,
+        data: list) -> list:
     """
     @param data List of data from the psycopg2 function cursor.fetchall()
     @returns struct of the record in a namedtuple
@@ -53,6 +62,7 @@ def convert_database_list(cursor: psycopg2.extensions.cursor, data: list) -> lis
     for row in data:
         record_list.append(Record(**dict(zip(cols, row))))
     return record_list
+
 
 def generate_jobs_table():
     """Generates database if it doesn't exist"""

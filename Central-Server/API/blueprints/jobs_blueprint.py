@@ -2,7 +2,7 @@ import os
 import os.path
 
 from apiflask import APIBlueprint
-from flask import abort,jsonify, request, Response
+from flask import abort, jsonify, request, Response
 
 import internal.database as database
 import internal.auth as auth
@@ -10,16 +10,17 @@ import internal.sanitizers as sanitizers
 from internal.jobs import *
 
 
-
 def sanitize_job_info(job):
     del job["output_path"]
     job["run_status"] = JobStatus(job["run_status"]).name
     return job
 
+
 jobs_blueprint = APIBlueprint('jobs', __name__)
 
 JOB_OUTPUT_DIR = "output/"
 JOB_OUTPUT_PREFIX = JOB_OUTPUT_DIR + "job_"
+
 
 @jobs_blueprint.route('/jobs', methods=["GET"])
 def list_jobs():
@@ -29,7 +30,7 @@ def list_jobs():
     Additional parameters:
     size: Size of page
     page: the page
-    
+
     This will return an empty array if there is no available job for that page.
     """
     if not (auth.authenticate_request(request)):
@@ -39,7 +40,9 @@ def list_jobs():
     page = request.args.get("page", default=0, type=int)
     conn = database.connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hilsim_runs ORDER BY run_status DESC limit %s offset %s", (size, page * size))
+    cursor.execute(
+        "SELECT * FROM hilsim_runs ORDER BY run_status DESC limit %s offset %s",
+        (size, page * size))
     # Sort through the json and set status
     structs = database.convert_database_list(cursor, cursor.fetchall())
     structs = [job._asdict() for job in structs]
@@ -48,6 +51,7 @@ def list_jobs():
         sanitize_job_info(job)
 
     return jsonify(structs), 200
+
 
 @jobs_blueprint.route('/job/<int:job_id>', methods=["GET"])
 @jobs_blueprint.output(JobOutSchema())
@@ -63,9 +67,12 @@ def job_information(job_id):
     cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM hilsim_runs where run_id=%s", (job_id,))
     data = cursor.fetchone()
-    if data == None:
+    if data is None:
         return jsonify({"error": "Job not found"}), 404
-    return sanitize_job_info(database.convert_database_tuple(cursor, data)._asdict())
+    return sanitize_job_info(
+        database.convert_database_tuple(
+            cursor, data)._asdict())
+
 
 @jobs_blueprint.route('/job/<int:job_id>/data', methods=["GET"])
 def job_data(job_id):
@@ -90,6 +97,7 @@ def job_data(job_id):
             return "Error with file: " + Exception(e), 500
     else:
         return jsonify({"error": "Output file does not exist"}), 404
+
 
 @jobs_blueprint.route('/job', methods=["POST"])
 @jobs_blueprint.input(JobRequestSchema, location="json")
@@ -116,9 +124,16 @@ def queue_job(json_data):
     conn = database.connect()
     cursor = conn.cursor()
 
-    cursor.execute(f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status, description, data_uri) \
+    cursor.execute(
+        f"INSERT INTO hilsim_runs (user_id, branch, git_hash, submitted_time, output_path, run_status, description, data_uri) \
                     VALUES (%s, %s, %s, now(), %s || currval ('hilsim_runs_run_id_seq'), %s, %s, %s) RETURNING run_id",
-                   (request_args['username'], request_args['branch'], request_args['commit'], JOB_OUTPUT_PREFIX, 0, desc, data_uri))
+        (request_args['username'],
+         request_args['branch'],
+         request_args['commit'],
+         JOB_OUTPUT_PREFIX,
+         0,
+         desc,
+         data_uri))
     # TODO: Directory will be consructed later when the work actually starts
     st = cursor.fetchall()
     conn.commit()
@@ -127,9 +142,11 @@ def queue_job(json_data):
     if len(st) > 0:
         return jsonify({"status": "Job was created", "run_id": st[0][0]}), 201
     else:
-        return jsonify({"error":  "Error"}), 400
+        return jsonify({"error": "Error"}), 400
 
 # TODO: delete this and replace with proper api stuff
+
+
 @jobs_blueprint.route('/temp/data', methods=["GET"])
 def get_data():
     """

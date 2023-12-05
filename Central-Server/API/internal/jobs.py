@@ -7,6 +7,7 @@ from apiflask.validators import Length, OneOf, Regexp
 
 import internal.sanitizers as sanitizers
 
+
 class JobStatus(enum.Enum):
     """An enum describing the current status of a job"""
     QUEUED = 0
@@ -28,15 +29,27 @@ class JobStatus(enum.Enum):
     SETUP = 8
     """Job is currently in the process of being set up."""
 
+
 class JobRequestSchema(Schema):
     """The database schema for a generic job request"""
-    commit = String(required=True, validate=Regexp(sanitizers.git_hash_regexp()))
-    username = String(required=True, validate=Regexp(sanitizers.github_username_regexp()))
-    branch = String(required=True, validate=Regexp(sanitizers.branch_name_regexp()))
+    commit = String(
+        required=True, validate=Regexp(
+            sanitizers.git_hash_regexp()))
+    username = String(
+        required=True, validate=Regexp(
+            sanitizers.github_username_regexp()))
+    branch = String(
+        required=True, validate=Regexp(
+            sanitizers.branch_name_regexp()))
     description = String(required=False, load_default="", dump_default="")
-    data_uri = String(required=False, load_default="/api/temp/data", dump_default="/api/temp/data")
+    data_uri = String(
+        required=False,
+        load_default="/api/temp/data",
+        dump_default="/api/temp/data")
 
 # do keep this updated with the db please
+
+
 class JobOutSchema(Schema):
     """Schema for job outputs"""
     run_id = Integer()

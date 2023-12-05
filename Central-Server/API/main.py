@@ -1,12 +1,12 @@
 """
-  _  __                     _ _ 
+  _  __                     _ _
  | |/ /                    (_|_)
- | ' / __ _ _ __ ___   __ _ _ _ 
- |  < / _` | '_ ` _ \ / _` | | |
- | . \ (_| | | | | | | (_| | | |
- |_|\_\__,_|_| |_| |_|\__,_| |_|
-                          _/ |  
-                         |__/   
+ | ' / __ _ _ __ ___   __ _ _ _
+ |  < / _` | '_ ` _ \\ / _` | | |
+ | . \\ (_| | | | | | | (_| | | |
+ |_|\\_\\__,_|_| |_| |_|\\__,_| |_|
+                          _/ |
+                         |__/
  ILLINOIS SPACE SOCIETY -- KAMAJI
 
 This is the entrypoint for the Kamaji service, designed by the Kamaji team in 2023:
@@ -15,9 +15,9 @@ Zyun Lam (2027)
 Surag Nuthulapaty (2027)
 Carson Sprague (2025)
 Deeya Bodas (2025)
-Anthony Smykalov (2025)   
+Anthony Smykalov (2025)
 
-Under oversight of   
+Under oversight of
 Aidan Costello (2026)
 Peter Giannetos (2025)
 
@@ -48,11 +48,18 @@ from internal.threads import BoardManagerThread
 
 # Handle main.py command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("runmode", help="Enter the mode you want to run in: dev or prod", type=str)
+parser.add_argument(
+    "runmode",
+    help="Enter the mode you want to run in: dev or prod",
+    type=str)
 args = parser.parse_args()
 
 # Initialize the API
-app = APIFlask(__name__, title="Kamaji", static_url_path="/static", static_folder="./static")
+app = APIFlask(
+    __name__,
+    title="Kamaji",
+    static_url_path="/static",
+    static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(perms_blueprint)
 CORS(app)
@@ -71,18 +78,22 @@ app.config['SERVERS'] = [
 ]
 
 # Set up API endpoints
+
+
 @app.route("/")
 def api_index():
     """/api/ -- Returns literal 'OK'"""
     return "OK"
 
+
 @app.errorhandler(403)
 def access_forbidden_error(e):
     """err 403 -- Returns normal 403 error"""
-    if random.randint(0, 100000) == 42069: # We are a really serious space program, check out the CEO of SpaceX, we like the same jokes
+    if random.randint(
+            0,
+            100000) == 42069:  # We are a really serious space program, check out the CEO of SpaceX, we like the same jokes
         return "<html><h1>Access forbidden :(</h1><img src=\"/api/static/image_480.png\"/></html>", 200
     return jsonify(error=str(e)), 403
-
 
 
 @app.route('/boards', methods=["GET"])
@@ -104,12 +115,15 @@ def list_boards():
         "boards": board_list
     }, 200
 
+
 @app.route('/internal/queue', methods=["GET"])
 def list_internal_queue():
     """
     /api/internal/queue -- Debug function to index the size of the current queue
     """
-    return jsonify({"size": len(m_thread.queue), "content": [str(e) for e in m_thread.queue]}), 200
+    return jsonify({"size": len(m_thread.queue), "content": [
+                   str(e) for e in m_thread.queue]}), 200
+
 
 if __name__ == "__main__":
     # Perform final initialization
@@ -124,15 +138,19 @@ if __name__ == "__main__":
 
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)
-    if(args.runmode=="dev"):
+    if (args.runmode == "dev"):
         # Init dev server
-        print("Initialized development websocket server on ws://localhost:" + str(port))
+        print(
+            "Initialized development websocket server on ws://localhost:" +
+            str(port))
         socketio = SocketIO(app, cors_allowed_origins='*')
         app.run(debug=True, host="0.0.0.0", port=port, use_reloader=False)
         socketio.run()
     else:
         # Init prod server
         print("Initialized production API on http://localhost:" + str(port))
-        print("Initialized production websocket server on ws://localhost:" + str(port))
+        print(
+            "Initialized production websocket server on ws://localhost:" +
+            str(port))
         socketio = SocketIO(app)
         serve(app, port=port)
