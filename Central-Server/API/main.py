@@ -146,7 +146,7 @@ if __name__ == "__main__":
         socketio = SocketIO(app, cors_allowed_origins='*')
         app.run(debug=True, host="0.0.0.0", port=port, use_reloader=False)
         socketio.run()
-    else:
+    elif (args.runmode == "prod"):
         # Init prod server
         print("Initialized production API on http://localhost:" + str(port))
         print(
@@ -154,3 +154,5 @@ if __name__ == "__main__":
             str(port))
         socketio = SocketIO(app)
         serve(app, port=port)
+    else:
+        raise ValueError("An invalid runmode was used. The only options are dev/prod")
