@@ -159,7 +159,7 @@ class BoardThread(threading.Thread):
 
     def terminate(self) -> packets.DataPacket:
         """Drop this thread"""
-        # TODO push current job to front of queue
+        # TODO make sure this works properly every time
         self.running = False
         if self.has_job_config:
             self.callback(self.cur_job_config)
