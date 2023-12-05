@@ -4,7 +4,7 @@ import collections
 
 import psycopg2
 
-
+DATABASE_PORT = 5432 # Default postgres port
 
 def get_db_secret() -> str:
     """Returns the database secret (password)"""
@@ -24,11 +24,12 @@ db_host = get_db_name() # Exposed variable for getting database
 
 def connect():
     """Returns a database connection after connecting with the DB credentials"""
+    global DATABASE_PORT
     conn = psycopg2.connect(database="postgres",
                     host=db_host,
                     user="postgres",
                     password=db_secret,
-                    port=5432)
+                    port=DATABASE_PORT)
     return conn
 
 def convert_database_tuple(cursor: psycopg2.extensions.cursor, data: tuple):
@@ -52,3 +53,16 @@ def convert_database_list(cursor: psycopg2.extensions.cursor, data: list) -> lis
     for row in data:
         record_list.append(Record(**dict(zip(cols, row))))
     return record_list
+
+def generate_jobs_table():
+    """Generates database if it doesn't exist"""
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM pg_tables WHERE tablename='hilsim_runs'")
+    exists = cursor.fetchone()
+    if not exists:
+        with open("database.sql") as f:
+            cursor.execute(f.read())
+        conn.commit()
+        conn.close()
+        cursor.close()

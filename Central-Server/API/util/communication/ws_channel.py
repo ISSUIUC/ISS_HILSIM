@@ -104,6 +104,5 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         print("emit", data)
         self.websocket_client.emit("wsdata", data)
 
-
 connected_websockets: List[WebsocketChannel] = []
 """The connected websockets of this channel (Type: `WebsocketChannel`)"""

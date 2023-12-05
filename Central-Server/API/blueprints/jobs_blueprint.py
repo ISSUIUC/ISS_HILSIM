@@ -1,12 +1,15 @@
+import os
+import os.path
+
 from apiflask import APIBlueprint
 from flask import abort,jsonify, request, Response
+
 import internal.database as database
 import internal.auth as auth
-import os.path
 import internal.sanitizers as sanitizers
 from internal.jobs import *
 
-import os
+
 
 def sanitize_job_info(job):
     del job["output_path"]

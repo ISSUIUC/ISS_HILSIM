@@ -38,7 +38,6 @@ from flask import Flask, jsonify, Response
 from flask_socketio import SocketIO
 from waitress import serve
 from blueprints.jobs_blueprint import jobs_blueprint
-from job_queue import job_queue_blueprint
 from blueprints.perms import perms_blueprint
 from apiflask import APIFlask
 from flask_cors import CORS
@@ -55,7 +54,6 @@ args = parser.parse_args()
 # Initialize the API
 app = APIFlask(__name__, title="Kamaji", static_url_path="/static", static_folder="./static")
 app.register_blueprint(jobs_blueprint)
-app.register_blueprint(job_queue_blueprint)
 app.register_blueprint(perms_blueprint)
 CORS(app)
 
@@ -85,18 +83,7 @@ def access_forbidden_error(e):
         return "<html><h1>Access forbidden :(</h1><img src=\"/api/static/image_480.png\"/></html>", 200
     return jsonify(error=str(e)), 403
 
-def generate_jobs_table():
-    """Generates database if it doesn't exist"""
-    conn = database.connect()
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM pg_tables WHERE tablename='hilsim_runs'")
-    exists = cursor.fetchone()
-    if not exists:
-        with open("database.sql") as f:
-            cursor.execute(f.read())
-        conn.commit()
-        conn.close()
-        cursor.close()
+
 
 @app.route('/boards', methods=["GET"])
 @app.output(internal.boards.BoardList())
@@ -133,7 +120,7 @@ if __name__ == "__main__":
     m_thread.start()
 
     # Re-initialize database
-    generate_jobs_table()
+    database.generate_jobs_table()
 
     port = int(os.environ.get('PORT', 443))
     print("PORT:", port)
