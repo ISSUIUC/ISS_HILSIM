@@ -1,5 +1,5 @@
 # This script provides a few wrapper functions for PySerial
-import serial # Pyserial! Not serial
+import serial  # Pyserial! Not serial
 import serial.tools.list_ports
 import util.communication.packets as packet
 import util.communication.serial_channel as serial_interface
@@ -21,9 +21,11 @@ def close_com_ports():
     for port in connected_comports:
         port.close()
 
+
 def close_port(port: serial_interface.SerialChannel):
     """Close a specific port"""
     port.close()
+
 
 def clear_port(port: serial_interface.SerialChannel):
     """Clears all of the data in the port buffer"""
@@ -40,6 +42,8 @@ def hard_reset(port: serial_interface.SerialChannel):
 
 
 alr_init = False
+
+
 def t_init_com_ports():
     """
     TODO: Delete this!
@@ -47,12 +51,12 @@ def t_init_com_ports():
     """
     global alr_init
     init_com_ports()
-    if alr_init == False:
-        port = serial_interface.SerialChannel(serial.Serial("COM8", write_timeout=0))
+    if not alr_init:
+        port = serial_interface.SerialChannel(
+            serial.Serial("COM8", write_timeout=0))
         connected_comports.append(port)
         alr_init = True
         print("(init_comports) Initialized port COM8")
-    
 
 
 def init_com_ports():
@@ -62,15 +66,18 @@ def init_com_ports():
     print("(init_comports) Attempting to initialize all connected COM ports..")
     for port_data in get_com_ports():
         try:
-            port = serial_interface.SerialChannel(serial.Serial(port_data.device, write_timeout=0))
+            port = serial_interface.SerialChannel(
+                serial.Serial(port_data.device, write_timeout=0))
             connected_comports.append(port)
             print("(init_comports) Initialized port " + port_data.device)
         except serial.SerialException as err:
-            if("denied" in str(err)):
+            if ("denied" in str(err)):
                 for connected in connected_comports:
-                    if(connected.serial_port.name == port_data.device):
-                        print("(init_comports) " + port_data.device + " already initialized")
-                
+                    if (connected.serial_port.name == port_data.device):
+                        print(
+                            "(init_comports) " +
+                            port_data.device +
+                            " already initialized")
+
             else:
                 print(err)
-            

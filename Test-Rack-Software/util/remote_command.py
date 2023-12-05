@@ -5,20 +5,18 @@
 # as a script (python remote-command.py clone) to do most of the heavy lifting for you.
 # The biggest caveat of this script is it depending on being run from a python shell. Luckily, git-commands.py
 # provides an abstraction layer for this script.
+import os  # noqa
+import sys  # noqa
 
-import os
-import sys
+sys.path.insert(0, os.path.abspath(  # noqa
+    os.path.join(os.path.dirname(__file__), '..')))  # noqa
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+import util.avionics_meta  # noqa
+from git import Repo  # noqa
+import config  # noqa
 
-import config
-from git import Repo
-
-import util.avionics_meta
 
 config_meta: util.avionics_meta.PlatformMetaInterface = config.use_meta
-
 
 
 def clone_repo():
@@ -58,26 +56,24 @@ def pull_branch(branch):
 ############## SCRIPT ##############
 # This is where the script decides which function above to call.
 
-argc = len(sys.argv) # Number of arguments
-if(argc == 1): # Program requires arguments to run
-    print("Incorrect usage: \n- python gitpy-wrapper.py clone\n- python gitpy-wrapper.py clear \n- python gitpy-wrapper.py pull [branch-name]")
+argc = len(sys.argv)  # Number of arguments
+if (argc == 1):  # Program requires arguments to run
+    print(
+        "Incorrect usage: \n- python gitpy-wrapper.py clone\n- python gitpy-wrapper.py clear \n- python gitpy-wrapper.py pull [branch-name]")
 
-if(argc == 2):
-    if(sys.argv[1] == "clone"):
-        clone_repo() # Clone command implementation
+if (argc == 2):
+    if (sys.argv[1] == "clone"):
+        clone_repo()  # Clone command implementation
         exit(0)
-    if(sys.argv[1] == "reset"):
-        reset_repo() # Reset command implementation
+    if (sys.argv[1] == "reset"):
+        reset_repo()  # Reset command implementation
         exit(0)
-    
-    print("Incorrect usage [1 arg]: \n- python gitpy-wrapper.py clone\n- python gitpy-wrapper.py clear")
 
-if(argc == 3):
-    if(sys.argv[1] == "pull"):
+    print(
+        "Incorrect usage [1 arg]: \n- python gitpy-wrapper.py clone\n- python gitpy-wrapper.py clear")
+
+if (argc == 3):
+    if (sys.argv[1] == "pull"):
         branch_name = sys.argv[2]
-        pull_branch(branch_name) # Pull command implementation
+        pull_branch(branch_name)  # Pull command implementation
         exit(0)
-
-
-
-
