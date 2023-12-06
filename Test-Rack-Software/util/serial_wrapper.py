@@ -46,7 +46,8 @@ alr_init = False
 
 def t_init_com_ports():
     """
-    TODO: Delete this!
+    TODO: Use to implement datastreamer tests
+    https://github.com/orgs/ISSUIUC/projects/4/views/1?pane=issue&itemId=46714975
     Test script for init_com_ports()
     """
     global alr_init

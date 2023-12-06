@@ -324,7 +324,7 @@ class BoardManagerThread(threading.Thread):
              job.data["job_data"]["job_id"]))
         cursor.close()
 
-    def get_recent_queue(self) -> List:  # List of what? TODO: check
+    def get_recent_queue(self) -> list:  # List of namedtuples of a job record
         """Gets all jobs in the queue that happened after the last time the queue was checked by the server"""
         conn = database.connect()
         cursor = conn.cursor()

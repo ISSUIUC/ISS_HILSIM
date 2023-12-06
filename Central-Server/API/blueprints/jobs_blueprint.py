@@ -135,6 +135,8 @@ def queue_job(json_data):
          desc,
          data_uri))
     # TODO: Directory will be consructed later when the work actually starts
+    # https://github.com/orgs/ISSUIUC/projects/4/views/1?pane=issue&itemId=46405451
+
     st = cursor.fetchall()
     conn.commit()
     conn.close()
@@ -144,13 +146,13 @@ def queue_job(json_data):
     else:
         return jsonify({"error": "Error"}), 400
 
-# TODO: delete this and replace with proper api stuff
-
-
 @jobs_blueprint.route('/temp/data', methods=["GET"])
 def get_data():
     """
     Temporary data reader
+
+    TODO: delete this and replace with proper api stuff
+    https://github.com/orgs/ISSUIUC/projects/4/views/1?pane=issue&itemId=46405451
     """
     with open("./temp-data/flight_computer.csv") as f:
         lines = f.read()

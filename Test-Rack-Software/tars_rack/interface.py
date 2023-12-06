@@ -62,8 +62,7 @@ class TARSAvionics(AVInterface.AvionicsInterface):
     def code_reset(self) -> None:
         git.remote_reset()
         # Clean build dir
-        # TODO: add line below back, removed for faster compilation in testing.
-        # pio.pio_clean()
+        pio.pio_clean()
 
     def power_cycle(self) -> bool:
         # Unfortunately TARS doesn't support power cycling :(
