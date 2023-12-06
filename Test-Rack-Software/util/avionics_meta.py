@@ -9,6 +9,8 @@ class PlatformMetaInterface:
     """GitHub URL to the repository for this stack"""
     platformio_subdirectory = ""  # Platformio subdirectory (in relation to the repository itself)
     """The subdirectory of the platformio directory, in relation to the repository itself"""
+    default_branch = ""
+    """The github default branch"""
 
     def __init__(self, file: str) -> None:
         self.remote_path = os.path.join(os.path.dirname(file), './remote')

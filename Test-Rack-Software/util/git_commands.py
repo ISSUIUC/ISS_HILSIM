@@ -31,7 +31,6 @@ def run_script(arg_list):
 
 def remote_clone():
     """Clones the repository defined in the config"""
-    print("Exists", config.remote_path)
     if (os.path.exists(config.remote_path)):
         print("(git_commands) Remote already exists, skipping [remote_clone]!")
     else:

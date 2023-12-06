@@ -24,4 +24,4 @@ class HilsimRun(AVInterface.HilsimRunInterface):
     # TODO: Implement
     pass
 
-av_instance = DummyAvionics(Datastreamer.instance)
+# av_instance = DummyAvionics(Datastreamer.instance)
