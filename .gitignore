@@ -2,9 +2,7 @@ remote/
 post_return.txt
 __pycache__/
 node_modules/
-*/.DS_Store
 **/.DS_Store
-.DS_Store
 # TODO: Ignore this
 # secrets/
 node_modules/
