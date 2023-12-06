@@ -6,14 +6,25 @@ import { socket, useWebsocket } from './websocket';
 import {
   createBrowserRouter,
   RouterProvider,
+  Routes,
+  Route
 } from "react-router-dom";
-import Page404 from './components/Page404';
-import WebsocketStatus from './components/WebsocketStatus';
+import Page404 from './pages/Page404';
+import WebsocketStatus from './pages/WebsocketStatus';
+import Queue from './pages/queue';
+import HomePage from './pages/homepage';
+import New_Job from './pages/newjob';
+import SwaggerUIPage from './pages/swagger';
+import Jobs from './pages/jobs';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <div><h2>This will be the homepage!</h2></div>,
+    element: <HomePage />,
+  },
+  {
+    path: "/new_job",
+    element: <New_Job />,
   },
   {
     path: "*",
@@ -23,13 +34,27 @@ const router = createBrowserRouter([
     path: "/wsstatus",
     element: <WebsocketStatus />,
   },
+  {
+    path: "/docs",
+    element: <SwaggerUIPage />,
+  },
+  {
+    path: "/jobs",
+    element: <Jobs />,
+  }
 ]);
 
 
 function App() {
   return (
     <div className="App">
-      <RouterProvider router={router} />
+      <RouterProvider router={router}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/new_job" element={<New_Job />}/>
+        </Routes>
+      </RouterProvider>
+      
     </div>
   );
 }
