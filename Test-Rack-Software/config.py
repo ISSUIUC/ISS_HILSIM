@@ -28,7 +28,7 @@ use_interface = MIDASmkI
 preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 """The preferred channel of communication between the datastreamer and server. This method will be tried first. Defaults to `SERIAL`"""
 
-api_url = "http://localhost"
+api_url = "https://c1e7-130-126-255-120.ngrok-free.app"
 # ===============================================================
 
 

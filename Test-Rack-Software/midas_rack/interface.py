@@ -98,7 +98,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         # get csv data
         print("(job_setup TEMP) Retrieving sample datastreamer data")
         csv_object = requests.get(
-            "https://541f-130-126-255-135.ngrok-free.app/api/temp/data")
+            "https://c1e7-130-126-255-120.ngrok-free.app/api/temp/data")
         csv = csv_object.text
         self.flight_data_raw = csv
         self.flight_data_dataframe = self.raw_csv_to_dataframe(
