@@ -21,10 +21,17 @@ def run_script(arg_list):
     """Runs a platformio command in a python subprocess"""
     print("(pio_commands) Running script [platformio " + str(arg_list) + "]")
     working_dir = config.platformio_path
-    args = ['platformio']
+
+    args = [cfg.python_root + 'platformio']
     for arg in arg_list:
         args.append(arg)
-    command_string = f"cd {working_dir}" + " ; " + " ".join(args)
+    if os.name == 'nt':
+        # If windows
+        command_sep = "&"
+    else:
+        # A posix system
+        command_sep = ";"
+    command_string = f"cd {working_dir}" + command_sep + " ".join(args)
     subprocess.check_call(command_string, shell=True)
     print("(pio_commands) Done.")
 

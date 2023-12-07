@@ -1,2 +1,2 @@
-/home/illinoisspacesociety/.platformio/penv/bin/python main.py
+~/.platformio/penv/bin/python main.py
 

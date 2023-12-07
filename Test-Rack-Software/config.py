@@ -14,7 +14,13 @@ import dummy_rack.platform_meta as DUMMYmeta  # noqa
 use_meta = MIDASmkImeta.meta
 """Which `platform_meta.py` file should we use?"""
 # ==============================================================
-custom_python = "/home/illinoisspacesociety/.platformio/penv/bin/"
+
+# If it's empty then it is the default python
+python_root = "~/.platformio/penv/bin/"
+
+# Add trailing forward slash
+if python_root and python_root[-1] != '/':
+    python_root += "/"
 
 # Continue by importing all interfaces
 import tars_rack.interface as TARSmkIV  # noqa
