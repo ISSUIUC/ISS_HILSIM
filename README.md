@@ -5,7 +5,7 @@ The Remote Testing Platform of the Future
 
 
 ### Running the server
-The HILSIM Server services are run as seperate Docker containers. For more information on Docker, read here: https://www.docker.com/
+The HILSIM Server services are run as seperate Docker containers. For more information on Docker, read [here.](https://www.docker.com/)
 
 In short, Docker containers allow us to spin up platform-independent instances of our services, which means that our code will function regardless of whether you are on Mac or Windows.
 
