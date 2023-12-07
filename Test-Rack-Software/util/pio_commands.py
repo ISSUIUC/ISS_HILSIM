@@ -27,7 +27,7 @@ def run_script(arg_list):
         args.append(arg)
     if os.name == 'nt':
         # If windows
-        command_sep = "&"
+        command_sep = " & "
     else:
         # A posix system
         command_sep = ";"
