@@ -24,7 +24,7 @@ def run_script(arg_list):
     args = ['platformio']
     for arg in arg_list:
         args.append(arg)
-    command_string = f"cd {working_dir}" + " & " + " ".join(args)
+    command_string = f"cd {working_dir}" + " ; " + " ".join(args)
     subprocess.check_call(command_string, shell=True)
     print("(pio_commands) Done.")
 

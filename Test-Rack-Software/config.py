@@ -14,7 +14,7 @@ import dummy_rack.platform_meta as DUMMYmeta  # noqa
 use_meta = MIDASmkImeta.meta
 """Which `platform_meta.py` file should we use?"""
 # ==============================================================
-
+custom_python = "/home/illinoisspacesociety/.platformio/penv/bin/"
 
 # Continue by importing all interfaces
 import tars_rack.interface as TARSmkIV  # noqa
@@ -29,6 +29,7 @@ preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 """The preferred channel of communication between the datastreamer and server. This method will be tried first. Defaults to `SERIAL`"""
 
 api_url = "https://c1e7-130-126-255-120.ngrok-free.app"
+custom_python = "/home/illinoisspacesociety/"
 # ===============================================================
 
 
