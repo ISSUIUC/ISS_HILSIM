@@ -2,4 +2,4 @@ title: Kamaji Docs
 description: The documentation site for Kamaji, the ISS Hardware-in-the-loop simulator.
 theme: jekyll-theme-cayman
 kramdown:
-  input: Kramdown
+  input: GFM
