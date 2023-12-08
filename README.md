@@ -1,9 +1,11 @@
+---
+layout: front
+title: Docs
+---
 # Kamaji
 The Remote Testing Platform of the Future
 
 ## Development
-
-
 ### Running the server
 The HILSIM Server services are run as seperate Docker containers. For more information on Docker, read [here.](https://www.docker.com/)
 
@@ -13,11 +15,11 @@ To run the server, first, install **Docker**. If you have **Docker Desktop**, yo
 
 To **build** the image, we use `docker-compose`. To build the development instance, run the following command:
 
-```docker-compose -f ./compose.yml build```
+```$ docker-compose -f ./compose.yml build```
 
 Then, after it builds, run it with
 
-```docker-compose -f ./compose.yml up```
+```$ docker-compose -f ./compose.yml up```
 
 The equivalent holds for a production container, except the yml file is instead `.\compose.prod.yml`:
 
