@@ -73,7 +73,7 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
 
     def code_flash(self) -> None:
         """Flashes code to the stack. For MIDAS, uses environment `mcu_hilsim`"""
-        pio.pio_upload("mcu_hilsim")
+        pio.pio_upload("mcu_main")
 
 class HilsimRun(AVInterface.HilsimRunInterface):
     av_interface: MIDASAvionics  # Specify av_interface is TARS-specific!
