@@ -31,10 +31,10 @@
     <main id="content" class="main-content" role="main">
 
         {% for page in site.pages %}
-            <a href={{ page.filename }}>{{ page.title }}</a>
+            <a href="{{ page.filename }}">{{ page.title }}</a><br>
         {% endfor %}
 
-        <br>
+        <hr>
       {{ content }}
 
       <footer class="site-footer">

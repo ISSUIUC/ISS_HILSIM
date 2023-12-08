@@ -1,7 +1,3 @@
----
-show_full: true
-title: Docs
----
 # Kamaji
 The Remote Testing Platform of the Future
 
