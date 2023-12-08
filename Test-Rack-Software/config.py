@@ -4,6 +4,7 @@
 # to access.
 import util.dynamic_url
 from util.communication.communication_interface import CommunicationChannelType
+import util.os_interface
 
 # Metadata needs to be imported first, so the avionics system knows what data to use for startup.
 # Import all metaconfigs
@@ -14,14 +15,11 @@ import dummy_rack.platform_meta as DUMMYmeta  # noqa
 # == EDIT THE VARIABLE BELOW TO CHANGE WHICH METADATA IS USED ==
 use_meta = MIDASmkImeta.meta
 """Which `platform_meta.py` file should we use?"""
+
 # ==============================================================
 
 # If it's empty then it is the default python
-python_root = "~/.platformio/penv/bin/"
-
-# Add trailing forward slash
-if python_root and python_root[-1] != '/':
-    python_root += "/"
+python_root = util.os_interface.get_python_root()
 
 # Continue by importing all interfaces
 import tars_rack.interface as TARSmkIV  # noqa
@@ -36,7 +34,6 @@ preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 """The preferred channel of communication between the datastreamer and server. This method will be tried first. Defaults to `SERIAL`"""
 
 
-custom_python = ""
 # ===============================================================
 api_url = util.dynamic_url.get_dynamic_url()
 

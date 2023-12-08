@@ -19,6 +19,7 @@ import util.handle_packets as handle_packets
 import util.datastreamer_server as Datastreamer
 import util.communication.ws_channel as ws_channel
 import util.communication.communication_interface as comm
+import threading
 
 # Set up interface defined in config
 avionics = test_board_config.use_interface
@@ -161,6 +162,23 @@ def handle_power_cycle(Server: Datastreamer.DatastreamerServer):
                 Server.packet_buffer.add(
                     packet.MISC_ERR("Error during power cycle"))
 
+def do_heartbeat(Server: Datastreamer.DatastreamerServer):
+    while True:
+        if Server.server_comm_channel is None or Server is None:
+            return
+
+        if (should_heartbeat(Server)):
+            print("(heartbeat) Sent update at u+", time.time())
+            Server.packet_buffer.add(
+                packet.CL_HEARTBEAT(
+                    packet.HeartbeatServerStatus(
+                        Server.state.server_state,
+                        Server.server_start_time,
+                        False,
+                        False),
+                    packet.HeartbeatAvionicsStatus(
+                        False,
+                        "")))
 
 def main():
     Server = Datastreamer.instance
@@ -222,24 +240,13 @@ def main():
     handle_packets.add_transitions(Server.state)
     handle_packets.add_always_events(Server.state)
 
+    heartbeat_thread = threading.Thread(target=do_heartbeat, args=(Server,))
+    heartbeat_thread.start()
+
     while True:
         Server.tick()
-
-        # Actions that always happen:
-        if (Server.server_comm_channel is not None and should_heartbeat(Server)):
-            print("(heartbeat) Sent update at u+", time.time())
-            Server.packet_buffer.add(
-                packet.CL_HEARTBEAT(
-                    packet.HeartbeatServerStatus(
-                        Server.state.server_state,
-                        Server.server_start_time,
-                        False,
-                        False),
-                    packet.HeartbeatAvionicsStatus(
-                        False,
-                        "")))
-        # End "Always" actions.
         Server.packet_buffer.clear_input_buffer()
+
 
 
 ##########################################################
