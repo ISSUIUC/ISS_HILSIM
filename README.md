@@ -1,5 +1,5 @@
 ---
-layout: front
+show_full: true
 title: Docs
 ---
 # Kamaji
