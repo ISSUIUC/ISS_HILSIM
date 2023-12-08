@@ -1,3 +1,7 @@
+---
+layout: home
+---
+
 # Kamaji
 The Remote Testing Platform of the Future
 

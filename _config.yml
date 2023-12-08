@@ -1,5 +1,8 @@
 title: Docs
 description: The ISS Hardware-in-the-loop simulator.
-theme: jekyll-theme-cayman
+theme: minima
 kramdown:
   input: GFM
+
+minima:
+  skin: auto
