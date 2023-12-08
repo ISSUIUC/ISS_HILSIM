@@ -2,6 +2,7 @@
 # defined avionics interface. This means that by defining which stack you want to use in the
 # next couple of lines, this file automatically tells `main.py` which file
 # to access.
+import util.dynamic_url
 from util.communication.communication_interface import CommunicationChannelType
 
 # Metadata needs to be imported first, so the avionics system knows what data to use for startup.
@@ -34,10 +35,10 @@ use_interface = MIDASmkI
 preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 """The preferred channel of communication between the datastreamer and server. This method will be tried first. Defaults to `SERIAL`"""
 
-api_url = "https://c1e7-130-126-255-120.ngrok-free.app"
-custom_python = "/home/illinoisspacesociety/"
-# ===============================================================
 
+custom_python = ""
+# ===============================================================
+api_url = util.dynamic_url.get_dynamic_url()
 
 # Post-config setup
 # nothing here lol

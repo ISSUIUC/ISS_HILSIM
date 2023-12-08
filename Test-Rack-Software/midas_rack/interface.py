@@ -20,6 +20,7 @@ import traceback
 import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer
 import requests
+import util.dynamic_url
 
 class MIDASAvionics(AVInterface.AvionicsInterface):
     TARS_port: serial.Serial = None
@@ -96,9 +97,11 @@ class HilsimRun(AVInterface.HilsimRunInterface):
             raise Exception("Setup error: Server.current_job is not defined.")
 
         # get csv data
+        api_url = util.dynamic_url.get_dynamic_url()
+        print("(job_setup TEMP) retrieving dynamic API url @", api_url)
         print("(job_setup TEMP) Retrieving sample datastreamer data")
         csv_object = requests.get(
-            "https://c1e7-130-126-255-120.ngrok-free.app/api/temp/data")
+            f"{api_url}/api/temp/data")
         csv = csv_object.text
         self.flight_data_raw = csv
         self.flight_data_dataframe = self.raw_csv_to_dataframe(
