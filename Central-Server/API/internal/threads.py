@@ -271,10 +271,10 @@ class BoardThread(threading.Thread):
             self.packet_buffer.clear_input_buffer()
 
             time.sleep(1)
-            if (time.time() - self.last_check > 1984):
+            """if (time.time() - self.last_check > 69420): #nice
                 # Remove tars if we can't detect it
                 print("Terminated", flush=True)
-                self.terminate()
+                self.terminate()"""
             if not self.communication_channel.socket_open():
                 print(
                     "Terminated due to communication channel termination",

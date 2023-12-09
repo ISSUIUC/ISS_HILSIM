@@ -40,17 +40,17 @@ def run_script(arg_list):
 def pio_build(build_target=None):
     """Shortcut for the `build` command in platformio"""
     if (build_target is None):
-        run_script(['run'])
+        run_script(['run', '-j', '1'])
     else:
-        run_script(['run', '--environment', build_target])
+        run_script(['run', 'j', '1', '--environment', build_target])
 
 
 def pio_upload(build_target=None):
     """Shortcut for the `upload` command in platformio, used to flash code."""
     if (build_target is None):
-        run_script(['run', '--target', 'upload', '-j', '3'])
+        run_script(['run', '--target', 'upload', '-j', '1'])
     else:
-        run_script(['run', '--target', 'upload', '-j', '3', '--environment', build_target])
+        run_script(['run', '--target', 'upload', '-j', '1', '--environment', build_target])
 
 
 def pio_clean(build_target=None):
