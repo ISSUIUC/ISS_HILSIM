@@ -97,6 +97,7 @@ def check_server_connection(Server: Datastreamer.DatastreamerServer):
             if pkt.packet_type == packet.DataPacketType.ACKNOWLEDGE:
                 Server.board_id = pkt.data['board_id']
                 Server.server_comm_channel = channel
+                Server.had_server_comm_channel = True
                 return True
     return False
 
@@ -163,9 +164,16 @@ def handle_power_cycle(Server: Datastreamer.DatastreamerServer):
                     packet.MISC_ERR("Error during power cycle"))
 
 def do_heartbeat(Server: Datastreamer.DatastreamerServer):
+    print("(heartbeat) Initialized heartbeat thread")
     while True:
-        if Server.server_comm_channel is None or Server is None:
+        if Server is None:
             return
+
+        if Server.server_comm_channel is None and Server.had_server_comm_channel:
+            return
+        
+        if Server.server_comm_channel is None:
+            continue
 
         if (should_heartbeat(Server)):
             print("(heartbeat) Sent update at u+", time.time())
@@ -240,8 +248,9 @@ def main():
     handle_packets.add_transitions(Server.state)
     handle_packets.add_always_events(Server.state)
 
-    heartbeat_thread = threading.Thread(target=do_heartbeat, args=(Server,))
+    heartbeat_thread = threading.Thread(target=do_heartbeat, args=(Server,), daemon=True)
     heartbeat_thread.start()
+    print("(heartbeat) Started heartbeat thread execution")
 
     while True:
         Server.tick()

@@ -48,9 +48,9 @@ def pio_build(build_target=None):
 def pio_upload(build_target=None):
     """Shortcut for the `upload` command in platformio, used to flash code."""
     if (build_target is None):
-        run_script(['run', '--target', 'upload'])
+        run_script(['run', '--target', 'upload', '-j', '3'])
     else:
-        run_script(['run', '--target', 'upload', '--environment', build_target])
+        run_script(['run', '--target', 'upload', '-j', '3', '--environment', build_target])
 
 
 def pio_clean(build_target=None):
