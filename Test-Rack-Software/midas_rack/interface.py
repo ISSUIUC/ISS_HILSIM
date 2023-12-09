@@ -14,6 +14,9 @@ import pandas
 import io
 import time
 import serial
+
+import RPi.GPIO as GPIO
+
 import util.communication.packets as pkt
 import util.communication.serial_channel as serial_interface
 import traceback
@@ -21,13 +24,16 @@ import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer
 import requests
 import util.dynamic_url
+import util.os_interface
+
 
 class MIDASAvionics(AVInterface.AvionicsInterface):
     TARS_port: serial.Serial = None
 
-    # Doesn't do anything for MIDAS, but other boards may have initialization
-    # packets
     def handle_init(self) -> None:
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(5, GPIO.OUT)
+        GPIO.setup(6, GPIO.OUT)
         return super().handle_init()
 
     def detect(self) -> bool:
@@ -73,7 +79,16 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
 
     def code_flash(self) -> None:
         """Flashes code to the stack. For MIDAS, uses environment `mcu_hilsim`"""
-        pio.pio_upload("mcu_main")
+        if(util.os_interface.is_raspberrypi()):
+            pio.pio_build("mcu_main")
+            GPIO.output(5, GPIO.LOW)
+            GPIO.output(6, GPIO.LOW)
+            pio.pio_upload("mcu_main")
+            GPIO.output(5, GPIO.HIGH)
+            GPIO.output(6, GPIO.HIGH)
+        else:
+            # This interface needs to set GPIO pins.
+            raise ValueError("This interface can only be uploaded through the raspberry pi.")
 
 class HilsimRun(AVInterface.HilsimRunInterface):
     av_interface: MIDASAvionics  # Specify av_interface is TARS-specific!
