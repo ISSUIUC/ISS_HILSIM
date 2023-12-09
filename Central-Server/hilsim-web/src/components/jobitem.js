@@ -10,19 +10,22 @@ function JobItem(props) {
   let has_start_time = false
   let has_end_time = true
 
+  if(props.job_data) {
+    if(props.job_data.run_status=="RUNNING"){
+      borderColor = "border-warning"
+    } else if(props.job_data.run_status=="SUCCESS") {
+      borderColor = "border-success"
+    } else if(props.job_data.run_status!="QUEUED") {
+      borderColor = "border-danger"
+    }
+
+    if(props.job_data.run_start != null) {
+      has_start_time = true
+    }
   
-  if(props.job_data.run_status=="RUNNING"){
-    borderColor = "border-warning"
-  } else if(props.job_data.run_status=="SUCCESS") {
-    borderColor = "border-success"
-  }
-
-  if(props.job_data.run_start != null) {
-    has_start_time = true
-  }
-
-  if(props.job_data.run_end != null) {
-    has_end_time = true
+    if(props.job_data.run_end != null) {
+      has_end_time = true
+    }
   }
 
   return (
@@ -31,12 +34,15 @@ function JobItem(props) {
       >
         <Card.Body>
           <Card.Title>{props.job_data.user_id}</Card.Title>
-          <Card.Text>
+          {/* <Card.Text>
             {props.job_data.run_id}
           </Card.Text>
           <Card.Text>
             Branch: {props.job_data.branch}
           </Card.Text>
+          <Card.Text>
+            {props.job_data.description}
+          </Card.Text> */}
           <hr/>
           <Button
             onClick={() => setOpen(!open)}
@@ -47,6 +53,15 @@ function JobItem(props) {
             <p className='text-primary text-decoration-underline text-left'>More</p>
           </Button>
           <Collapse in={open}>
+            <Card.Text>
+              {props.job_data.run_id}
+            </Card.Text>
+            <Card.Text>
+              Branch: {props.job_data.branch}
+            </Card.Text>
+            <Card.Text>
+              {props.job_data.description}
+            </Card.Text>
             <Card.Text>
               Submit time: {props.job_data.submitted_time}
             </Card.Text>

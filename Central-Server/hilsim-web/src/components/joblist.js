@@ -16,7 +16,6 @@ function JobList() {
     }})
     .then(response => response.json())
     .then(json_data => {
-      console.log("to json", json_data);
       setJobQueue(json_data);
     }).catch((err) => {
       console.log("err fetch", err)
@@ -37,9 +36,7 @@ function JobList() {
       </Container>
     );
   }
-
-  console.log("success jobs", jobQueue.filter((job_data) => job_data.run_status=="SUCCESS"))
-
+  
   return (
     <Container fluid>
       {jobQueue.filter((job_data) => job_data.run_status=="RUNNING").map((job_data) => {
