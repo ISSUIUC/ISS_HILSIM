@@ -31,9 +31,9 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
     TARS_port: serial.Serial = None
 
     def handle_init(self) -> None:
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(5, GPIO.OUT)
-        GPIO.setup(6, GPIO.OUT)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(11, GPIO.OUT)
+        GPIO.setup(12, GPIO.OUT)
         return super().handle_init()
 
     def detect(self) -> bool:
@@ -81,11 +81,9 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         """Flashes code to the stack. For MIDAS, uses environment `mcu_hilsim`"""
         if(util.os_interface.is_raspberrypi()):
             pio.pio_build("mcu_main")
-            GPIO.output(5, GPIO.LOW)
-            GPIO.output(6, GPIO.LOW)
+            GPIO.output(11, GPIO.LOW)
             pio.pio_upload("mcu_main")
-            GPIO.output(5, GPIO.HIGH)
-            GPIO.output(6, GPIO.HIGH)
+            GPIO.output(11, GPIO.HIGH)
         else:
             # This interface needs to set GPIO pins.
             raise ValueError("This interface can only be uploaded through the raspberry pi.")
