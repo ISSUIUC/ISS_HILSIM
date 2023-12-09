@@ -271,7 +271,7 @@ class BoardThread(threading.Thread):
             self.packet_buffer.clear_input_buffer()
 
             time.sleep(1)
-            if (time.time() - self.last_check > 120):
+            if (time.time() - self.last_check > 1984):
                 # Remove tars if we can't detect it
                 print("Terminated", flush=True)
                 self.terminate()

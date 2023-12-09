@@ -248,8 +248,8 @@ def main():
     handle_packets.add_transitions(Server.state)
     handle_packets.add_always_events(Server.state)
 
-    heartbeat_thread = threading.Thread(target=do_heartbeat, args=(Server,), daemon=True)
-    heartbeat_thread.start()
+    # heartbeat_thread = threading.Thread(target=do_heartbeat, args=(Server,), daemon=True)
+    # heartbeat_thread.start()
     print("(heartbeat) Started heartbeat thread execution")
 
     while True:
