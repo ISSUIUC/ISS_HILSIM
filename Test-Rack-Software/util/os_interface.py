@@ -10,7 +10,7 @@ def is_raspberrypi():
 
 def get_python_root() -> str:
     if is_raspberrypi():
-        python_root = "~/.platformio/penv/bin/"
+        python_root = "/home/illinoisspacesociety/.platformio/penv/bin/"
         if python_root and python_root[-1] != '/':
             python_root += "/"
         return python_root
