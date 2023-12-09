@@ -61,7 +61,7 @@ def send_wide_ident(Server: Datastreamer.DatastreamerServer):
             # Check websockets
             try:
                 websocket = ws_channel.WebsocketChannel(
-                    test_board_config.api_url, "/api/dscomm/ws/socket.io", wait_timeout = 10)
+                    test_board_config.api_url, "/api/dscomm/ws/socket.io")
                 # We've connected, we haven't sent an IDENT, but we know we're
                 # in theory good to go.
                 Server.do_wide_ident = False
