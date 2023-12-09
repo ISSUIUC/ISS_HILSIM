@@ -176,7 +176,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                             return True, "Setup Complete"
                         self.av_interface.TARS_port.open()
                         print(
-                            "\n(job_setup) Successfully re-opened TARS port (" +
+                            "\n(job_setup) Successfully re-opened MIDAS port (" +
                             self.av_interface.TARS_port.serial_port.name +
                             ")")
                         return True, "Setup Complete"
