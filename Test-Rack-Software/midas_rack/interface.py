@@ -34,6 +34,8 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(11, GPIO.OUT)
         GPIO.setup(12, GPIO.OUT)
+        GPIO.output(11, GPIO.HIGH)
+        GPIO.output(12, GPIO.HIGH)
         return super().handle_init()
 
     def detect(self) -> bool:
