@@ -44,7 +44,7 @@ def pio_build(build_target=None):
     if (build_target is None):
         run_script(['run', '-j', str(COMPILATION_CORE_USAGE)])
     else:
-        run_script(['run', 'j', str(COMPILATION_CORE_USAGE), '--environment', build_target])
+        run_script(['run', '-j', str(COMPILATION_CORE_USAGE), '--environment', build_target])
 
 
 def pio_upload(build_target=None):
