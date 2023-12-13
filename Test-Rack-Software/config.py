@@ -36,6 +36,7 @@ preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 
 # ===============================================================
 api_url = util.dynamic_url.get_dynamic_url()
+use_interface.av_instance.handle_init()
 
 # Post-config setup
 # nothing here lol
