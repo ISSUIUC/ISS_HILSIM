@@ -42,7 +42,7 @@ class ClientWebsocketConnection(communication_interface.CommunicationChannel):
 
 
 class WebsocketChannel(communication_interface.CommunicationChannel):
-    websocket_client: socketio.Client = None
+    websocket_client: socketio.AsyncClient = None
     """websocket ClientConnection which handles the basic communication layer"""
     websocket_location: str = ""
     """Location for the websocket connection, is the first part of the URI (i.e: http://localhost)"""
@@ -57,7 +57,7 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
                  websocket_path: str = "") -> None:
         self.websocket_location = websocket_location
         self.websocket_path = websocket_path
-        self.websocket_client = socketio.Client()
+        self.websocket_client = socketio.AsyncClient()
 
         @self.websocket_client.on('connect')
         def connect():
