@@ -40,7 +40,6 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.RESET_PIN, GPIO.OUT, initial=GPIO.HIGH)
         GPIO.setup(self.BOOT_PIN, GPIO.OUT, initial=GPIO.HIGH)
-        return super().handle_init()
 
     def detect(self) -> bool:
         # For MIDAS, we need to make sure that we're already connected to the
