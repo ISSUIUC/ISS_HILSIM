@@ -15,7 +15,11 @@ import io
 import time
 import serial
 
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except:
+    print("Unable to import Rpi.GPIO -- Ignoring")
+
 
 import util.communication.packets as pkt
 import util.communication.serial_channel as serial_interface

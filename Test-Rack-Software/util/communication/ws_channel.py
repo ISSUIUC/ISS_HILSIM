@@ -1,6 +1,7 @@
 import util.communication.communication_interface as communication_interface
 import socketio
 from typing import List
+import asyncio
 
 
 class ClientWebsocketConnection(communication_interface.CommunicationChannel):
@@ -75,7 +76,7 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         def dc(sid):
             print("DCED!", sid)
 
-        self.open()
+        asyncio.run(self.open())
 
     async def open(self) -> None:
         await self.websocket_client.connect(
@@ -100,7 +101,7 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         return out_temp
 
     def write(self, data: str) -> None:
-        self.websocket_client.emit("wsdataresponse", data)
+        asyncio.run(self.websocket_client.emit("wsdataresponse", data))
 
 
 connected_websockets: List[WebsocketChannel] = []
