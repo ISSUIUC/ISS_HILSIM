@@ -33,13 +33,12 @@ import util.os_interface
 
 class MIDASAvionics(AVInterface.AvionicsInterface):
     TARS_port: serial.Serial = None
-
+    RESET_PIN = 21
+    BOOT_PIN = 20
     def handle_init(self) -> None:
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(11, GPIO.OUT)
-        GPIO.setup(12, GPIO.OUT)
-        GPIO.output(11, GPIO.HIGH)
-        GPIO.output(12, GPIO.HIGH)
+        GPIO.setup(self.RESET_PIN, GPIO.OUT, initial=GPIO.HIGH)
+        GPIO.setup(self.BOOT_PIN, GPIO.OUT, initial=GPIO.HIGH)
         return super().handle_init()
 
     def detect(self) -> bool:
@@ -77,7 +76,9 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         pio.pio_clean()
 
     def power_cycle(self) -> bool:
-        # TODO: implement power cycling
+        GPIO.output(self.RESET_PIN, GPIO.LOW)
+        time.sleep(3)
+        GPIO.output(self.RESET_PIN, GPIO.HIGH)
         return True
 
     def code_pull(self, git_target) -> None:
@@ -85,11 +86,18 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
 
     def code_flash(self) -> None:
         """Flashes code to the stack. For MIDAS, uses environment `mcu_hilsim`"""
+        # https://www.martinloren.com/how-to/fashing-esp32/
         if(util.os_interface.is_raspberrypi()):
             pio.pio_build("mcu_main")
-            GPIO.output(11, GPIO.LOW)
+            # Hold down both pins
+            GPIO.output(self.RESET_PIN, GPIO.LOW)
+            GPIO.output(self.BOOT_PIN, GPIO.LOW)
+            time.sleep(3)
+            # Release reset pin
+            GPIO.output(self.RESET_PIN, GPIO.HIGH)
             pio.pio_upload("mcu_main")
-            GPIO.output(11, GPIO.HIGH)
+            # Release boot pin
+            GPIO.output(self.BOOT_PIN, GPIO.HIGH)
         else:
             # This interface needs to set GPIO pins.
             raise ValueError("This interface can only be uploaded through the raspberry pi.")
