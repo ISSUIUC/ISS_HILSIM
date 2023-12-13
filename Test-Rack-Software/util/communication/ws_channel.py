@@ -77,8 +77,8 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
 
         self.open()
 
-    def open(self) -> None:
-        self.websocket_client.connect(
+    async def open(self) -> None:
+        await self.websocket_client.connect(
             self.websocket_location,
             socketio_path=self.websocket_path)
         self.is_open = True
