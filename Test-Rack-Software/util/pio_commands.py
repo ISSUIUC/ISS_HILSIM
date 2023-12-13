@@ -8,6 +8,7 @@ import subprocess
 import os
 import sys
 import threading
+import time
 
 COMPILATION_CORE_USAGE = 1
 
@@ -19,6 +20,15 @@ config = cfg.use_meta
 
 #### Helper functions ####
 
+
+def run_script_threaded(arg_list, callback: callable = None):
+    """Runs a platformio command in a subthread. Calls `callback` every iteration."""
+    thr = threading.Thread(target=run_script, args=(arg_list,))
+    thr.start()
+    while thr.is_alive():
+        time.sleep(0.02)
+        if callback is not None:
+            callback()
 
 def run_script(arg_list):
     """Runs a platformio command in a python subprocess"""
@@ -39,26 +49,26 @@ def run_script(arg_list):
     print("(pio_commands) Done.")
 
 
-def pio_build(build_target=None):
+def pio_build(build_target=None, callback=None):
     """Shortcut for the `build` command in platformio"""
     if (build_target is None):
-        run_script(['run', '-j', str(COMPILATION_CORE_USAGE)])
+        run_script_threaded(['run', '-j', str(COMPILATION_CORE_USAGE)], callback=callback)
     else:
-        run_script(['run', '-j', str(COMPILATION_CORE_USAGE), '--environment', build_target])
+        run_script_threaded(['run', '-j', str(COMPILATION_CORE_USAGE), '--environment', build_target], callback=callback)
 
 
-def pio_upload(build_target=None):
+def pio_upload(build_target=None, callback=None):
     """Shortcut for the `upload` command in platformio, used to flash code."""
     if (build_target is None):
-        run_script(['run', '--target', 'upload', '-j', str(COMPILATION_CORE_USAGE)])
+        run_script_threaded(['run', '--target', 'upload', '-j', str(COMPILATION_CORE_USAGE)], callback=callback)
     else:
-        run_script(['run', '--target', 'upload', '-j', str(COMPILATION_CORE_USAGE), '--environment', build_target])
+        run_script_threaded(['run', '--target', 'upload', '-j', str(COMPILATION_CORE_USAGE), '--environment', build_target], callback=callback)
 
 
-def pio_clean(build_target=None):
+def pio_clean(build_target=None, callback=None):
     """Shortcut for `build clean` in platformio."""
     if (build_target is None):
-        run_script(['run', '--target', 'clean', '-s'])
+        run_script_threaded(['run', '--target', 'clean', '-s'], callback=callback)
     else:
-        run_script(['run', '--target', 'clean',
-                   '--environment', build_target, '-s'])
+        run_script_threaded(['run', '--target', 'clean',
+                   '--environment', build_target, '-s'], callback=callback)

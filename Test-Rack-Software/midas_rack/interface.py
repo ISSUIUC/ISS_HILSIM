@@ -73,7 +73,7 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
     def code_reset(self) -> None:
         git.remote_reset()
         # Clean build dir
-        pio.pio_clean()
+        pio.pio_clean(callback=self.server.defer)
 
     def power_cycle(self) -> bool:
         GPIO.output(self.RESET_PIN, GPIO.LOW)
@@ -88,14 +88,14 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         """Flashes code to the stack. For MIDAS, uses environment `mcu_hilsim`"""
         # https://www.martinloren.com/how-to/fashing-esp32/
         if(util.os_interface.is_raspberrypi()):
-            pio.pio_build("mcu_main")
+            pio.pio_build("mcu_main", callback=self.server.defer)
             # Hold down both pins
             GPIO.output(self.RESET_PIN, GPIO.LOW)
             GPIO.output(self.BOOT_PIN, GPIO.LOW)
             time.sleep(3)
             # Release reset pin
             GPIO.output(self.RESET_PIN, GPIO.HIGH)
-            pio.pio_upload("mcu_main")
+            pio.pio_upload("mcu_main", callback=self.server.defer)
             # Release boot pin
             GPIO.output(self.BOOT_PIN, GPIO.HIGH)
         else:
