@@ -36,6 +36,7 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
     RESET_PIN = 21
     BOOT_PIN = 20
     def handle_init(self) -> None:
+        print("(MIDAS) handle_init run, board mode set to BCM")
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.RESET_PIN, GPIO.OUT, initial=GPIO.HIGH)
         GPIO.setup(self.BOOT_PIN, GPIO.OUT, initial=GPIO.HIGH)
@@ -88,6 +89,8 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         """Flashes code to the stack. For MIDAS, uses environment `mcu_hilsim`"""
         # https://www.martinloren.com/how-to/fashing-esp32/
         if(util.os_interface.is_raspberrypi()):
+            GPIO.output(self.RESET_PIN, GPIO.HIGH)
+            GPIO.output(self.BOOT_PIN, GPIO.HIGH)
             pio.pio_build("mcu_main", callback=self.server.defer)
             # Hold down both pins
             GPIO.output(self.RESET_PIN, GPIO.LOW)
