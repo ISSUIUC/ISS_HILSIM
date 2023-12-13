@@ -66,6 +66,7 @@ def pio_upload(build_target=None, callback=None):
 
 
 def pio_clean(build_target=None, callback=None):
+    return
     """Shortcut for `build clean` in platformio."""
     if (build_target is None):
         run_script_threaded(['run', '--target', 'clean', '-s'], callback=callback)
