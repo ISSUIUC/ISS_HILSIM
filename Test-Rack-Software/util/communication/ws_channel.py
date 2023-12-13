@@ -1,7 +1,6 @@
 import util.communication.communication_interface as communication_interface
 import socketio
 from typing import List
-import asyncio
 
 
 class ClientWebsocketConnection(communication_interface.CommunicationChannel):
@@ -43,7 +42,7 @@ class ClientWebsocketConnection(communication_interface.CommunicationChannel):
 
 
 class WebsocketChannel(communication_interface.CommunicationChannel):
-    websocket_client: socketio.AsyncClient = None
+    websocket_client: socketio.Client = None
     """websocket ClientConnection which handles the basic communication layer"""
     websocket_location: str = ""
     """Location for the websocket connection, is the first part of the URI (i.e: http://localhost)"""
@@ -58,7 +57,7 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
                  websocket_path: str = "") -> None:
         self.websocket_location = websocket_location
         self.websocket_path = websocket_path
-        self.websocket_client = socketio.AsyncClient()
+        self.websocket_client = socketio.Client()
 
         @self.websocket_client.on('connect')
         def connect():
@@ -76,10 +75,10 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         def dc(sid):
             print("DCED!", sid)
 
-        asyncio.run(self.open())
+        self.open()
 
-    async def open(self) -> None:
-        await self.websocket_client.connect(
+    def open(self) -> None:
+        self.websocket_client.connect(
             self.websocket_location,
             socketio_path=self.websocket_path)
         self.is_open = True
@@ -101,7 +100,7 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         return out_temp
 
     def write(self, data: str) -> None:
-        asyncio.run(self.websocket_client.emit("wsdataresponse", data))
+        self.websocket_client.emit("wsdataresponse", data)
 
 
 connected_websockets: List[WebsocketChannel] = []

@@ -18,7 +18,7 @@ import serial
 try:
     import RPi.GPIO as GPIO
 except:
-    print("Unable to import Rpi.GPIO -- Ignoring")
+    print("(config) WARNING: unable to import RPi.GPIO (Ignoring import)")
 
 
 import util.communication.packets as pkt
