@@ -12,6 +12,7 @@ Developed by the Kamaji team, 2023"""
 
 import threading
 import datetime
+import os
 import time
 import traceback
 from typing import List
@@ -190,6 +191,24 @@ class BoardThread(threading.Thread):
             (jobs.JobStatus.SUCCESS.value,
              packet.data["job_data"]["job_id"]))
         conn.commit()
+
+        # Create directory
+        cursor.execute("SELECT * FROM hilsim_runs WHERE run_id = %s", (packet.data["job_data"]["job_id"],))
+        results = cursor.fetchall()
+        if(len(results) != 0):
+            output_dir = database.convert_database_tuple(cursor, results[0]).output_path
+            os.mkdirs(output_dir)
+            text = packet.raw_data
+            if len(text) == 0:
+                text = "No data :( Why Zhu Li?"
+            out_file = os.path.join(output_dir, "output.txt")
+            fuke = open(out_file, "w")
+            fuke.write(text)
+            fuke.flush()
+            fuke.close()
+        else:
+            # No jobs :'(
+            pass
 
     def handle_packet(self, packet):
         if (packet.packet_type == packets.DataPacketType.IDENT):
