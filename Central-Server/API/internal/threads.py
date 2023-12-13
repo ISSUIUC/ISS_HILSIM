@@ -169,7 +169,7 @@ class BoardThread(threading.Thread):
         print(
             f"(comm:#{self.thread_id})",
             f"[run_job]",
-            f"Using given config to initialize job on linked board")
+            f"Using given config to initialize job on linked board", flush=True)
         # Send the job by adding it to the packet buffer (See:
         # packets.DataPacketBuffer)
         self.packet_buffer.add(self.cur_job_config)
@@ -197,7 +197,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Sent ACK to linked board")
+                f"Sent ACK to linked board", flush=True)
             self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
             self.board_type = packet.data["board_type"]
         elif (packet.packet_type == packets.DataPacketType.READY):
@@ -205,7 +205,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Recieved READY signal from linked board")
+                f"Recieved READY signal from linked board", flush=True)
             # Reset all job flags
             self.is_ready = True
             self.cur_job_config = None
@@ -232,7 +232,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[job done]",
-                f"This board has finished a job and has moved into cleanup")
+                f"This board has finished a job and has moved into cleanup", flush=True)
         elif (packet.packet_type == packets.DataPacketType.JOB_UPDATE):
             print(packet.data, flush=True)
             # self.job_status.current_action = packet.data["job_status"]["current_action"]
@@ -249,7 +249,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Handling packet {packet}")
+                f"Handling packet {packet}", flush=True)
             self.last_check = time.time()
             self.handle_packet(packet)
 
