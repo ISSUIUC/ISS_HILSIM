@@ -4,6 +4,8 @@ import collections
 
 import psycopg2
 
+import util.test_env as testing
+
 DATABASE_PORT = 5432  # Default postgres port
 
 
@@ -77,17 +79,15 @@ def generate_jobs_table():
         conn.close()
         cursor.close()
     else:
+        # If we are in the testing environment, we need to clear the database, even if it exists.
         print("(generate_jobs_table) Detecting testing environment", flush=True)
-        try:
-            if (os.environ['USE_TESTING_ENVIRONMENT'] == "true"):
-                print("(generate_jobs_table) Detected testing environment. Resetting database.", flush=True)
-                try:
-                    cursor.execute("DELETE FROM hilsim_runs")
-                    print("(generate_jobs_table) Database reset successfully", flush=True)
-                except Exception as e:
-                    print("(generate_jobs_table) Database error:", e)
-                    print("(generate_jobs_table) Failed to reset database. Continuing..", flush=True)
-            else:
-                print("(generate_jobs_table) Non-testing environment detected", flush=True)
-        except:
+        if(testing.is_test_environment()):
+            print("(generate_jobs_table) Detected testing environment. Resetting database.", flush=True)
+            try:
+                cursor.execute("DELETE FROM hilsim_runs")
+                print("(generate_jobs_table) Database reset successfully", flush=True)
+            except Exception as e:
+                print("(generate_jobs_table) Database error:", e)
+                print("(generate_jobs_table) Failed to reset database. Continuing..", flush=True)
+        else:
             print("(generate_jobs_table) Non-testing environment detected", flush=True)

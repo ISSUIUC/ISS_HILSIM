@@ -39,7 +39,6 @@ from flask_socketio import SocketIO
 from waitress import serve
 from blueprints.jobs_blueprint import jobs_blueprint
 from blueprints.perms import perms_blueprint
-from blueprints.tests import tests_blueprint
 from apiflask import APIFlask
 from flask_cors import CORS
 
@@ -63,7 +62,6 @@ app = APIFlask(
     static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(perms_blueprint)
-app.register_blueprint(tests_blueprint)
 CORS(app)
 
 # Initialize datastreamer connectiosn

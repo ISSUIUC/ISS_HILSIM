@@ -25,22 +25,14 @@ import util.communication.ws_channel as websocket_channel
 import util.communication.packets as packets
 import internal.database as database
 import internal.jobs as jobs
+import util.test_env
+import util.datastreamer_connection as dsconn
 
 
 GLOBAL_BOARD_ID = 0  # Tracking ID for board numbers
 """GLOBAL_BOARD_ID describes the current tracking ID for boards active in the Kamaji service. Whenever
 a new board is generated, it is assigned a new board ID equivalent to this variable value, then it is incremented."""
 
-
-class DatastreamerConnection():
-    """This class links a single thread to a communication channel. Instances are created and added to a list to indicate the nessecity of spinning up new datastreamer threads."""
-
-    def __init__(
-            self,
-            thread_name,
-            communication_channel: websocket_channel.ClientWebsocketConnection) -> None:
-        self.thread_name = thread_name
-        self.communicaton_channel = communication_channel
 
 
 class WebsocketThread(threading.Thread):
@@ -314,7 +306,7 @@ class BoardManagerThread(threading.Thread):
     """This thread is the main export of `threads.py`, it handles all datastreamer communication internally."""
     threads: List[BoardThread] = []
     """Datastreamer threads"""
-    spin_up_queue: List[DatastreamerConnection] = []
+    spin_up_queue: List[dsconn.DatastreamerConnection] = []
     """Queue that holds which threads need to be spun up."""
 
     ws_thread: WebsocketThread = None
@@ -444,11 +436,14 @@ class BoardManagerThread(threading.Thread):
 
         # Datastreamer websocket implementation
         def ws_on_connect(sid, environ):
-            self.add_thread(
-                DatastreamerConnection(
+            conn = dsconn.DatastreamerConnection(
                     sid, websocket_channel.ClientWebsocketConnection(
-                        self.ws_thread.socketio_server, sid)))
-
+                        self.ws_thread.socketio_server, sid))
+            if(not util.test_env.is_test_environment()):
+                self.add_thread(conn)
+            else:
+                util.test_env.datastreamer_comp_test_hook(conn)
+            
         def ws_on_message(sid, data):
             print(sid, ": ", data)
 
