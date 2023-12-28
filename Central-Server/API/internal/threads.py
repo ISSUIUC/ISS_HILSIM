@@ -197,7 +197,7 @@ class BoardThread(threading.Thread):
         results = cursor.fetchall()
         if(len(results) != 0):
             output_dir = database.convert_database_tuple(cursor, results[0]).output_path
-            os.mkdirs(output_dir)
+            os.makedirs(output_dir)
             text = packet.raw_data
             if len(text) == 0:
                 text = "No data :( Why Zhu Li?"
