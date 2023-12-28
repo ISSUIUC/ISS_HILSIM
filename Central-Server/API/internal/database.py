@@ -76,3 +76,18 @@ def generate_jobs_table():
         conn.commit()
         conn.close()
         cursor.close()
+    else:
+        print("(generate_jobs_table) Detecting testing environment", flush=True)
+        try:
+            if (os.environ['USE_TESTING_ENVIRONMENT'] == "true"):
+                print("(generate_jobs_table) Detected testing environment. Resetting database.", flush=True)
+                try:
+                    cursor.execute("DELETE FROM hilsim_runs")
+                    print("(generate_jobs_table) Database reset successfully", flush=True)
+                except Exception as e:
+                    print("(generate_jobs_table) Database error:", e)
+                    print("(generate_jobs_table) Failed to reset database. Continuing..", flush=True)
+            else:
+                print("(generate_jobs_table) Non-testing environment detected", flush=True)
+        except:
+            print("(generate_jobs_table) Non-testing environment detected", flush=True)
