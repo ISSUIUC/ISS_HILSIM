@@ -7,6 +7,7 @@ class PlatformMeta(AVMeta.PlatformMetaInterface):
     default_branch = ""
     # Platformio subdirectory (in relation to the repository itself)
     platformio_subdirectory = ""
+    kamaji_target = "test"
 
     def __init__(self, file: str) -> None:
         super().__init__(file)

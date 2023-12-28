@@ -11,6 +11,8 @@ class PlatformMetaInterface:
     """The subdirectory of the platformio directory, in relation to the repository itself"""
     default_branch = ""
     """The github default branch"""
+    kamaji_target = "main"
+    """Which kamaji target to use -- `main`, `test`, etc.."""
 
     def __init__(self, file: str) -> None:
         self.remote_path = os.path.join(os.path.dirname(file), './remote')

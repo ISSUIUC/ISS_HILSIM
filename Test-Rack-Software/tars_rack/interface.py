@@ -9,6 +9,7 @@
 import util.git_commands as git
 import util.pio_commands as pio
 import util.serial_wrapper as server
+import util.dynamic_url
 import tars_rack.av_platform.csv_datastream as csv_datastream
 import pandas
 import io

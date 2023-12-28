@@ -13,7 +13,7 @@ import midas_rack.platform_meta as MIDASmkImeta  # noqa
 import dummy_rack.platform_meta as DUMMYmeta  # noqa
 
 # == EDIT THE VARIABLE BELOW TO CHANGE WHICH METADATA IS USED ==
-use_meta = MIDASmkImeta.meta
+use_meta = DUMMYmeta.meta
 """Which `platform_meta.py` file should we use?"""
 
 # ==============================================================
@@ -27,7 +27,7 @@ import midas_rack.interface as MIDASmkI  # noqa
 import dummy_rack.interface as DUMMY  # noqa
 
 # == EDIT THE VARIABLE BELOW TO CHANGE WHICH INTERFACE IS USED ==
-use_interface = MIDASmkI
+use_interface = DUMMY
 """Which interface should this testing rack use?"""
 # ===================== OTHER CONFIGURATION =====================
 preferred_communication_channel = CommunicationChannelType.WEBSOCKET
@@ -35,7 +35,7 @@ preferred_communication_channel = CommunicationChannelType.WEBSOCKET
 
 
 # ===============================================================
-api_url = util.dynamic_url.get_dynamic_url()
+api_url = util.dynamic_url.get_dynamic_url(use_meta.kamaji_target)
 use_interface.av_instance.handle_init()
 
 # Post-config setup
