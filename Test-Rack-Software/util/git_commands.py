@@ -22,7 +22,7 @@ def run_script(arg_list):
         str(arg_list) +
         "]")
     script_dir = os.path.join(os.path.dirname(__file__), "./remote_command.py")
-    args = ['python', script_dir]
+    args = [cfg.python_root + 'python', script_dir]
     for arg in arg_list:
         args.append(arg)
     subprocess.check_call(args)
@@ -31,7 +31,6 @@ def run_script(arg_list):
 
 def remote_clone():
     """Clones the repository defined in the config"""
-    print("Exists", config.remote_path)
     if (os.path.exists(config.remote_path)):
         print("(git_commands) Remote already exists, skipping [remote_clone]!")
     else:

@@ -12,6 +12,7 @@ Developed by the Kamaji team, 2023"""
 
 import threading
 import datetime
+import os
 import time
 import traceback
 from typing import List
@@ -24,22 +25,14 @@ import util.communication.ws_channel as websocket_channel
 import util.communication.packets as packets
 import internal.database as database
 import internal.jobs as jobs
+import util.test_env
+import util.datastreamer_connection as dsconn
 
 
 GLOBAL_BOARD_ID = 0  # Tracking ID for board numbers
 """GLOBAL_BOARD_ID describes the current tracking ID for boards active in the Kamaji service. Whenever
 a new board is generated, it is assigned a new board ID equivalent to this variable value, then it is incremented."""
 
-
-class DatastreamerConnection():
-    """This class links a single thread to a communication channel. Instances are created and added to a list to indicate the nessecity of spinning up new datastreamer threads."""
-
-    def __init__(
-            self,
-            thread_name,
-            communication_channel: websocket_channel.ClientWebsocketConnection) -> None:
-        self.thread_name = thread_name
-        self.communicaton_channel = communication_channel
 
 
 class WebsocketThread(threading.Thread):
@@ -169,7 +162,7 @@ class BoardThread(threading.Thread):
         print(
             f"(comm:#{self.thread_id})",
             f"[run_job]",
-            f"Using given config to initialize job on linked board")
+            f"Using given config to initialize job on linked board", flush=True)
         # Send the job by adding it to the packet buffer (See:
         # packets.DataPacketBuffer)
         self.packet_buffer.add(self.cur_job_config)
@@ -191,13 +184,31 @@ class BoardThread(threading.Thread):
              packet.data["job_data"]["job_id"]))
         conn.commit()
 
+        # Create directory
+        cursor.execute("SELECT * FROM hilsim_runs WHERE run_id = %s", (packet.data["job_data"]["job_id"],))
+        results = cursor.fetchall()
+        if(len(results) != 0):
+            output_dir = database.convert_database_tuple(cursor, results[0]).output_path
+            os.makedirs(output_dir)
+            text = packet.raw_data
+            if len(text) == 0:
+                text = "No data :( Why Zhu Li?"
+            out_file = os.path.join(output_dir, "output.txt")
+            fuke = open(out_file, "w")
+            fuke.write(text)
+            fuke.flush()
+            fuke.close()
+        else:
+            # No jobs :'(
+            pass
+
     def handle_packet(self, packet):
         if (packet.packet_type == packets.DataPacketType.IDENT):
             # Identify this board to the server, send ACK packet.
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Sent ACK to linked board")
+                f"Sent ACK to linked board", flush=True)
             self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
             self.board_type = packet.data["board_type"]
         elif (packet.packet_type == packets.DataPacketType.READY):
@@ -205,7 +216,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Recieved READY signal from linked board")
+                f"Recieved READY signal from linked board", flush=True)
             # Reset all job flags
             self.is_ready = True
             self.cur_job_config = None
@@ -232,7 +243,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[job done]",
-                f"This board has finished a job and has moved into cleanup")
+                f"This board has finished a job and has moved into cleanup", flush=True)
         elif (packet.packet_type == packets.DataPacketType.JOB_UPDATE):
             print(packet.data, flush=True)
             # self.job_status.current_action = packet.data["job_status"]["current_action"]
@@ -249,7 +260,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Handling packet {packet}")
+                f"Handling packet {packet}", flush=True)
             self.last_check = time.time()
             self.handle_packet(packet)
 
@@ -271,10 +282,10 @@ class BoardThread(threading.Thread):
             self.packet_buffer.clear_input_buffer()
 
             time.sleep(1)
-            if (time.time() - self.last_check > 120):
+            """if (time.time() - self.last_check > 69420): #nice
                 # Remove tars if we can't detect it
                 print("Terminated", flush=True)
-                self.terminate()
+                self.terminate()"""
             if not self.communication_channel.socket_open():
                 print(
                     "Terminated due to communication channel termination",
@@ -295,7 +306,7 @@ class BoardManagerThread(threading.Thread):
     """This thread is the main export of `threads.py`, it handles all datastreamer communication internally."""
     threads: List[BoardThread] = []
     """Datastreamer threads"""
-    spin_up_queue: List[DatastreamerConnection] = []
+    spin_up_queue: List[dsconn.DatastreamerConnection] = []
     """Queue that holds which threads need to be spun up."""
 
     ws_thread: WebsocketThread = None
@@ -425,11 +436,14 @@ class BoardManagerThread(threading.Thread):
 
         # Datastreamer websocket implementation
         def ws_on_connect(sid, environ):
-            self.add_thread(
-                DatastreamerConnection(
+            conn = dsconn.DatastreamerConnection(
                     sid, websocket_channel.ClientWebsocketConnection(
-                        self.ws_thread.socketio_server, sid)))
-
+                        self.ws_thread.socketio_server, sid))
+            if(not util.test_env.is_test_environment()):
+                self.add_thread(conn)
+            else:
+                util.test_env.datastreamer_comp_test_hook(conn)
+            
         def ws_on_message(sid, data):
             print(sid, ": ", data)
 

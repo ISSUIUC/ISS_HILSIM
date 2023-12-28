@@ -24,7 +24,7 @@ def clone_repo():
     Clone the repository defined in config into the directory defined in config. (Usually ./remote)
     """
     print("(git_commands) Cloning repository..")
-    print("ASDF", config_meta.repository_url)
+    print("(git_commands) Cloning", config_meta.repository_url)
     Repo.clone_from(config_meta.repository_url, config_meta.remote_path)
 
 
@@ -35,9 +35,6 @@ def reset_repo():
     repo = Repo(config_meta.remote_path)
     print("(git_commands) Stashing changes..")
     repo.git.checkout(".")
-    print("(git_commands) Checking-out and pulling origin/master..")
-    repo.git.checkout("master")
-    repo.git.pull()
 
 
 def pull_branch(branch):
@@ -67,6 +64,7 @@ if (argc == 2):
         exit(0)
     if (sys.argv[1] == "reset"):
         reset_repo()  # Reset command implementation
+        pull_branch(config_meta.default_branch)
         exit(0)
 
     print(

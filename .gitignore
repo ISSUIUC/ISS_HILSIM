@@ -7,3 +7,4 @@ node_modules/
 # secrets/
 node_modules/
 .env
+Central-Server/API/output
