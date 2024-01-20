@@ -143,91 +143,103 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         print("(job_setup) deferred TARS port control to platformio")
 
         if (self.job.pull_type == pkt.JobData.GitPullType.BRANCH):
-            try:
-                self.av_interface.code_reset()
-
-                # Check for defer (This may be DRY, but there aren't many better
-                # ways to do this --MK)
-                self.server.defer()
-                if (self.server.signal_abort):
-                    self.server.state.try_transition(
-                        Datastreamer.ServerStateController.ServerState.JOB_ERROR)
-                    return False, "Abort signal recieved"
-
-                self.av_interface.code_pull(self.job.pull_target)
-                job = self.server.current_job_data
-                accepted_status = pkt.JobStatus(
-                    pkt.JobStatus.JobState.SETUP,
-                    "COMPILE_READY",
-                    f"Finished pre-compile setup on job {str(job.job_id)}")
-                self.server.packet_buffer.add(
-                    pkt.CL_JOB_UPDATE(accepted_status, ""))
-
-                # Check for defer (This may be DRY, but there aren't many better
-                # ways to do this --MK)
-                self.server.defer()
-                if (self.server.signal_abort):
-                    self.server.state.try_transition(
-                        Datastreamer.ServerStateController.ServerState.JOB_ERROR)
-                    return False, "Abort signal recieved"
-
-                self.av_interface.code_flash()
-
-                job = self.server.current_job_data
-                accepted_status = pkt.JobStatus(
-                    pkt.JobStatus.JobState.SETUP,
-                    "COMPILED",
-                    f"Finished code flash on job {str(job.job_id)}")
-                self.server.packet_buffer.add(
-                    pkt.CL_JOB_UPDATE(accepted_status, ""))
-
-                # Check for defer (This may be DRY, but there aren't many better
-                # ways to do this --MK)
-                self.server.defer()
-                if (self.server.signal_abort):
-                    self.server.state.try_transition(
-                        Datastreamer.ServerStateController.ServerState.JOB_ERROR)
-                    return False, "Abort signal recieved"
-
-                # Wait for the port to open back up (Max wait 10s)
-                start = time.time()
-                while (time.time() < start + 10):
-                    # Check for defer (This may be DRY, but there aren't many
-                    # better ways to do this --MK)
-                    self.server.defer()
-                    if (self.server.signal_abort):
-                        self.server.state.try_transition(
-                            Datastreamer.ServerStateController.ServerState.JOB_ERROR)
-                        return False, "Abort signal recieved"
-
-                    try:
-                        if (self.av_interface.TARS_port.is_open):
-                            return True, "Setup Complete"
-                        self.av_interface.TARS_port.open()
-                        print(
-                            "\n(job_setup) Successfully re-opened MIDAS port (" +
-                            self.av_interface.TARS_port.serial_port.name +
-                            ")")
-                        return True, "Setup Complete"
-                    except Exception as e:
-                        print(e)
-                        print("")
-                        time_left = abs((start + 10) - time.time())
-                        print(
-                            f"(job_setup) attempting to re-open tars port.. ({time_left:.1f}s)",
-                            end="\r")
-                return False, "Unable to re-open avionics COM Port"
-
-            except Exception as e:
-                print("(job_setup) Job setup failed")
-                print(e)
-                print(traceback.format_exc())
-                return False, "Setup failed: " + str(e)
+            return self.pull_branch()
         elif (self.job.pull_type == pkt.JobData.GitPullType.COMMIT):
             raise NotImplementedError(
                 "Commit-based pulls are not implemented yet.")
 
     # Turns a raw CSV string to a Pandas dataframe
+    def pull_branch(self):
+        try:
+            self.av_interface.code_reset()
+
+            # Check for defer (This may be DRY, but there aren't many better
+            # ways to do this --MK)
+            self.server.defer()
+            if (self.server.signal_abort):
+                self.server.state.try_transition(
+                    Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                return False, "Abort signal recieved"
+
+            self.av_interface.code_pull(self.job.pull_target)
+            job = self.server.current_job_data
+            accepted_status = pkt.JobStatus(
+                pkt.JobStatus.JobState.SETUP,
+                "COMPILE_READY",
+                f"Finished pre-compile setup on job {str(job.job_id)}")
+            self.server.packet_buffer.add(
+                pkt.CL_JOB_UPDATE(accepted_status, ""))
+
+            # Check for defer (This may be DRY, but there aren't many better
+            # ways to do this --MK)
+            self.server.defer()
+            if (self.server.signal_abort):
+                self.server.state.try_transition(
+                    Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                return False, "Abort signal recieved"
+
+            self.av_interface.code_flash()
+
+            job = self.server.current_job_data
+            accepted_status = pkt.JobStatus(
+                pkt.JobStatus.JobState.SETUP,
+                "COMPILED",
+                f"Finished code flash on job {str(job.job_id)}")
+            self.server.packet_buffer.add(
+                pkt.CL_JOB_UPDATE(accepted_status, ""))
+
+            # Check for defer (This may be DRY, but there aren't many better
+            # ways to do this --MK)
+            self.server.defer()
+            if (self.server.signal_abort):
+                self.server.state.try_transition(
+                    Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                return False, "Abort signal recieved"
+
+            # Wait for the port to open back up (Max wait 10s)
+            start = time.time()
+            while (time.time() < start + 10):
+                # Check for defer (This may be DRY, but there aren't many
+                # better ways to do this --MK)
+                self.server.defer()
+                if (self.server.signal_abort):
+                    self.server.state.try_transition(
+                        Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                    return False, "Abort signal recieved"
+
+                try:
+                    if (self.av_interface.TARS_port.is_open):
+                        return True, "Setup Complete"
+                    self.av_interface.TARS_port.open()
+
+                    magic = self.av_interface.TARS_port.read_until()
+                    if magic != [69, 110, 117, 109, 99, 108, 97, 119]:
+                        # Then it's the same
+                        print("Error: Magic number mismatch, it might not be MIDAS", flush=True)
+                    # Some other miscellaneous data
+                    git_hash = self.av_interface.TARS_port.read_until()
+                    compile_time = self.av_interface.TARS_port.read_until()
+                    compile_date = self.av_interface.TARS_port.read_until()
+                    print("Pulling ", git_hash, " from ", compile_date, " ", compile_time, flush=True)
+                    print(
+                        "\n(job_setup) Successfully re-opened MIDAS port (" +
+                        self.av_interface.TARS_port.serial_port.name +
+                        ")")
+                    return True, "Setup Complete"
+                except Exception as e:
+                    print(e)
+                    print("")
+                    time_left = abs((start + 10) - time.time())
+                    print(
+                        f"(job_setup) attempting to re-open tars port.. ({time_left:.1f}s)",
+                        end="\r")
+            return False, "Unable to re-open avionics COM Port"
+
+        except Exception as e:
+            print("(job_setup) Job setup failed")
+            print(e)
+            print(traceback.format_exc())
+            return False, "Setup failed: " + str(e)
 
     def raw_csv_to_dataframe(self, raw_csv) -> pandas.DataFrame:
         # Get column names
