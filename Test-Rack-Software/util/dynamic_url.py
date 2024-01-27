@@ -1,7 +1,7 @@
 import requests
 
 api_source = "https://raw.githubusercontent.com/ISSUIUC/ISS_HILSIM/active_server_url/server_url.txt"
-api_default = "http://localhost"
+api_default = "http://localhost/"
 
 def get_dynamic_url(kamaji_target="main") -> str:
     """Retrieves the api url for kamaji
@@ -9,8 +9,7 @@ def get_dynamic_url(kamaji_target="main") -> str:
     if api_source is not None:
         result = requests.get(api_source)
         try:
-            json = result.json()
-            return json[kamaji_target]
+            return result.content.decode()
         except Exception as e:
             print("Failed to retrieve dynamic url:", e)
             return api_default
