@@ -1,6 +1,6 @@
 import requests
 
-api_source = "https://jsonblob.com/api/jsonBlob/1182790336216162304"
+api_source = "https://raw.githubusercontent.com/ISSUIUC/ISS_HILSIM/active_server_url/server_url.txt"
 api_default = "http://localhost"
 
 def get_dynamic_url(kamaji_target="main") -> str:
