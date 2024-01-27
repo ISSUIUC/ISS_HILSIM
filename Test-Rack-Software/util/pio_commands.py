@@ -10,7 +10,7 @@ import sys
 import threading
 import time
 
-COMPILATION_CORE_USAGE = 1
+COMPILATION_CORE_USAGE = 2
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
