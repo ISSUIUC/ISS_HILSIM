@@ -211,8 +211,9 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     if (self.av_interface.TARS_port.is_open):
                         return True, "Setup Complete"
                     self.av_interface.TARS_port.open()
-
-                    magic = self.av_interface.TARS_port.read_until()
+                    print("Read magic")
+                    magic_id = [69, 110, 117, 109, 99, 108, 97, 119]
+                    magic = self.av_interface.TARS_port.read(len(magic_id))
                     if magic != [69, 110, 117, 109, 99, 108, 97, 119]:
                         # Then it's the same
                         print("Error: Magic number mismatch, it might not be MIDAS", flush=True)
