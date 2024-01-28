@@ -90,14 +90,14 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         if(util.os_interface.is_raspberrypi()):
             GPIO.output(self.RESET_PIN, GPIO.HIGH)
             GPIO.output(self.BOOT_PIN, GPIO.HIGH)
-            pio.pio_build("mcu_main", callback=self.server.defer)
+            pio.pio_build("mcu_hilsim", callback=self.server.defer)
             # Hold down both pins
             GPIO.output(self.RESET_PIN, GPIO.LOW)
             GPIO.output(self.BOOT_PIN, GPIO.LOW)
             time.sleep(3)
             # Release reset pin
             GPIO.output(self.RESET_PIN, GPIO.HIGH)
-            pio.pio_upload("mcu_main", callback=self.server.defer)
+            pio.pio_upload("mcu_hilsim", callback=self.server.defer)
             # Release boot pin
             GPIO.output(self.BOOT_PIN, GPIO.HIGH)
         else:
@@ -211,10 +211,12 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     if (self.av_interface.TARS_port.is_open):
                         return True, "Setup Complete"
                     self.av_interface.TARS_port.open()
-
-                    magic = self.av_interface.TARS_port.read_until()
+                    print("Read magic")
+                    magic_id = [69, 110, 117, 109, 99, 108, 97, 119]
+                    magic = self.av_interface.TARS_port.read(len(magic_id))
                     if magic != [69, 110, 117, 109, 99, 108, 97, 119]:
                         # Then it's the same
+                        print(", ".join(magic), flush=True)
                         print("Error: Magic number mismatch, it might not be MIDAS", flush=True)
                     # Some other miscellaneous data
                     git_hash = self.av_interface.TARS_port.read_until()
