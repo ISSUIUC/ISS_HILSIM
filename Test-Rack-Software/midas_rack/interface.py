@@ -19,7 +19,7 @@ try:
     import RPi.GPIO as GPIO
 except:
     print("(config) WARNING: unable to import RPi.GPIO (Ignoring import)")
-
+    import midas_rack.dummyGPIO as GPIO
 
 import util.communication.packets as pkt
 import util.communication.serial_channel as serial_interface
@@ -102,7 +102,8 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
             GPIO.output(self.BOOT_PIN, GPIO.HIGH)
         else:
             # This interface needs to set GPIO pins.
-            raise ValueError("This interface can only be uploaded through the raspberry pi.")
+            pio.pio_build("mcu_hilsim", callback=self.server.defer)
+            pio.pio_upload("mcu_hilsim", callback=self.server.defer)
 
 class HilsimRun(AVInterface.HilsimRunInterface):
     av_interface: MIDASAvionics  # Specify av_interface is TARS-specific!

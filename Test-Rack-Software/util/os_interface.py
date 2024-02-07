@@ -1,5 +1,6 @@
 import os
 import io
+import subprocess
 
 def is_raspberrypi():
     try:

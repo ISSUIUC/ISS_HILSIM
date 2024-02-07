@@ -243,7 +243,6 @@ def main():
     while True:
         Server.tick()
 
-            
         Server.packet_buffer.clear_input_buffer()
 
 

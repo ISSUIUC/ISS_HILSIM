@@ -9,10 +9,10 @@ def get_dynamic_url(kamaji_target="main") -> str:
     if api_source is not None:
         result = requests.get(api_source)
         try:
-            return result.content.decode()
+            return result.content.decode().strip()
         except Exception as e:
             print("Failed to retrieve dynamic url:", e)
-            return api_default
+            return api_default.strip()
     else:
         print("Failed to get dynamic url")
-        return api_default
+        return api_default.strip()
