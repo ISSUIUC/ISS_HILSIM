@@ -213,6 +213,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     if (self.av_interface.TARS_port.is_open):
                         return True, "Setup Complete"
                     self.av_interface.TARS_port.open()
+                    print("(Interface) Opening port")
                     self.av_interface.TARS_port.baudrate(9600)
                     magic_id = [69, 110, 117, 109, 99, 108, 97, 119]
                     magic = self.av_interface.TARS_port.read(len(magic_id))
@@ -224,7 +225,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     git_hash = self.av_interface.TARS_port.read_until()
                     compile_time = self.av_interface.TARS_port.read_until()
                     compile_date = self.av_interface.TARS_port.read_until()
-                    print("Pulling ", git_hash, " from ", compile_date, " ", compile_time, flush=True)
+                    print("(Interface) Pulling ", git_hash, " from ", compile_date, " ", compile_time, flush=True)
                     print(
                         "\n(job_setup) Successfully re-opened MIDAS port (" +
                         self.av_interface.TARS_port.serial_port.name +
