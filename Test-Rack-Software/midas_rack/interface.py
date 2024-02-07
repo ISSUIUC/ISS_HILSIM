@@ -10,6 +10,7 @@ import util.git_commands as git
 import util.pio_commands as pio
 import util.serial_wrapper as server
 import tars_rack.av_platform.csv_datastream as csv_datastream
+import traceback
 import pandas
 import io
 import time
@@ -231,6 +232,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     return True, "Setup Complete"
                 except Exception as e:
                     print(e)
+                    print(traceback.format_exc())
                     print("")
                     time_left = abs((start + 10) - time.time())
                     print(
