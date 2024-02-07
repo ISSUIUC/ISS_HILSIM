@@ -214,21 +214,22 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                         return True, "Setup Complete"
                     self.av_interface.TARS_port.open()
                     print("(Interface) Opening port")
-                    self.av_interface.TARS_port.baudrate(9600)
                     magic_id = [69, 110, 117, 109, 99, 108, 97, 119]
+                    self.av_interface.TARS_port.write([69, 110, 117, 109, 99, 108, 97, 119])
+                    #self.av_interface.TARS_port.baudrate = 9600
                     magic = self.av_interface.TARS_port.read(len(magic_id))
-                    if magic != magic_id:
+                    if magic.decode().strip() != magic_id:
                         # Then it's the same
-                        print(", ".join(magic), flush=True)
+                        print(str(magic), flush=True)
                         print("Error: Magic number mismatch, it might not be MIDAS", flush=True)
                     # Some other miscellaneous data
-                    git_hash = self.av_interface.TARS_port.read_until()
-                    compile_time = self.av_interface.TARS_port.read_until()
-                    compile_date = self.av_interface.TARS_port.read_until()
+                    git_hash = self.av_interface.TARS_port.read_until().decode().strip()
+                    compile_time = self.av_interface.TARS_port.read_until().decode().strip()
+                    compile_date = self.av_interface.TARS_port.read_until().decode().strip()
                     print("(Interface) Pulling ", git_hash, " from ", compile_date, " ", compile_time, flush=True)
                     print(
                         "\n(job_setup) Successfully re-opened MIDAS port (" +
-                        self.av_interface.TARS_port.serial_port.name +
+                        self.av_interface.TARS_port.name +
                         ")")
                     return True, "Setup Complete"
                 except Exception as e:
