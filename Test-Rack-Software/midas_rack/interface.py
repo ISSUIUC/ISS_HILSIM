@@ -231,7 +231,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                         ")")
                     return True, "Setup Complete"
                 except Exception as e:
-                    print(e)
+                    print("(non-fatal) unable to open port: ", e)
                     print(traceback.format_exc())
                     print("")
                     time_left = abs((start + 10) - time.time())
