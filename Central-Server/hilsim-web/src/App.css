@@ -101,3 +101,13 @@
 .submission-spinner {
   margin-left: 15px;
 }
+
+.kamajidev-card {
+  margin-left: 10px;
+  color: #afa;
+  font-weight: bold;
+}
+
+.nav-left-pad {
+  margin-left: 10px;
+}

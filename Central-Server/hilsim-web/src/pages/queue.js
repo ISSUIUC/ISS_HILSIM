@@ -20,8 +20,11 @@ function Queue() {
           </Col>
           <Col md={9}>
           <QueueList />
+
+          
           </Col>
         </Row>
+
     </Container>
     </div>
     
