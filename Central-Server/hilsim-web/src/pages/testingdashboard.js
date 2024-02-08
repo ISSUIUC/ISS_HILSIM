@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import NavBar from '../components/common/navbar';
 import QueueList from '../components/queuelist';
 import { api_url } from '../dev_config';
@@ -23,10 +23,11 @@ function TestSubmitButton(props) {
         }).then((data) => data.json())
         .then((json_data) => {
           // Reload the page on success (to update queue)
-          window.location.reload()
+          // window.location.reload()
         }).catch((err) => {
             console.log("Couldn't submit")
         })
+        props.refresh(500)
       }
     
     return <Button variant="primary" className='w-100 mb-1' onClick={() => {
@@ -36,11 +37,60 @@ function TestSubmitButton(props) {
 
 
 function TestingDashboard() {
+  const [refreshQueue, setRefreshQueue] = useState(false)
+
+  function refresh(delay) {
+    setTimeout(() => {
+      setRefreshQueue(!refreshQueue);
+    }, delay);
+  }
+
+  useEffect(() => {
+    let i = setInterval(() => {
+      refresh()
+      console.log("shit")
+    }, 1500);
+  }, [])
+
+  function dropdb() {
+    console.log("(admin) attempting db drop")
+    fetch(api_url.trim() + `api/admin/database`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true"
+      },
+      body: JSON.stringify({})
+    }).then((data) => data.json())
+    .then((json_data) => {
+      refresh(500)
+    }).catch((err) => {
+        console.log("Couldn't drop")
+    })
+  }
+
+  function dropqueue() {
+    console.log("(admin) attempting queue drop")
+    fetch(api_url.trim() + `api/admin/queue`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true"
+      },
+      body: JSON.stringify({})
+    }).then((data) => data.json())
+    .then((json_data) => {
+      refresh(500)
+    }).catch((err) => {
+        console.log("Couldn't drop")
+    })
+  }
+  
   return (
     <div>
     <NavBar />
 
-    <Alert variant={'warning'} className='m-2 p-1'>
+    <Alert variant={'info'} className='m-2 p-1'>
           This page is only visible on the Kamaji Development environment. 
     </Alert>
 
@@ -52,8 +102,8 @@ function TestingDashboard() {
                     <Card.Body>
                         <Card.Title>Quick job submission</Card.Title>
                         <Card.Text>
-                            <TestSubmitButton target={"MIDASmkI"} repo="MIDAS-Software" branch="av-1066-midas-hilsim"></TestSubmitButton>
-                            <TestSubmitButton target={"TARSmkIV"} repo="TARS-Software" branch="master"></TestSubmitButton>
+                            <TestSubmitButton refresh={refresh} target={"MIDASmkI"} repo="MIDAS-Software" branch="av-1066-midas-hilsim"></TestSubmitButton>
+                            <TestSubmitButton refresh={refresh} target={"TARSmkIV"} repo="TARS-Software" branch="master"></TestSubmitButton>
                         </Card.Text>
                     </Card.Body>
                 </Card>
@@ -61,16 +111,15 @@ function TestingDashboard() {
                     <Card.Body>
                         <Card.Title>System administration</Card.Title>
                         <Card.Text>
-                            <Button variant="secondary" className='w-100 mb-1'>Refresh queue</Button>
-                            <Button variant="warning" className='w-100 mb-1'>Clear queue</Button>
-                            <Button variant="danger" className='w-100 mb-1'>Clear database</Button>
+                        <Button onClick={() => {refresh()}}variant="secondary" className='w-100 mb-1'>Force queue refresh</Button>
+                        <Button onClick={() => {dropdb()}}variant="danger" className='w-100 mb-1'>Clear queue</Button>
                         </Card.Text>
                     </Card.Body>
                 </Card>
             </TabContainer>
         </Col>
         <Col>
-            <QueueList />
+            <QueueList refresh={refreshQueue} />
         </Col>
       </Row>
     </TabContainer>
