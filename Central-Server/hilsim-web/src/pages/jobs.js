@@ -11,6 +11,7 @@ import NavBar from '../components/common/navbar';
 function Jobs() {
   return (
     <div>
+      
         <NavBar/>
       <Container fluid>
         <h1 style={{textAlign: 'left', fontWeight: 'initial', marginBottom: '10px'}}>
