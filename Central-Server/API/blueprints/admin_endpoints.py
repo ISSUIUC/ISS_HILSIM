@@ -7,7 +7,7 @@ import internal.threads as threads
 
 admin_blueprint = APIBlueprint('admin', __name__)
 
-
+# A reference to the manager thread, imported from main so that we can clear the queue.
 main_thread: threads.BoardManagerThread = None
 def register_main_thread(mt: threads.BoardManagerThread):
     global main_thread
@@ -19,7 +19,7 @@ def delete_q():
     if not (auth.authenticate_request(request)):
         abort(403)
 
-    main_thread.clear_queue()
+    main_thread.clear_queue() # Clears the program queue of the board manager thread.
     return jsonify({"status": "Success"}), 200
 
 @admin_blueprint.route('/admin/database', methods=["DELETE"])
