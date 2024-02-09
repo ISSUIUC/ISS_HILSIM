@@ -2,6 +2,7 @@ import os
 import io
 import subprocess
 
+# Makes the datastreamer only work/ run if the device we are running on is a rasberry pi
 def is_raspberrypi():
     try:
         with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
