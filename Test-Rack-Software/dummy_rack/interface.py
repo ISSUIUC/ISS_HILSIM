@@ -33,6 +33,7 @@ class DummyAvionics(AVInterface.AvionicsInterface):
 
     def power_cycle(self) -> bool:
         time.sleep(1) # Emulate a synchronous power cycle
+        return True
 
     def code_pull(self, git_target: str) -> None:
         time.sleep(1) # Emulate a synchronous code pull
