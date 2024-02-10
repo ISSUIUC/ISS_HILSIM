@@ -46,6 +46,8 @@ class ServerStateController():
         """Fatal fail state (non-recoverable)"""
         JOB_ERROR = 102  # Error during a job
         """Job fail state (recoverable), used for logging errors when a job fails during setup or run"""
+        HALT = 400
+        """End state for standalone datastreamer"""
 
     class Always:
         """A class representing an action that should always be run in a certain state"""

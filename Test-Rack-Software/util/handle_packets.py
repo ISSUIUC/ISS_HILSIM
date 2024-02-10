@@ -9,6 +9,9 @@ def add_transitions(statemachine: Datastreamer.ServerStateController):
     """Add transition events for all packets"""
     jobs.handle_job_transitions(statemachine)
 
+def add_transitions_standalone(statemachine: Datastreamer.ServerStateController):
+    """Add transition events for all packets for a standalone datastreamer"""
+    jobs.handle_standalone_job_transitions(statemachine)
 
 # Always read incoming packets regardless of state
 def handle_server_packets(Server: Datastreamer.DatastreamerServer):

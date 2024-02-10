@@ -109,7 +109,24 @@ def handle_job_transitions(statemachine: Datastreamer.ServerStateController):
         handle_job_runtime_error)
     statemachine.add_transition_event(SState.CLEANUP, SState.READY, job_cleanup)
 
-
+def handle_standalone_job_transitions(statemachine: Datastreamer.ServerStateController):
+    SState = Datastreamer.ServerStateController.ServerState
+    statemachine.add_transition_event(
+        SState.JOB_SETUP,
+        SState.JOB_RUNNING,
+        run_setup_job)
+    statemachine.add_transition_event(
+        SState.JOB_RUNNING, SState.CLEANUP, run_job)
+    statemachine.add_transition_event(
+        SState.JOB_SETUP,
+        SState.JOB_ERROR,
+        handle_job_setup_error)
+    statemachine.add_transition_event(
+        SState.JOB_ERROR,
+        SState.CLEANUP,
+        handle_job_setup_error)
+    statemachine.add_transition_event(SState.CLEANUP, SState.HALT, job_cleanup)
+    
 def handle_job_packet(packet: pkt.DataPacket):
     """Handles all job packets sent by the Kamaji server"""
     SState = Datastreamer.ServerStateController.ServerState
