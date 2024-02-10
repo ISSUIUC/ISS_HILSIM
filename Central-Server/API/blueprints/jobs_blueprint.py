@@ -89,10 +89,10 @@ def job_data(job_id):
     data = cursor.fetchone()
     data = database.convert_database_tuple(cursor, data)
     file_name = data.output_path
-    if os.path.exists(file_name):
+    if os.path.exists(file_name + "/output.txt"):
         try:
-            with open(file_name) as f:
-                return Response(str(f.read()), mimetype='text/csv')
+            with open(file_name + "/output.txt") as f:
+                return Response(str(f.read()), mimetype='text/plain')
         except Exception as e:
             print(f"(/job/id/data) Exception: {e}")
             return "Error with file: " + str(Exception(e)), 500
