@@ -166,6 +166,8 @@ class BoardThread(threading.Thread):
         # Send the job by adding it to the packet buffer (See:
         # packets.DataPacketBuffer)
         self.packet_buffer.add(self.cur_job_config)
+        for packet in self.packet_buffer.packet_buffer:
+            print("--->             ", packet.packet_type, packet.data, flush=True)
         print(
             f"(comm:#{self.thread_id})",
             f"[run_job]",
@@ -239,6 +241,7 @@ class BoardThread(threading.Thread):
         elif (packet.packet_type == packets.DataPacketType.DONE):
             # This packet signifies that a job has finished running
             self.job_running = False
+            # self.has_job_config = False
             self.complete_job(packet)
             print(
                 f"(comm:#{self.thread_id})",
@@ -277,6 +280,7 @@ class BoardThread(threading.Thread):
             # If a board is primed to run a job, run it.
             if self.has_job_config and self.job_running == False and self.is_ready:
                 self.job_running = True
+                self.is_ready = False
                 self.run_job()
 
             self.packet_buffer.clear_input_buffer()
@@ -340,6 +344,7 @@ class BoardManagerThread(threading.Thread):
         cursor.execute(db_query, (jobs.JobStatus.QUEUED.value, self.last_time))
         queued_jobs = cursor.fetchall()
         if len(queued_jobs) > 0:
+            
             # Then get the last one
             struct = database.convert_database_tuple(cursor, queued_jobs[-1])
             self.last_time = struct.submitted_time
@@ -424,6 +429,7 @@ class BoardManagerThread(threading.Thread):
                 pull_target=job.branch,
                 job_author_id=job.user_id)
             packet = packets.SV_JOB(job_data, "")
+            print("(check_jobs) Adding job from check_jobs")
             self.add_job(packet)
 
     def run(self):
