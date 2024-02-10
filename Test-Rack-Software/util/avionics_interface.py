@@ -106,7 +106,7 @@ class HilsimRunInterface(ABC):
         pass
 
     @abstractmethod
-    def step(self, dt: float, send_status) -> tuple[bool, bool, str]:
+    def step(self, dt: float) -> tuple[bool, bool, str]:
         """
         Runs one iteration of the HILSIM loop, with a change in time of dt.
 

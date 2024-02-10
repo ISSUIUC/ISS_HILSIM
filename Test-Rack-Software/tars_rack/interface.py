@@ -9,6 +9,7 @@
 import util.git_commands as git
 import util.pio_commands as pio
 import util.serial_wrapper as server
+import util.dynamic_url
 import tars_rack.av_platform.csv_datastream as csv_datastream
 import pandas
 import io
@@ -104,9 +105,11 @@ class HilsimRun(AVInterface.HilsimRunInterface):
             raise Exception("Setup error: Server.current_job is not defined.")
 
         # get csv data
+        api_url = util.dynamic_url.get_dynamic_url()
+        print("(job_setup TEMP) retrieving dynamic API url @", api_url)
         print("(job_setup TEMP) Retrieving sample datastreamer data")
         csv_object = requests.get(
-            "https://541f-130-126-255-135.ngrok-free.app/api/temp/data")
+            f"{api_url}/api/temp/data")
         csv = csv_object.text
         self.flight_data_raw = csv
         self.flight_data_dataframe = self.raw_csv_to_dataframe(
