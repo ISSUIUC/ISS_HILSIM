@@ -25,7 +25,8 @@ function QueueList(props) {
   }, [setJobQueue, props.refresh])
 
 
-  if(jobQueue.filter((job_data) => job_data.run_status!="SUCCESS").length == 0) {
+    console.log(jobQueue)
+  if(jobQueue.filter((job_data) => {return job_data.run_status!="SUCCESS"}).length == 0) {
     return (
       <Container fluid>
         <Card style={{textAlign: 'left', marginBottom: '10px'}}>

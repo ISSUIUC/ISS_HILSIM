@@ -27,6 +27,7 @@ def delete_db():
     if not (auth.authenticate_request(request)):
         abort(403)
 
+    main_thread.clear_queue() # Clears the program queue of the board manager thread.
     conn = database.connect()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM hilsim_runs")
