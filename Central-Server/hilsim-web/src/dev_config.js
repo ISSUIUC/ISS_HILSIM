@@ -8,7 +8,8 @@
 */
 
 const server_url_request = await fetch("https://raw.githubusercontent.com/ISSUIUC/ISS_HILSIM/active_server_url/server_url.txt");
-const text = await server_url_request.text();
+let text = await server_url_request.text()
+text = text.trim()
 
 await fetch(text).then(response => {
     console.log("Fetched URL is valid.")

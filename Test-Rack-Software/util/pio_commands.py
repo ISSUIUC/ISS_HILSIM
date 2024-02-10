@@ -26,7 +26,7 @@ def run_script_threaded(arg_list, callback: callable = None):
     thr.start()
     while thr.is_alive():
         # Allow time to set up thread and actually let thread to run, since two threads in the same process cannot execute at the same time
-        time.sleep(0.02)
+        # time.sleep(0.02)
         if callback is not None:
             callback()
 

@@ -11,6 +11,7 @@ def is_raspberrypi():
     return False
 
 def get_python_root() -> str:
+    """Retrieves the python root for git and pio commands. Only works on Raspberry Pi!"""
     if is_raspberrypi():
         python_root = "/home/illinoisspacesociety/.platformio/penv/bin/"
         if python_root and python_root[-1] != '/':
