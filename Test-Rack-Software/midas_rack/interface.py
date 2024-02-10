@@ -6,6 +6,11 @@
 # HilsimRun does not need to be exposed, but must derive from avionics_interface.HilsimRun
 # Michael Karpov (2027)
 
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 import util.git_commands as git
 import util.pio_commands as pio
 import util.serial_wrapper as server
@@ -15,6 +20,8 @@ import pandas
 import io
 import time
 import serial
+import csv as csv_package
+from standalone import config as standalone_config
 
 try:
     import RPi.GPIO as GPIO
@@ -66,6 +73,22 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
                 self.TARS_port = comport.serial_port
                 self.ready = True
                 return True
+        
+    def detect_standalone(self) -> bool:
+        ignore_ports = []
+        # We should ignore the server's comport if the chosen server
+        # communication channel is serial..
+        print("(detect_avionics) Attempting to detect avionics")
+        for comport in server.connected_comports:
+            if not (comport in ignore_ports):
+                print(
+                    "(detect_avionics) Detected viable avionics target @ " +
+                    comport.serial_port.name)
+                self.TARS_port = comport.serial_port
+                self.ready = True
+                return True
+        
+        return True
 
     def first_setup(self) -> None:
         git.remote_clone()
@@ -121,6 +144,34 @@ class HilsimRun(AVInterface.HilsimRunInterface):
 
     def get_current_log(self) -> str:
         return "\n".join(self.return_log)
+    
+    def job_setup_standalone(self):
+        print("(job_setup) ABORT flag: ", self.server.signal_abort)
+        if (self.job is None):
+            raise Exception("Setup error: Server.current_job is not defined.")
+
+        # get csv data
+        api_url = util.dynamic_url.get_dynamic_url()
+        print("(job_setup TEMP) retrieving dynamic API url @", api_url)
+        print("(job_setup TEMP) Retrieving sample datastreamer data")
+        csv_object = csv_package.reader(open(f"./standalone/{standalone_config.DATA_FILE_NAME}"))
+
+        csv = csv_object.text
+        self.flight_data_raw = csv
+        self.flight_data_dataframe = self.raw_csv_to_dataframe(
+            self.flight_data_raw)
+        self.flight_data_rows = self.flight_data_dataframe.iterrows()
+        print("(job_setup TEMP) Successfully retrieved sample data")
+
+        # Temporarily close port so code can flash
+        self.av_interface.TARS_port.close()
+        print("(job_setup) deferred TARS port control to platformio")
+
+        if (self.job.pull_type == pkt.JobData.GitPullType.BRANCH):
+            return self.pull_branch()
+        elif (self.job.pull_type == pkt.JobData.GitPullType.COMMIT):
+            raise NotImplementedError(
+                "Commit-based pulls are not implemented yet.")
 
     def job_setup(self):
         print("(job_setup) ABORT flag: ", self.server.signal_abort)

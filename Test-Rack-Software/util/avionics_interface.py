@@ -28,6 +28,13 @@ class AvionicsInterface(ABC):
             "AvionicsInterface.detect method not implemented")
 
     @abstractmethod
+    def detect_standalone(self) -> bool:
+        """Detects any specific avionics stack. Does not require server connection to work. Updates `ready` depending on the result.
+        Additionally, returns the result."""
+        raise NotImplementedError(
+            "AvionicsInterface.detect method not implemented")
+
+    @abstractmethod
     def first_setup(self) -> None:
         """Performs any specific setup for this stack."""
         raise NotImplementedError(
@@ -78,6 +85,15 @@ class HilsimRunInterface(ABC):
         """Returns the current log output from the AV stack"""
         raise NotImplementedError(
             "AvionicsInterface.HilsimRun.get_current_log method not implemented")
+
+    @abstractmethod
+    def job_setup_standalone(self) -> tuple[bool, str]:
+        """Sets up a job to run on a standalone datastreamer (This code will usually be blocking, so it will have to manually call server.defer()!)
+
+
+        @returns A tuple: [job_setup_successful, job_setup_fail_reason]"""
+        raise NotImplementedError(
+            "AvionicsInterface.HilsimRun.job_setup method not implemented")
 
     @abstractmethod
     def job_setup(self) -> tuple[bool, str]:

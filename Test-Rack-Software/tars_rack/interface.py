@@ -55,6 +55,31 @@ class TARSAvionics(AVInterface.AvionicsInterface):
                 self.TARS_port = comport.serial_port
                 self.ready = True
                 return True
+    
+    def detect_standalone(self) -> bool:
+        # For TARS, we need to make sure that we're already connected to the
+        # server
+        print("(detect_avionics) Attempting to detect avionics")
+        if (not self.server.server_comm_channel):
+            print("(detect_avionics) No server detected!")
+            self.ready = False
+            return False
+
+        ignore_ports = []
+        # We should ignore the server's comport if the chosen server
+        # communication channel is serial..
+        if type(self.server.server_comm_channel) == serial_interface.SerialChannel:
+            print("(detect_avionics) Server is using Serial Channel interface")
+            ignore_ports = [self.server.server_comm_channel]
+
+        for comport in server.connected_comports:
+            if not (comport in ignore_ports):
+                print(
+                    "(detect_avionics) Detected viable avionics target @ " +
+                    comport.serial_port.name)
+                self.TARS_port = comport.serial_port
+                self.ready = True
+                return True
 
     def first_setup(self) -> None:
         git.remote_clone()

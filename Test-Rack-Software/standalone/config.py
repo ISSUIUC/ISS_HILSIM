@@ -2,9 +2,15 @@
 # defined avionics interface. This means that by defining which stack you want to use in the
 # next couple of lines, this file automatically tells `main.py` which file
 # to access.
-import util.dynamic_url
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
+from util import dynamic_url
 from util.communication.communication_interface import CommunicationChannelType
-import util.os_interface
+from util import os_interface
 
 # Metadata needs to be imported first, so the avionics system knows what data to use for startup.
 # Import all metaconfigs
@@ -19,7 +25,7 @@ use_meta = MIDASmkImeta.meta
 # ==============================================================
 
 # If it's empty then it is the default python
-python_root = util.os_interface.get_python_root()
+python_root = os_interface.get_python_root()
 
 # Continue by importing all interfaces
 import tars_rack.interface as TARSmkIV  # noqa
@@ -29,3 +35,5 @@ import dummy_rack.interface as DUMMY  # noqa
 # == EDIT THE VARIABLE BELOW TO CHANGE WHICH INTERFACE IS USED ==
 use_interface = MIDASmkI
 """Which interface should this testing rack use?"""
+
+DATA_FILE_NAME = "data.csv"

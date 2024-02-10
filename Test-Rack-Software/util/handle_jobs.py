@@ -36,6 +36,30 @@ def run_setup_job(Server: Datastreamer.DatastreamerServer):
             Datastreamer.ServerStateController.ServerState.JOB_ERROR)
         return False
 
+def run_setup_job_standalone(Server: Datastreamer.DatastreamerServer):
+    """Invokes the avionics system's job setup method.
+
+    Avionics setup methods are generally blocking. Make sure that they properly call Server.defer() when possible."""
+    try:
+        Server.job_active = True
+        job = Server.current_job_data
+        Server.defer()
+
+        current_job: AVInterface.HilsimRunInterface = Server.current_job  # For type hints
+        setup_successful, setup_fail_reason = current_job.job_setup_standalone()
+        if (setup_successful):
+            current_job.post_setup()
+            return True 
+        else:
+            raise Exception("Setup failed: " + setup_fail_reason)
+    except Exception as e:
+        print("(job_setup) Error while setting up job")
+        print(e)
+        print(traceback.format_exc())
+        Server.state.force_transition(
+            Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+        return False
+
 
 def run_job(Server: Datastreamer.DatastreamerServer):
     """Invokes the step() method in the current HilsimRun (plaform-blind)"""
@@ -83,7 +107,7 @@ def job_cleanup(Server: Datastreamer.DatastreamerServer):
 
 
 def handle_job_setup_error(Server: Datastreamer.DatastreamerServer):
-    pass
+    return True
 
 
 def handle_job_runtime_error(Server: Datastreamer.DatastreamerServer):
@@ -114,13 +138,14 @@ def handle_standalone_job_transitions(statemachine: Datastreamer.ServerStateCont
     statemachine.add_transition_event(
         SState.JOB_SETUP,
         SState.JOB_RUNNING,
-        run_setup_job)
+        run_setup_job_standalone)
     statemachine.add_transition_event(
         SState.JOB_RUNNING, SState.CLEANUP, run_job)
     statemachine.add_transition_event(
         SState.JOB_SETUP,
         SState.JOB_ERROR,
         handle_job_setup_error)
+    statemachine.add_transition_pipe(SState.JOB_ERROR, SState.CLEANUP)
     statemachine.add_transition_event(
         SState.JOB_ERROR,
         SState.CLEANUP,

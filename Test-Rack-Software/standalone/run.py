@@ -5,20 +5,28 @@
 # Implement new state machine
 # Add ability to write to this directory (or `./output`) after runs finish.
 # Reuse as much of the already written code as possible.
-import config as standalone_config
-import util.serial_wrapper as connection
-import util.communication.packets as packet
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
+import config
+import job_config
+from util import serial_wrapper as connection
+from util.communication import packets as packet
 import time
-import util.avionics_meta as AVMeta
-import util.handle_packets as handle_packets
-import util.datastreamer_server as Datastreamer
-import util.communication.ws_channel as ws_channel
-import util.communication.communication_interface as comm
+from util import avionics_meta as AVMeta
+from util import datastreamer_server as Datastreamer
+from util.communication import ws_channel as ws_channel
+from util.communication import communication_interface as comm
 import threading
+from util import handle_jobs as jobs
+import util.communication.packets as pkt
 
 
-avionics = standalone_config.use_interface
-av_meta: AVMeta.PlatformMetaInterface = standalone_config.use_meta
+avionics = config.use_interface
+av_meta: AVMeta.PlatformMetaInterface = config.use_meta
 
 def handle_error_state(Server: Datastreamer.DatastreamerServer):
     # Recoverable error
@@ -35,7 +43,7 @@ def handle_first_setup(Server: Datastreamer.DatastreamerServer):
 
 def detect_avionics(Server: Datastreamer.DatastreamerServer):
     try:
-        return avionics.av_instance.detect()
+        return avionics.av_instance.detect_standalone()
     except Exception as e:
         print("(detect_avionics) Detect_avionics encountered an error during the detection process:")
         print(e)
@@ -47,10 +55,13 @@ def on_ready(Server: Datastreamer.DatastreamerServer):
     # we only want to send ready packet if we are not in the process of
     # CYCLE'ing!
     if (not Server.signal_cycle):
-        Server.packet_buffer.add(packet.CL_READY())
         print("(transition_to_ready) Reset fail flags and sent READY packet.")
     else:
         print("(transition_to_ready) In CYCLE process! Cleared fail flag")
+
+def halt(Server: Datastreamer.DatastreamerServer):
+    exit(0)
+    return True
 
 def main():
     Server = Datastreamer.instance
@@ -85,11 +96,27 @@ def main():
         SState.AV_DETECT, SState.READY, detect_avionics)
     
     Server.state.add_success_event(SState.ANY, SState.READY, on_ready)
-    
-    handle_packets.add_transitions_standalone(Server.state)
-    handle_packets.add_always_events(Server.state)
-    
 
+    Server.state.add_always_event(SState.HALT, halt)
+    
+    jobs.handle_standalone_job_transitions(Server.state)
+
+    print()
+
+    raw_csv = ""
+
+    Server.current_job_data = pkt.JobData(job_config.JOB_ID, job_config.PULL_TYPE, 
+                                          job_config.PULL_TARGET, job_config.JOB_TYPE, 
+                                          job_config.JOB_PRIORITY, job_config.JOB_TIMESTEP)
+
+    Server.current_job = avionics.HilsimRun(Server, avionics.av_instance, raw_csv, Server.current_job_data)
+    
+    Server.state.try_transition(SState.JOB_SETUP)
+
+    while True:
+        Server.tick()
+
+        Server.packet_buffer.clear_input_buffer()
 
 if __name__ == "__main__":
     main()

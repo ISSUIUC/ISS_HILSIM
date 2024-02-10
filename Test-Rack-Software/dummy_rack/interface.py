@@ -25,6 +25,9 @@ class DummyAvionics(AVInterface.AvionicsInterface):
     def detect(self) -> bool:
         return True # Emulate successful avionics connection
     
+    def detect_standalone(self) -> bool:
+        return True # Emulate successful avionics connection
+    
     def first_setup(self) -> None:
         time.sleep(1) # Emulate a synchronous git clone
 
