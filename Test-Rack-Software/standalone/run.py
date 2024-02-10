@@ -103,18 +103,19 @@ def main():
 
     print()
 
-    raw_csv = ""
-
-    Server.current_job_data = pkt.JobData(job_config.JOB_ID, job_config.PULL_TYPE, 
-                                          job_config.PULL_TARGET, job_config.JOB_TYPE, 
-                                          job_config.JOB_PRIORITY, job_config.JOB_TIMESTEP)
-
-    Server.current_job = avionics.HilsimRun(Server, avionics.av_instance, raw_csv, Server.current_job_data)
-    
-    Server.state.try_transition(SState.JOB_SETUP)
-
     while True:
         Server.tick()
+
+        if Server.state.server_state == SState.READY:
+            raw_csv = ""
+
+            Server.current_job_data = pkt.JobData(job_config.JOB_ID, job_config.PULL_TYPE, 
+                                                job_config.PULL_TARGET, job_config.JOB_TYPE, 
+                                                job_config.JOB_PRIORITY, job_config.JOB_TIMESTEP)
+
+            Server.current_job = avionics.HilsimRun(Server, avionics.av_instance, raw_csv, Server.current_job_data)
+            
+            Server.state.try_transition(SState.JOB_SETUP)
 
         Server.packet_buffer.clear_input_buffer()
 

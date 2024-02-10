@@ -88,7 +88,7 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
                 self.ready = True
                 return True
         
-        return True
+        return False
 
     def first_setup(self) -> None:
         git.remote_clone()
@@ -154,9 +154,9 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         api_url = util.dynamic_url.get_dynamic_url()
         print("(job_setup TEMP) retrieving dynamic API url @", api_url)
         print("(job_setup TEMP) Retrieving sample datastreamer data")
-        csv_object = csv_package.reader(open(f"./standalone/{standalone_config.DATA_FILE_NAME}"))
+        csv_object = open(f"./Test-Rack-Software/standalone/{standalone_config.DATA_FILE_NAME}").read()
 
-        csv = csv_object.text
+        csv = csv_object
         self.flight_data_raw = csv
         self.flight_data_dataframe = self.raw_csv_to_dataframe(
             self.flight_data_raw)
