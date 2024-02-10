@@ -334,6 +334,9 @@ class BoardManagerThread(threading.Thread):
         self.running = True
         self.last_time = datetime.datetime(2005, 7, 2)
 
+    def clear_queue(self):
+        self.queue = []
+
     def pop_killed_job_back_to_queue(self, job: packets.DataPacket):
         """Used as a callback for board threads, makes unfinished/errored jobs pop back into the queue instead of going into limbo/being discarded"""
         print(

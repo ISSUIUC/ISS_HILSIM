@@ -12,7 +12,8 @@ function JobList() {
 
   useEffect(() => {
     fetch(api_url + `/api/jobs`, {headers: {
-      "ngrok-skip-browser-warning": "true"
+      "ngrok-skip-browser-warning": "true",
+      "Access-Control-Allow-Origin": "*"  
     }})
     .then(response => response.json())
     .then(json_data => {
