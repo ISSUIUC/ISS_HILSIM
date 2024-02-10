@@ -106,8 +106,8 @@ def list_boards():
     for board in m_thread.threads:
         board_list.append({
             "id": board.board_id,
-            "is_ready": board.is_ready,
-            "job_running": board.job_running,
+            "is_ready": board.flags.is_ready,
+            "job_running": board.flags.job_running,
             "board_type": board.board_type,
             "running": board.running
         })
