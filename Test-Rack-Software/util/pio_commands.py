@@ -20,13 +20,13 @@ config = cfg.use_meta
 
 #### Helper functions ####
 
-
 def run_script_threaded(arg_list, callback: callable = None):
     """Runs a platformio command in a subthread. Calls `callback` every iteration."""
     thr = threading.Thread(target=run_script, args=(arg_list,))
     thr.start()
     while thr.is_alive():
-        time.sleep(0.02)
+        # Allow time to set up thread and actually let thread to run, since two threads in the same process cannot execute at the same time
+        # time.sleep(0.02)
         if callback is not None:
             callback()
 
