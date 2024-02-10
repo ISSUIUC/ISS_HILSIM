@@ -111,3 +111,8 @@
 .nav-left-pad {
   margin-left: 10px;
 }
+
+.code-text {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 0.8em;
+}

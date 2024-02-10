@@ -94,7 +94,8 @@ def job_data(job_id):
             with open(file_name) as f:
                 return Response(str(f.read()), mimetype='text/csv')
         except Exception as e:
-            return "Error with file: " + Exception(e), 500
+            print(f"(/job/id/data) Exception: {e}")
+            return "Error with file: " + str(Exception(e)), 500
     else:
         return jsonify({"error": "Output file does not exist"}), 404
 
