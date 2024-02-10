@@ -100,6 +100,26 @@ class BoardThread(threading.Thread):
     """Signifies a single datastreamer board connection."""
     packet_buffer = None  # The output buffer of this thread
 
+    class Flags:
+        has_job_config = False
+        is_ready = False
+        job_running = False
+
+        def take_job(self):
+            self.has_job_config = True
+        
+        def ready_recieved(self):
+            self.has_job_config = False
+            self.is_ready = True
+            self.job_running = False
+        
+        def job_run(self):
+            self.is_ready = False
+            self.job_running = True
+        
+        def done_recieved(self):
+            self.job_running = False
+
     def __init__(
             self,
             thread_name: str,
@@ -118,28 +138,26 @@ class BoardThread(threading.Thread):
         self.communication_channel = communication_channel
         self.thread_id = thread_id
         self.cur_job_config: packets.DataPacket = None
-        self.has_job_config = False
         self.running = True
         self.packet_buffer = packets.DataPacketBuffer()
         self.board_id = board_id
         # True when in READY state (? TODO: check if this is true)
-        self.is_ready = False
-        self.job_running = False  # True when actively running job
         self.board_type = ""
         self.last_check = time.time()
         self.callback = pop_back_callback
         self.job_status: packets.JobStatus = None
+        self.flags = BoardThread.Flags()
 
     def can_take_job(self):
         """Whether the board associated to this thread is ready to take a job"""
-        return not self.has_job_config and self.is_ready
+        return not self.flags.has_job_config and self.flags.is_ready
 
     def take_job(self, config: packets.DataPacket):
         """Assign the given job config to this board
         @config: The JOB packet that contains this config"""
         # Set all flags
         self.cur_job_config = config
-        self.has_job_config = True
+        self.flags.take_job()
 
         # Update the job status in the database
         conn = database.connect()
@@ -154,7 +172,7 @@ class BoardThread(threading.Thread):
         """Drop this thread"""
         # TODO make sure this works properly every time
         self.running = False
-        if self.has_job_config:
+        if self.flags.has_job_config:
             self.callback(self.cur_job_config)
 
     def run_job(self):
@@ -173,7 +191,6 @@ class BoardThread(threading.Thread):
             f"[run_job]",
             f"Job initialization command sent",
             flush=True)
-        self.job_running = True  # Set job flags
 
     def complete_job(self, packet: packets.DataPacket):
         """Called when a job is complete"""
@@ -220,10 +237,9 @@ class BoardThread(threading.Thread):
                 f"[handle_packet]",
                 f"Recieved READY signal from linked board", flush=True)
             # Reset all job flags
-            self.is_ready = True
             self.cur_job_config = None
-            self.has_job_config = False
-            self.job_running = False
+
+            self.flags.ready_recieved()
         elif (packet.packet_type == packets.DataPacketType.HEARTBEAT):
             # Datastreamer packet containing server data.
             # self.last_check = time.time()
@@ -240,7 +256,7 @@ class BoardThread(threading.Thread):
             self.board_type = packet.data["board_type"]
         elif (packet.packet_type == packets.DataPacketType.DONE):
             # This packet signifies that a job has finished running
-            self.job_running = False
+            self.flags.done_recieved()
             # self.has_job_config = False
             self.complete_job(packet)
             print(
@@ -278,9 +294,8 @@ class BoardThread(threading.Thread):
             self.handle_communication(self.packet_buffer.input_buffer)
 
             # If a board is primed to run a job, run it.
-            if self.has_job_config and self.job_running == False and self.is_ready:
-                self.job_running = True
-                self.is_ready = False
+            if self.flags.has_job_config and self.flags.job_running == False and self.flags.is_ready:
+                self.flags.job_run()
                 self.run_job()
 
             self.packet_buffer.clear_input_buffer()
