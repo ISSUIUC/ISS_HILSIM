@@ -35,5 +35,3 @@ import dummy_rack.interface as DUMMY  # noqa
 # == EDIT THE VARIABLE BELOW TO CHANGE WHICH INTERFACE IS USED ==
 use_interface = MIDASmkI
 """Which interface should this testing rack use?"""
-
-DATA_FILE_NAME = "data.csv"

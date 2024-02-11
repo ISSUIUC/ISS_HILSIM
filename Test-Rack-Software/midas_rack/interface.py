@@ -21,7 +21,8 @@ import io
 import time
 import serial
 import csv as csv_package
-from standalone import config as standalone_config
+from standalone import job_config as standalone_config
+
 
 try:
     import RPi.GPIO as GPIO

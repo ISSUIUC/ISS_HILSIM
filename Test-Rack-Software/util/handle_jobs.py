@@ -1,3 +1,9 @@
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
 import util.datastreamer_server as Datastreamer
 import util.communication.packets as pkt
 import config as test_board_config
@@ -5,6 +11,7 @@ import util.avionics_interface as AVInterface
 import time
 import traceback
 import inspect
+import standalone.job_config as job_config
 
 avionics = test_board_config.use_interface
 
@@ -63,23 +70,17 @@ def run_setup_job_standalone(Server: Datastreamer.DatastreamerServer):
 
 def run_job(Server: Datastreamer.DatastreamerServer):
     """Invokes the step() method in the current HilsimRun (plaform-blind)"""
-    dt = time.time() - Server.last_job_step_time
+    # dt = time.time() - Server.last_job_step_time
+    dt = 0.1
     current_job: AVInterface.HilsimRunInterface = Server.current_job  # For type hints
 
     if (Server.signal_abort):
-        job_status = pkt.JobStatus(
-            pkt.JobStatus.JobState.ERROR,
-            "ABORTED_MANUAL",
-            f"Abort signal was sent")
-        Server.packet_buffer.add(
-            pkt.CL_JOB_UPDATE(
-                job_status,
-                current_job.get_current_log()))
         Server.state.force_transition(
             Datastreamer.ServerStateController.ServerState.JOB_ERROR)
         return False
 
     run_finished, run_errored, return_log = current_job.step(dt)
+    Server.av_return_log.append(return_log)
     if (run_finished):
         if (run_errored):
             Server.state.force_transition(
@@ -103,6 +104,19 @@ def job_cleanup(Server: Datastreamer.DatastreamerServer):
     Server.job_active = False
     Server.current_job = None
     Server.current_job_data = None
+    return True
+
+def job_cleanup_standalone(Server: Datastreamer.DatastreamerServer):
+    Server.job_active = False
+    Server.current_job = None
+    Server.current_job_data = None
+
+    to_write = "\n".join(Server.av_return_log)
+
+    with open(f"./Test-Rack-Software/standalone/output/{job_config.RETURN_LOG_OUT_FILE}", 'w') as f:
+        f.write(to_write)
+    Server.av_return_log = []
+
     return True
 
 
@@ -150,7 +164,7 @@ def handle_standalone_job_transitions(statemachine: Datastreamer.ServerStateCont
         SState.JOB_ERROR,
         SState.CLEANUP,
         handle_job_setup_error)
-    statemachine.add_transition_event(SState.CLEANUP, SState.HALT, job_cleanup)
+    statemachine.add_transition_event(SState.CLEANUP, SState.HALT, job_cleanup_standalone)
     
 def handle_job_packet(packet: pkt.DataPacket):
     """Handles all job packets sent by the Kamaji server"""

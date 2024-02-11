@@ -267,6 +267,9 @@ class DatastreamerServer:
     last_job_step_time = time.time()
     """The last time that a job step() was completed"""
 
+    av_return_log = []
+    """What the Avionics returns over the course of a job, used for standalone DS"""
+
     def tick(self):
         """Generic single action on the server. Will perform all server actions by calling transition events and always events.
 

@@ -6,10 +6,7 @@ sys.path.insert(0, os.path.abspath(
 
 import util.communication.packets as pkt
 
-JOB_ID = -1
+DATA_FILE_NAME = "data.csv"
 PULL_TYPE = pkt.JobData.GitPullType.BRANCH
 PULL_TARGET = "main"
-JOB_TYPE = pkt.JobData.JobType.DEFAULT
-JOB_AUTHOR = "N/A"
-JOB_PRIORITY = pkt.JobData.JobPriority.HIGH
-JOB_TIMESTEP = 0.1
+RETURN_LOG_OUT_FILE = "log.txt"

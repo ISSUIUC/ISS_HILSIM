@@ -52,12 +52,7 @@ def detect_avionics(Server: Datastreamer.DatastreamerServer):
 def on_ready(Server: Datastreamer.DatastreamerServer):
     Server.signal_abort = False
 
-    # we only want to send ready packet if we are not in the process of
-    # CYCLE'ing!
-    if (not Server.signal_cycle):
-        print("(transition_to_ready) Reset fail flags and sent READY packet.")
-    else:
-        print("(transition_to_ready) In CYCLE process! Cleared fail flag")
+    print("(transition_to_ready) Reset fail flags and sent READY packet.")
 
 def halt(Server: Datastreamer.DatastreamerServer):
     exit(0)
@@ -109,9 +104,9 @@ def main():
         if Server.state.server_state == SState.READY:
             raw_csv = ""
 
-            Server.current_job_data = pkt.JobData(job_config.JOB_ID, job_config.PULL_TYPE, 
-                                                job_config.PULL_TARGET, job_config.JOB_TYPE, 
-                                                job_config.JOB_PRIORITY, job_config.JOB_TIMESTEP)
+            Server.current_job_data = pkt.JobData(-1, job_config.PULL_TYPE, 
+                                                job_config.PULL_TARGET, pkt.JobData.JobType.DEFAULT, 
+                                                pkt.JobData.JobPriority.HIGH, 0.1)
 
             Server.current_job = avionics.HilsimRun(Server, avionics.av_instance, raw_csv, Server.current_job_data)
             
