@@ -19,7 +19,10 @@ function JobPage() {
                 "Access-Control-Allow-Origin": "*"
               }
         }).then((result) => {
-            console.log(result)
+            result.text().then((res_str) => {
+                setOutput(res_str)
+            })
+            
         }).catch((err) => {
             console.log("job page err", err)
         })
@@ -60,7 +63,7 @@ function JobPage() {
                                     <Card.Subtitle className="mb-2 text-muted">Raw output</Card.Subtitle>
                                     <Card.Text>
                                         <Card className="bg-dark text-white code-text" style={{textAlign: 'left', padding: '5px'}}>
-                                            
+                                            {output}
                                         </Card>
                                         
                                     </Card.Text>
