@@ -3,12 +3,20 @@ import { Container } from 'react-bootstrap';
 import { useState, useRef } from 'react';
 import Button from 'react-bootstrap/Button';
 import Collapse from 'react-bootstrap/Collapse';
+import { useNavigate } from "react-router-dom"
+import { KamajiJobTags } from './jobtags';
 
 function JobItem(props) {
   const [open, setOpen] = useState(false);
   let borderColor = ''
   let has_start_time = false
   let has_end_time = true
+
+  const navigate = useNavigate();
+
+  if(!props.active) {
+    return <></>;
+  }
 
   
   if(props.job_data.run_status=="RUNNING"){
@@ -30,9 +38,11 @@ function JobItem(props) {
             className={"border-3 rounded " + borderColor}
       >
         <Card.Body>
-          <Card.Title>{props.job_data.user_id}</Card.Title>
+          <Card.Title className="cursor-pointer" onClick={() => {
+            navigate(`/job?id=${props.job_data.run_id}`)
+          }}>{props.job_data.run_id} : {props.job_data.user_id}</Card.Title>
           <Card.Text>
-            {props.job_data.run_id}
+            <KamajiJobTags status={props.job_data.run_status}></KamajiJobTags>
           </Card.Text>
           <Card.Text>
             Branch: {props.job_data.branch}

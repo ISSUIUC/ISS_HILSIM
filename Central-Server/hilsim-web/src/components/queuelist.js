@@ -1,11 +1,11 @@
 import Card from 'react-bootstrap/Card';
 import ListGroup from 'react-bootstrap/ListGroup';
-import QueueItem from './queueitem';
 import { Container } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import { api_url } from '../dev_config';
 import { Link } from "react-router-dom";
 import DevOnly from './devonly';
+import JobItem from './jobitem';
 
 function QueueList(props) {
   const [jobQueue, setJobQueue] = useState([]);
@@ -17,15 +17,12 @@ function QueueList(props) {
     }})
     .then(response => response.json())
     .then(json_data => {
-      console.log("to json", json_data);
       setJobQueue(json_data);
     }).catch((err) => {
       console.log("err fetch", err)
     })
   }, [setJobQueue, props.refresh])
 
-
-    console.log(jobQueue)
   if(jobQueue.filter((job_data) => {return job_data.run_status!="SUCCESS"}).length == 0) {
     return (
       <Container fluid>
@@ -41,10 +38,14 @@ function QueueList(props) {
     );
   }
 
+  function should_show_job(job_data) {
+    return job_data.run_status == "QUEUED" ||  job_data.run_status == "RUNNING";
+  }
+
   return (
     <Container fluid>
       {jobQueue.map((job_data) => {
-        return <><QueueItem job_data={job_data} key={job_data.run_id}/>{props.refresh}</>
+        return <><JobItem active={should_show_job(job_data)} job_data={job_data} key={job_data.run_id}/>{props.refresh}</>
       })}
     </Container>
   );
