@@ -68,9 +68,8 @@ def run_setup_job_standalone(Server: Datastreamer.DatastreamerServer):
         return False
 
 
-def run_job(Server: Datastreamer.DatastreamerServer):
+def run_job_standalone(Server: Datastreamer.DatastreamerServer):
     """Invokes the step() method in the current HilsimRun (plaform-blind)"""
-    # dt = time.time() - Server.last_job_step_time
     dt = 0.1
     current_job: AVInterface.HilsimRunInterface = Server.current_job  # For type hints
 
@@ -81,6 +80,36 @@ def run_job(Server: Datastreamer.DatastreamerServer):
 
     run_finished, run_errored, return_log = current_job.step(dt)
     Server.av_return_log.append(return_log)
+    if (run_finished):
+        if (run_errored):
+            Server.state.force_transition(
+                Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+            return False
+        else:
+            print("(job_done) Finished job with job id " +
+                  str(Server.current_job_data.job_id))
+            return True
+    return False
+
+def run_job(Server: Datastreamer.DatastreamerServer):
+    """Invokes the step() method in the current HilsimRun (plaform-blind)"""
+    dt = time.time() - Server.last_job_step_time
+    current_job: AVInterface.HilsimRunInterface = Server.current_job  # For type hints
+
+    if (Server.signal_abort):
+        job_status = pkt.JobStatus(
+            pkt.JobStatus.JobState.ERROR,
+            "ABORTED_MANUAL",
+            f"Abort signal was sent")
+        Server.packet_buffer.add(
+            pkt.CL_JOB_UPDATE(
+                job_status,
+                current_job.get_current_log()))
+        Server.state.force_transition(
+            Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+        return False
+
+    run_finished, run_errored, return_log = current_job.step(dt)
     if (run_finished):
         if (run_errored):
             Server.state.force_transition(
@@ -154,7 +183,7 @@ def handle_standalone_job_transitions(statemachine: Datastreamer.ServerStateCont
         SState.JOB_RUNNING,
         run_setup_job_standalone)
     statemachine.add_transition_event(
-        SState.JOB_RUNNING, SState.CLEANUP, run_job)
+        SState.JOB_RUNNING, SState.CLEANUP, run_job_standalone)
     statemachine.add_transition_event(
         SState.JOB_SETUP,
         SState.JOB_ERROR,

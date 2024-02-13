@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from standalone import config as config
+from standalone import config
 import job_config
 from util import serial_wrapper as connection
 from util.communication import packets as packet
