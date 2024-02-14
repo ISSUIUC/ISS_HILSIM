@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from standalone import config
+import config
 import job_config
 from util import serial_wrapper as connection
 from util.communication import packets as packet
@@ -43,7 +43,7 @@ def handle_first_setup(Server: Datastreamer.DatastreamerServer):
 
 def detect_avionics(Server: Datastreamer.DatastreamerServer):
     try:
-        return avionics.av_instance.detect_standalone()
+        return avionics.av_instance.detect()
     except Exception as e:
         print("(detect_avionics) Detect_avionics encountered an error during the detection process:")
         print(e)
