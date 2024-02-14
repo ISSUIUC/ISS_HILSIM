@@ -70,18 +70,23 @@ def run_setup_job_standalone(Server: Datastreamer.DatastreamerServer):
 
 def run_job_standalone(Server: Datastreamer.DatastreamerServer):
     """Invokes the step() method in the current HilsimRun (plaform-blind)"""
+    print("a")
     dt = 0.1
     current_job: AVInterface.HilsimRunInterface = Server.current_job  # For type hints
-
+    print("b")
     if (Server.signal_abort):
+        print("aborting job")
         Server.state.force_transition(
             Datastreamer.ServerStateController.ServerState.JOB_ERROR)
         return False
-
+    print("c")
     run_finished, run_errored, return_log = current_job.step(dt)
     Server.av_return_log.append(return_log)
+    print("Step func has run", len(Server.av_return_log), "times")
     if (run_finished):
+        print("run fin")
         if (run_errored):
+            print("run error")
             Server.state.force_transition(
                 Datastreamer.ServerStateController.ServerState.JOB_ERROR)
             return False
@@ -89,6 +94,7 @@ def run_job_standalone(Server: Datastreamer.DatastreamerServer):
             print("(job_done) Finished job with job id " +
                   str(Server.current_job_data.job_id))
             return True
+    print("d")
     return False
 
 def run_job(Server: Datastreamer.DatastreamerServer):
@@ -140,7 +146,9 @@ def job_cleanup_standalone(Server: Datastreamer.DatastreamerServer):
     Server.current_job = None
     Server.current_job_data = None
 
-    to_write = "\n".join(Server.av_return_log)
+    # to_write = "\n".join(Server.av_return_log)
+    print("AV log len ", len(Server.av_return_log))
+    to_write = ""
 
     with open(f"./Test-Rack-Software/standalone/output/{job_config.RETURN_LOG_OUT_FILE}", 'w') as f:
         f.write(to_write)
@@ -183,7 +191,7 @@ def handle_standalone_job_transitions(statemachine: Datastreamer.ServerStateCont
         SState.JOB_RUNNING,
         run_setup_job_standalone)
     statemachine.add_transition_event(
-        SState.JOB_RUNNING, SState.CLEANUP, run_job_standalone)
+        SState.JOB_RUNNING, SState.CLEANUP, run_job)
     statemachine.add_transition_event(
         SState.JOB_SETUP,
         SState.JOB_ERROR,

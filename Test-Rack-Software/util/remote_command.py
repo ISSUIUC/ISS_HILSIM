@@ -73,5 +73,6 @@ if (argc == 2):
 if (argc == 3):
     if (sys.argv[1] == "pull"):
         branch_name = sys.argv[2]
+        print("bn", branch_name)
         pull_branch(branch_name)  # Pull command implementation
         exit(0)

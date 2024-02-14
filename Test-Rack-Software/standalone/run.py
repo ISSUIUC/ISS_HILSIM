@@ -60,6 +60,7 @@ def halt(Server: Datastreamer.DatastreamerServer):
 
 def main():
     Server = Datastreamer.instance
+    connection.init_com_ports()
 
      # END Server config setup
     SState = Datastreamer.ServerStateController.ServerState  # SState alias
@@ -105,7 +106,7 @@ def main():
             raw_csv = ""
 
             Server.current_job_data = pkt.JobData(-1, job_config.PULL_TYPE, 
-                                                job_config.PULL_TARGET, pkt.JobData.JobType.DEFAULT, 
+                                                av_meta.default_branch, pkt.JobData.JobType.DEFAULT, 
                                                 pkt.JobData.JobPriority.HIGH, 0.1)
 
             Server.current_job = avionics.HilsimRun(Server, avionics.av_instance, raw_csv, Server.current_job_data)

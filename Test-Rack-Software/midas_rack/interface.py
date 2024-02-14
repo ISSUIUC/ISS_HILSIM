@@ -80,7 +80,7 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         # We should ignore the server's comport if the chosen server
         # communication channel is serial..
         print("(detect_avionics) Attempting to detect avionics")
-        print(" ".join([x for x in server.connected_comports]))
+        print(" ".join([str(x) for x in server.connected_comports]))
         for comport in server.connected_comports:
             if not (comport in ignore_ports):
                 print(
@@ -153,8 +153,6 @@ class HilsimRun(AVInterface.HilsimRunInterface):
             raise Exception("Setup error: Server.current_job is not defined.")
 
         # get csv data
-        api_url = util.dynamic_url.get_dynamic_url()
-        print("(job_setup TEMP) retrieving dynamic API url @", api_url)
         print("(job_setup TEMP) Retrieving sample datastreamer data")
         csv_object = open(f"./Test-Rack-Software/standalone/{standalone_config.DATA_FILE_NAME}").read()
 

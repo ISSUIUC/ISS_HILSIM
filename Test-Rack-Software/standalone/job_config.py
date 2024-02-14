@@ -8,5 +8,4 @@ import util.communication.packets as pkt
 
 DATA_FILE_NAME = "data.csv"
 PULL_TYPE = pkt.JobData.GitPullType.BRANCH
-PULL_TARGET = "main"
 RETURN_LOG_OUT_FILE = "log.txt"

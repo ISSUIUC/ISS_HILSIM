@@ -6,6 +6,12 @@
 # HilsimRun does not need to be exposed, but must derive from avionics_interface.HilsimRun
 # Michael Karpov (2027)
 
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
 import util.git_commands as git
 import util.pio_commands as pio
 import util.serial_wrapper as server
@@ -21,6 +27,7 @@ import traceback
 import util.avionics_interface as AVInterface
 import util.datastreamer_server as Datastreamer
 import requests
+from standalone import job_config as standalone_config
 
 
 class TARSAvionics(AVInterface.AvionicsInterface):
@@ -29,7 +36,7 @@ class TARSAvionics(AVInterface.AvionicsInterface):
     # Doesn't do anything for TARS, but other boards may have initialization
     # packets
     def handle_init(self) -> None:
-        return super().handle_init()
+        pass
 
     def detect(self) -> bool:
         # For TARS, we need to make sure that we're already connected to the
@@ -57,21 +64,9 @@ class TARSAvionics(AVInterface.AvionicsInterface):
                 return True
     
     def detect_standalone(self) -> bool:
+        ignore_ports = []
         # For TARS, we need to make sure that we're already connected to the
         # server
-        print("(detect_avionics) Attempting to detect avionics")
-        if (not self.server.server_comm_channel):
-            print("(detect_avionics) No server detected!")
-            self.ready = False
-            return False
-
-        ignore_ports = []
-        # We should ignore the server's comport if the chosen server
-        # communication channel is serial..
-        if type(self.server.server_comm_channel) == serial_interface.SerialChannel:
-            print("(detect_avionics) Server is using Serial Channel interface")
-            ignore_ports = [self.server.server_comm_channel]
-
         for comport in server.connected_comports:
             if not (comport in ignore_ports):
                 print(
@@ -101,11 +96,14 @@ class TARSAvionics(AVInterface.AvionicsInterface):
         """Flashes code to the stack. For TARS, uses environment `mcu_hilsim`"""
         # For TARS, we need to attempt the code flash twice, since it always
         # fails the first time.
-        try:
-            pio.pio_upload("mcu_hilsim")
-        except BaseException:
-            print("(code_flash) First flash failed, attempting re-flash for Teensy error 1")
-            pio.pio_upload("mcu_hilsim")
+        print("Flashing code")
+        while True:
+            try:
+                pio.pio_upload("mcu_hilsim")
+                break
+            except BaseException:
+                print("(code_flash) First flash failed, attempting re-flash for Teensy error 1")
+                pio.pio_upload("mcu_hilsim")
 
 
 class HilsimRun(AVInterface.HilsimRunInterface):
@@ -230,6 +228,96 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         elif (self.job.pull_type == pkt.JobData.GitPullType.COMMIT):
             raise NotImplementedError(
                 "Commit-based pulls are not implemented yet.")
+    
+    def job_setup_standalone(self):
+        print("(job_setup) ABORT flag: ", self.server.signal_abort)
+        if (self.job is None):
+            raise Exception("Setup error: Server.current_job is not defined.")
+
+        # get csv data
+        print("(job_setup TEMP) Retrieving sample datastreamer data")
+        csv_object = open(f"./Test-Rack-Software/standalone/{standalone_config.DATA_FILE_NAME}").read()
+        csv = csv_object
+        self.flight_data_raw = csv
+        self.flight_data_dataframe = self.raw_csv_to_dataframe(
+            self.flight_data_raw)
+        self.flight_data_rows = self.flight_data_dataframe.iterrows()
+        print("(job_setup TEMP) Successfully retrieved sample data")
+
+        # Temporarily close port so code can flash
+        self.av_interface.TARS_port.close()
+        print("(job_setup) deferred TARS port control to platformio")
+
+        if (self.job.pull_type == pkt.JobData.GitPullType.BRANCH):
+            try:
+                self.av_interface.code_reset()
+
+                # Check for defer (This may be DRY, but there aren't many better
+                # ways to do this --MK)
+                self.server.defer()
+                if (self.server.signal_abort):
+                    self.server.state.try_transition(
+                        Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                    return False, "Abort signal recieved"
+
+                self.av_interface.code_pull(self.job.pull_target)
+                job = self.server.current_job_data
+
+                # Check for defer (This may be DRY, but there aren't many better
+                # ways to do this --MK)
+                self.server.defer()
+                if (self.server.signal_abort):
+                    self.server.state.try_transition(
+                        Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                    return False, "Abort signal recieved"
+
+                self.av_interface.code_flash()
+
+                # Check for defer (This may be DRY, but there aren't many better
+                # ways to do this --MK)
+                self.server.defer()
+                if (self.server.signal_abort):
+                    self.server.state.try_transition(
+                        Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                    return False, "Abort signal recieved"
+
+                # Wait for the port to open back up (Max wait 10s)
+                start = time.time()
+                while (time.time() < start + 10):
+                    # Check for defer (This may be DRY, but there aren't many
+                    # better ways to do this --MK)
+                    self.server.defer()
+                    if (self.server.signal_abort):
+                        self.server.state.try_transition(
+                            Datastreamer.ServerStateController.ServerState.JOB_ERROR)
+                        return False, "Abort signal recieved"
+
+                    try:
+                        if (self.av_interface.TARS_port.is_open):
+                            return True, "Setup Complete"
+                        self.av_interface.TARS_port.open()
+                        print(
+                            "\n(job_setup) Successfully re-opened TARS port (" +
+                            self.av_interface.TARS_port.serial_port.name +
+                            ")")
+                        return True, "Setup Complete"
+                    except Exception as e:
+                        print(e)
+                        print("")
+                        time_left = abs((start + 10) - time.time())
+                        print(
+                            f"(job_setup) attempting to re-open tars port.. ({time_left:.1f}s)",
+                            end="\r")
+                return False, "Unable to re-open avionics COM Port"
+
+            except Exception as e:
+                print("(job_setup) Job setup failed")
+                print(e)
+                print(traceback.format_exc())
+                return False, "Setup failed: " + str(e)
+        elif (self.job.pull_type == pkt.JobData.GitPullType.COMMIT):
+            raise NotImplementedError(
+                "Commit-based pulls are not implemented yet.")
 
     # Turns a raw CSV string to a Pandas dataframe
 
@@ -276,16 +364,21 @@ class HilsimRun(AVInterface.HilsimRunInterface):
     """
 
     def step(self, dt: float):
+        print("step a")
         self.current_time += dt
         simulation_dt = 0.01
+        print("step b")
         # The av stack can only take a certain amount of data at a time, so we need to yield until we
         # can safely send data.
         if self.current_time > self.last_packet_time + simulation_dt:
+            print("step c")
             self.last_packet_time += simulation_dt
             if self.current_time < self.start_time + 5:
+                print("step d")
                 # Wait for 5 seconds to make sure serial is connected
                 pass
             else:
+                print("step e")
                 if (self.current_line == 0):
                     self.last_packet_time = self.current_time
                     job_status = pkt.JobStatus(
@@ -296,6 +389,8 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                         job_status, "\n".join(self.return_log))
                     self.av_interface.server.packet_buffer.add(status_packet)
                 self.current_line += 1
+                
+                print("step f")
 
                 if (self.current_line % 300 == 0):
                     # Only send a job update every 3-ish seconds
@@ -310,6 +405,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     print(
                         f"Running ({self.current_line/len(self.flight_data_dataframe)*100:.2f}%) [{self.current_line} processed out of {len(self.flight_data_dataframe)} total]")
 
+                print("step g")
                 line_num, row = next(self.flight_data_rows, (None, None))
                 if line_num is None:
                     job_status = pkt.JobStatus(
@@ -321,7 +417,9 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     self.av_interface.server.packet_buffer.add(status_packet)
                     return True, False, self.return_log  # Finished, No Error, Log
                 data = csv_datastream.csv_line_to_protobuf(row)
+                print("step h")
                 if not data:
+                    print("step i")
                     job_status = pkt.JobStatus(
                         pkt.JobStatus.JobState.ERROR,
                         "ABORTED_ERROR",
@@ -331,8 +429,10 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                     self.av_interface.server.packet_buffer.add(status_packet)
                     return True, False, self.return_log  # Finished, Error, Log
                 try:
+                    print("step j", data)
                     self.port.write(data)
                 except BaseException:
+                    print("step k")
                     job_status = pkt.JobStatus(
                         pkt.JobStatus.JobState.ERROR,
                         "ABORTED_ERROR",
@@ -342,14 +442,16 @@ class HilsimRun(AVInterface.HilsimRunInterface):
                         job_status, "\n".join(self.return_log))
                     self.av_interface.server.packet_buffer.add(status_packet)
                     return True, False, self.return_log  # Finished, Error, Log
-
+            
+        print("step l")
         if self.port.in_waiting:
             data = self.port.read_all()
             string = data.decode("utf8")
             if string:
                 string = string[0: (len(string) - 1)]
                 self.return_log.append(string)
-
+        
+        print("step m")
         return False, False, self.return_log
 
 
