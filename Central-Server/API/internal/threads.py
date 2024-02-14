@@ -27,6 +27,7 @@ import internal.database as database
 import internal.jobs as jobs
 import util.test_env
 import util.datastreamer_connection as dsconn
+import util.logs
 
 
 GLOBAL_BOARD_ID = 0  # Tracking ID for board numbers
@@ -166,6 +167,7 @@ class BoardThread(threading.Thread):
             "UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
             (jobs.JobStatus.RUNNING.value,
              config.data["job_data"]["job_id"]))
+        util.logs.write_to_job_log_timestamp(config.data["job_data"]["job_id"], f"Job assigned to board ID {self.board_id} (Thread ID {self.thread_id})")
         conn.commit()
 
     def terminate(self) -> packets.DataPacket:
@@ -201,14 +203,18 @@ class BoardThread(threading.Thread):
             "UPDATE hilsim_runs set run_status = %s, run_end = now() where run_id = %s ",
             (jobs.JobStatus.SUCCESS.value,
              packet.data["job_data"]["job_id"]))
+        util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Job completed successfully")
         conn.commit()
+
+        util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Writing output directory..")
 
         # Create directory
         cursor.execute("SELECT * FROM hilsim_runs WHERE run_id = %s", (packet.data["job_data"]["job_id"],))
         results = cursor.fetchall()
         if(len(results) != 0):
             output_dir = database.convert_database_tuple(cursor, results[0]).output_path
-            os.makedirs(output_dir)
+            if (not os.path.exists(output_dir)):
+                os.makedirs(output_dir)
             text = packet.raw_data
             if len(text) == 0:
                 text = "No data :( Why Zhu Li?"
@@ -217,6 +223,10 @@ class BoardThread(threading.Thread):
             fuke.write(text)
             fuke.flush()
             fuke.close()
+
+            id = packet.data["job_data"]["job_id"]
+            util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Output successfully written to '{out_file}'")
+            util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Finalized job {id}")
         else:
             # No jobs :'(
             pass
@@ -351,6 +361,7 @@ class BoardManagerThread(threading.Thread):
             "UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
             (jobs.JobStatus.QUEUED.value,
              job.data["job_data"]["job_id"]))
+        util.logs.write_to_job_log_timestamp(job.data["job_data"]["job_id"], f"Popping job back to queue due to failure")
         cursor.close()
 
     def get_recent_queue(self) -> list:  # List of namedtuples of a job record
