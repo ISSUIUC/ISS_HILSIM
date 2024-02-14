@@ -43,7 +43,7 @@ def handle_first_setup(Server: Datastreamer.DatastreamerServer):
 
 def detect_avionics(Server: Datastreamer.DatastreamerServer):
     try:
-        return avionics.av_instance.detect()
+        return avionics.av_instance.detect_standalone()
     except Exception as e:
         print("(detect_avionics) Detect_avionics encountered an error during the detection process:")
         print(e)

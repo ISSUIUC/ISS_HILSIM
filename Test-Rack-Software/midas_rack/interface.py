@@ -80,6 +80,7 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         # We should ignore the server's comport if the chosen server
         # communication channel is serial..
         print("(detect_avionics) Attempting to detect avionics")
+        print(" ".join([x for x in server.connected_comports]))
         for comport in server.connected_comports:
             if not (comport in ignore_ports):
                 print(
