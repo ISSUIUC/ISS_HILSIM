@@ -22,7 +22,7 @@ def run_script(arg_list):
         str(arg_list) +
         "]")
     script_dir = os.path.join(os.path.dirname(__file__), "./remote_command.py")
-    args = [cfg.python_root + 'python3', script_dir]
+    args = [cfg.python_root + 'python', script_dir]
     for arg in arg_list:
         args.append(arg)
     subprocess.check_call(args)

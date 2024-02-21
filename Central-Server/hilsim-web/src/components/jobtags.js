@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 
+function LoadingSpinner() {
+    return <div class="lds-ring"><div></div><div></div><div></div><div></div></div>;
+}
+
 function KamajiTag(props) {
     let display_text = props.display.charAt(0).toUpperCase() + props.display.slice(1).toLowerCase();
-    return <span className={'badge badge-' + props.variant}>{display_text}</span>
+    let loading_tag = props.variant == "pending" ? <LoadingSpinner /> : <></>
+
+
+    return <span className={'badge badge-' + props.variant}>{display_text} {loading_tag}</span>
 }
 
 function KamajiJobTags(props) {
