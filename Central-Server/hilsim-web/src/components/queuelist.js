@@ -38,8 +38,10 @@ function QueueList(props) {
     );
   }
 
+
+  let allowed_job_states = ["QUEUED", "RUNNING", "SETUP_PRECOMPILE", "SETUP_COMPILING"]
   function should_show_job(job_data) {
-    return job_data.run_status == "QUEUED" ||  job_data.run_status == "RUNNING";
+    return allowed_job_states.includes(job_data.run_status);
   }
 
   return (

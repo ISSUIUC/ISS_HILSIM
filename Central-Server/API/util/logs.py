@@ -11,7 +11,11 @@ import internal.database as database
 def write_to_job_log_timestamp(job_id: int, text: str) -> bool:
     """Appends `text` to the output file of `job_id`, also includes timestamp."""
     current_time = datetime.datetime.now()
-    write_to_job_log(job_id, f"({current_time}) {text}")
+
+    CSTtz = datetime.timezone(datetime.timedelta(hours=-6),
+                                    name="CST")
+
+    write_to_job_log(job_id, f"({current_time.astimezone(CSTtz)}) {text}")
 
 def write_to_job_log(job_id: int, text_to_append: str) -> bool:
     """Appends `text_to_append` to the output file of job `job_id`. Returns whether the operation was successful."""

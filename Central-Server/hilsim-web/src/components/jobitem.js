@@ -19,7 +19,8 @@ function JobItem(props) {
   }
 
   
-  if(props.job_data.run_status=="RUNNING"){
+  let run_states = ["RUNNING", "SETUP_PRECOMPILE", "SETUP_COMPILING"]
+  if(run_states.includes(props.job_data.run_status)){
     borderColor = "border-warning"
   } else if(props.job_data.run_status=="SUCCESS") {
     borderColor = "border-success"

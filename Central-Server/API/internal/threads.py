@@ -165,7 +165,7 @@ class BoardThread(threading.Thread):
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
-            (jobs.JobStatus.RUNNING.value,
+            (jobs.JobStatus.SETUP_PRECOMPILE.value,
              config.data["job_data"]["job_id"]))
         util.logs.write_to_job_log_timestamp(config.data["job_data"]["job_id"], f"Job assigned to board ID {self.board_id} (Thread ID {self.thread_id})")
         conn.commit()
@@ -275,8 +275,25 @@ class BoardThread(threading.Thread):
                 f"This board has finished a job and has moved into cleanup", flush=True)
         elif (packet.packet_type == packets.DataPacketType.JOB_UPDATE):
             print(packet.data, flush=True)
-            # self.job_status.current_action = packet.data["job_status"]["current_action"]
-            # self.job_status.status_text = packet.data["job_status"]["status_text"]
+            cur_action = packet.data["job_status"]["current_action"]
+            job_id = self.cur_job_config.data["job_data"]["job_id"]
+            conn = database.connect()
+            cursor = conn.cursor()
+            if (cur_action == "COMPILE_READY"):
+                cursor.execute(
+                    "UPDATE hilsim_runs set run_status = %s where run_id = %s",
+                    (jobs.JobStatus.SETUP_COMPILING.value,
+                    job_id))
+                util.logs.write_to_job_log_timestamp(job_id, f"Finished pre-compile setup on job {job_id}, beginning compilation.")
+            if (cur_action == "COMPILED"):
+                cursor.execute(
+                    "UPDATE hilsim_runs set run_status = %s where run_id = %s",
+                    (jobs.JobStatus.RUNNING.value,
+                    job_id))
+                util.logs.write_to_job_log_timestamp(job_id, f"Successfully compiled job {job_id}, initializing HITL run.")
+
+            conn.commit()
+            cursor.close()
             """to be implemented, this is just the board giving updates on the status of a job"""
         elif (packet.packet_type == packets.DataPacketType.PONG):
             self.last_check = time.time()

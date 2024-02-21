@@ -17,6 +17,14 @@ function KamajiJobTags(props) {
             badge1 = <KamajiTag display={"In progress"} variant={"progress"} />
             badge2 = <KamajiTag display={"Running"} variant={"pending"} />
             break;
+        case "SETUP_PRECOMPILE":
+            badge1 = <KamajiTag display={"In progress"} variant={"progress"} />
+            badge2 = <KamajiTag display={"Setup"} variant={"pending"} />
+            break;
+        case "SETUP_COMPILING":
+            badge1 = <KamajiTag display={"In progress"} variant={"progress"} />
+            badge2 = <KamajiTag display={"Compiling"} variant={"pending"} />
+            break;
         case "CANCELED":
             badge1 = <KamajiTag display={"Error"} variant={"error"} />
             badge2 = <KamajiTag display={"Job canceled"} variant={"error"} />
