@@ -68,7 +68,6 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
 
         @self.websocket_client.on('wsdata')
         def message(data):
-            print("wsin", data)
             self.in_buffer += data
 
         @self.websocket_client.on('disconnect')

@@ -33,12 +33,14 @@ import sys
 import os
 import random
 import argparse
+import logging
 
 from flask import Flask, jsonify, Response
 from flask_socketio import SocketIO
 from waitress import serve
 from blueprints.jobs_blueprint import jobs_blueprint
 from blueprints.perms import perms_blueprint
+from blueprints.admin_endpoints import admin_blueprint, register_main_thread
 from apiflask import APIFlask
 from flask_cors import CORS
 
@@ -62,10 +64,15 @@ app = APIFlask(
     static_folder="./static")
 app.register_blueprint(jobs_blueprint)
 app.register_blueprint(perms_blueprint)
+app.register_blueprint(admin_blueprint)
 CORS(app)
+
+print("(CORS) enabled CORS logging")
+logging.getLogger('flask_cors').level = logging.DEBUG
 
 # Initialize datastreamer connectiosn
 m_thread = BoardManagerThread()
+register_main_thread(m_thread)
 
 # Set up server configs
 app.config['SPEC_FORMAT'] = 'json'
@@ -106,8 +113,8 @@ def list_boards():
     for board in m_thread.threads:
         board_list.append({
             "id": board.board_id,
-            "is_ready": board.is_ready,
-            "job_running": board.job_running,
+            "is_ready": board.flags.is_ready,
+            "job_running": board.flags.job_running,
             "board_type": board.board_type,
             "running": board.running
         })

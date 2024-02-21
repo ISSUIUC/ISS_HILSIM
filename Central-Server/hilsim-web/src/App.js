@@ -16,6 +16,7 @@ import HomePage from './pages/homepage';
 import New_Job from './pages/newjob';
 import SwaggerUIPage from './pages/swagger';
 import Jobs from './pages/jobs';
+import TestingDashboard from './pages/testingdashboard';
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
   {
     path: "/new_job",
     element: <New_Job />,
+  },
+  {
+    path: "/testing_dash",
+    element: <TestingDashboard />,
   },
   {
     path: "*",

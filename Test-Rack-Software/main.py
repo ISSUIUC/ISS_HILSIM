@@ -19,6 +19,7 @@ import util.handle_packets as handle_packets
 import util.datastreamer_server as Datastreamer
 import util.communication.ws_channel as ws_channel
 import util.communication.communication_interface as comm
+import threading
 
 # Set up interface defined in config
 avionics = test_board_config.use_interface
@@ -96,6 +97,7 @@ def check_server_connection(Server: Datastreamer.DatastreamerServer):
             if pkt.packet_type == packet.DataPacketType.ACKNOWLEDGE:
                 Server.board_id = pkt.data['board_id']
                 Server.server_comm_channel = channel
+                Server.had_server_comm_channel = True
                 return True
     return False
 
@@ -130,6 +132,22 @@ def on_ready(Server: Datastreamer.DatastreamerServer):
         print("(transition_to_ready) In CYCLE process! Cleared fail flag")
 
 
+def handle_heartbeat(Server: Datastreamer.DatastreamerServer):
+    if(Server.server_comm_channel is None):
+        return
+    if (should_heartbeat(Server)):
+        print("(heartbeat) Sent update at u+", time.time())
+        Server.packet_buffer.add(
+            packet.CL_HEARTBEAT(
+                packet.HeartbeatServerStatus(
+                    Server.state.server_state,
+                    Server.server_start_time,
+                    False,
+                    False),
+                packet.HeartbeatAvionicsStatus(
+                    False,
+                    "")))
+
 def handle_power_cycle(Server: Datastreamer.DatastreamerServer):
     SState = Datastreamer.ServerStateController.ServerState
     # This is linked to ANY state, but we realistically only care about some:
@@ -160,7 +178,6 @@ def handle_power_cycle(Server: Datastreamer.DatastreamerServer):
                 print("ERROR during power cycle!")
                 Server.packet_buffer.add(
                     packet.MISC_ERR("Error during power cycle"))
-
 
 def main():
     Server = Datastreamer.instance
@@ -218,28 +235,16 @@ def main():
 
     # Always events
     Server.state.add_always_event(SState.ANY, handle_power_cycle)
+    Server.state.add_always_event(SState.ANY, handle_heartbeat)
 
     handle_packets.add_transitions(Server.state)
     handle_packets.add_always_events(Server.state)
-
+    
     while True:
         Server.tick()
 
-        # Actions that always happen:
-        if (Server.server_comm_channel is not None and should_heartbeat(Server)):
-            print("(heartbeat) Sent update at u+", time.time())
-            Server.packet_buffer.add(
-                packet.CL_HEARTBEAT(
-                    packet.HeartbeatServerStatus(
-                        Server.state.server_state,
-                        Server.server_start_time,
-                        False,
-                        False),
-                    packet.HeartbeatAvionicsStatus(
-                        False,
-                        "")))
-        # End "Always" actions.
         Server.packet_buffer.clear_input_buffer()
+
 
 
 ##########################################################

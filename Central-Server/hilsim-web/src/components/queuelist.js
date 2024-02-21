@@ -5,13 +5,15 @@ import { Container } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import { api_url } from '../dev_config';
 import { Link } from "react-router-dom";
+import DevOnly from './devonly';
 
-function QueueList() {
+function QueueList(props) {
   const [jobQueue, setJobQueue] = useState([]);
 
   useEffect(() => {
     fetch(api_url + `/api/jobs`, {headers: {
-      "ngrok-skip-browser-warning": "true"
+      "ngrok-skip-browser-warning": "true",
+      "Access-Control-Allow-Origin": "*"
     }})
     .then(response => response.json())
     .then(json_data => {
@@ -20,9 +22,11 @@ function QueueList() {
     }).catch((err) => {
       console.log("err fetch", err)
     })
-  }, [setJobQueue])
+  }, [setJobQueue, props.refresh])
 
-  if(jobQueue.filter((job_data) => job_data.run_status!="SUCCESS").length == 0) {
+
+    console.log(jobQueue)
+  if(jobQueue.filter((job_data) => {return job_data.run_status!="SUCCESS"}).length == 0) {
     return (
       <Container fluid>
         <Card style={{textAlign: 'left', marginBottom: '10px'}}>
@@ -40,7 +44,7 @@ function QueueList() {
   return (
     <Container fluid>
       {jobQueue.map((job_data) => {
-        return <QueueItem job_data={job_data} key={job_data.run_id}/>
+        return <><QueueItem job_data={job_data} key={job_data.run_id}/>{props.refresh}</>
       })}
     </Container>
   );

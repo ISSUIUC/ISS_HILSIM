@@ -30,7 +30,7 @@ class SerialChannel(communication_interface.CommunicationChannel):
             instr = ""
             while (self.serial_port.in_waiting):
                 data = self.serial_port.read_all()
-                string = data.decode("utf8")
+                string = data.decode("utf8", errors="ignore")
                 if string:
                     instr += string
             return instr
