@@ -495,8 +495,9 @@ class BoardManagerThread(threading.Thread):
         def ws_on_message(sid, data):
             print(sid, ": ", data)
 
-        def ws_on_disconnect(sid):
-            self.kill_thr(sid)
+        def ws_on_disconnect():
+            self.kill_thr()
+            # force status to reconnect
 
         print("(board_manager_thread) Creating websocket subthread")
         self.ws_thread = WebsocketThread(5001)
