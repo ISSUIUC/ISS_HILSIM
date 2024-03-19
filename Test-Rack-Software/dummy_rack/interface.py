@@ -48,7 +48,7 @@ class HilsimRun(AVInterface.HilsimRunInterface):
         return "Dummy hilsim run log"
     
     def job_setup(self) -> tuple[bool, str]:
-        time.sleep(1) # Emulate a synchronous job setup
+        time.sleep(20) # Emulate a synchronous job setup
         return True, "Setup Complete"
     
     def __init__(

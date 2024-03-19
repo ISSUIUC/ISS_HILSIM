@@ -209,7 +209,7 @@ class DataPacketBuffer:
         """
         channel.write(packet.serialize())
 
-    def to_serialized_string(self) -> None:
+    def to_serialized_string(self) -> str:
         """
         Serializes the packet buffer
         """

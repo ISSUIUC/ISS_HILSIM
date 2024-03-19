@@ -67,7 +67,7 @@ def run_job(Server: Datastreamer.DatastreamerServer):
             Server.packet_buffer.add(
                 pkt.CL_DONE(
                     Server.current_job_data,
-                    "\n".join(return_log)))
+                    "".join(return_log)))
             print("(job_done) sent DONE packet to server with job result")
             return True
 

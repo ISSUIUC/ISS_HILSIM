@@ -21,9 +21,8 @@ await fetch(text).then(response => {
     text = "http://localhost"
 });
 
-console.log(text);
 
 // test url
-
+// text = "http://localhost"
 export const api_url = text.trim();
 // /api/jobs/list

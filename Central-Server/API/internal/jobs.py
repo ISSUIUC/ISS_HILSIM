@@ -26,8 +26,10 @@ class JobStatus(enum.Enum):
     """Job timed out, cancelled `#cancelculturestrikesagain`"""
     FAILED_OTHER = 7
     """Job failed for some other reason"""
-    SETUP = 8
-    """Job is currently in the process of being set up."""
+    SETUP_PRECOMPILE = 8
+    """Job is currently in the process of being set up (pulling branches before compilation)."""
+    SETUP_COMPILING = 9
+    """Job is currently being compiled"""
 
 
 class JobRequestSchema(Schema):
