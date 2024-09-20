@@ -25,6 +25,7 @@ services:
       - PORT=443
       - DB_PASSWORD_FILE=/run/secrets/db_password
       - DB_NAME=db
+      - USE_TESTING_ENVIRONMENT=true
     volumes:
       - ./Central-Server/API:/src/api
     secrets:
