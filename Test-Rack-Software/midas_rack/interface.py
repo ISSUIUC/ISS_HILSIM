@@ -86,25 +86,30 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
         git.remote_pull_branch(git_target)
 
     def code_flash(self) -> None:
+        environment = "mcu_hilsim_sustainer"
         """Flashes code to the stack. For MIDAS, uses environment `mcu_hilsim`"""
         # https://www.martinloren.com/how-to/fashing-esp32/
         if(util.os_interface.is_raspberrypi()):
             GPIO.output(self.RESET_PIN, GPIO.HIGH)
             GPIO.output(self.BOOT_PIN, GPIO.HIGH)
-            pio.pio_build("mcu_hilsim_booster", callback=self.server.defer)
+
+            pio.pio_build(environment, callback=self.server.defer)
+
             # Hold down both pins
             GPIO.output(self.RESET_PIN, GPIO.LOW)
             GPIO.output(self.BOOT_PIN, GPIO.LOW)
             time.sleep(3)
             # Release reset pin
             GPIO.output(self.RESET_PIN, GPIO.HIGH)
-            pio.pio_upload("mcu_hilsim_booster", callback=self.server.defer)
+
+            pio.pio_upload(environment, callback=self.server.defer)
             # Release boot pin
             GPIO.output(self.BOOT_PIN, GPIO.HIGH)
         else:
             # This interface needs to set GPIO pins.
-            pio.pio_build("mcu_hilsim_booster", callback=self.server.defer)
-            pio.pio_upload("mcu_hilsim_booster", callback=self.server.defer)
+
+            pio.pio_build(environment, callback=self.server.defer)
+            pio.pio_upload(environment, callback=self.server.defer)
 
 class HilsimRun(AVInterface.HilsimRunInterface):
     av_interface: MIDASAvionics  # Specify av_interface is TARS-specific!
