@@ -55,11 +55,12 @@ function NewJob() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true"
+        "ngrok-skip-browser-warning": "true",
+        "Access-Control-Allow-Origin": "*"
       },
       body: JSON.stringify({
         commit: "0000",
-        username: "test_usear",
+        username: "test_user",
         branch: selectedBranch,
         description: description
       })

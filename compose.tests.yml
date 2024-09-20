@@ -1,0 +1,39 @@
+# A "headless" barebones compose script that only runs API and its critical services.
+version: '3'
+services:
+  api:
+    build:
+      context: ./Central-Server/API
+      dockerfile: ./Dockerfile
+    ports:
+      - "443:443"
+      - "5001:5001"
+    environment:
+      - PORT=443
+      - DB_PASSWORD_FILE=/run/secrets/db_password
+      - DB_NAME=tests_db
+      - USE_TESTING_ENVIRONMENT=true
+    volumes:
+      - ./Central-Server/API:/src/api
+    secrets:
+      - db_password
+
+  proxy:
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile.tests
+    ports:
+      - "80:80"
+
+  tests_db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+
+# Ask someone responsible for the secrets folder
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt

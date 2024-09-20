@@ -228,8 +228,10 @@ class DatastreamerServer:
     board_type: str = ""
 
     # COMMUNICATION
+    had_server_comm_channel: bool = False
+    """Whether this server has had a server comm channel (Used for heartbeat validation)"""
     server_comm_channel: communication_interface.CommunicationChannel = None
-    """Serial port reference to the serial port that connects to the Kamaji server."""
+    """Comm channel reference to the Communications channel that connects to the Kamaji server."""
     server_preferred_comm_method: communication_interface.CommunicationChannelType = communication_interface.CommunicationChannelType.SERIAL
     """The preferred method for datastreamer boards to communicate to Kamaji. Defaults to `SERIAL`"""
     board_id = -1

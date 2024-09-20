@@ -4,10 +4,30 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Row from 'react-bootstrap/esm/Row';
 import Col from 'react-bootstrap/esm/Col';
 import QueueList from '../components/queuelist';
-import QueueItem from '../components/queueitem';
 import Status from '../components/status';
+import { useEffect, useState } from 'react';
 
 function Queue() {
+
+  const [refreshQueue, setRefreshQueue] = useState(false)
+  const [autorefresh, setAutoRefresh] = useState(true)
+
+  function refresh(delay) {
+    setTimeout(() => {
+      setRefreshQueue(!refreshQueue);
+    }, delay);
+  }
+
+  useEffect(() => {
+    let i = setInterval(() => {
+      refresh()
+    }, 1000);
+
+    return () => {
+      clearInterval(i)
+    }
+  }, [autorefresh])
+
   return (
     <div>
       <Container fluid>
@@ -19,9 +39,12 @@ function Queue() {
           <Status />
           </Col>
           <Col md={9}>
-          <QueueList />
+          <QueueList refresh={refreshQueue}/>
+
+          
           </Col>
         </Row>
+
     </Container>
     </div>
     

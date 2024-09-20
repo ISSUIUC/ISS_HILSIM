@@ -12,6 +12,7 @@ Developed by the Kamaji team, 2023"""
 
 import threading
 import datetime
+import os
 import time
 import traceback
 from typing import List
@@ -24,22 +25,15 @@ import util.communication.ws_channel as websocket_channel
 import util.communication.packets as packets
 import internal.database as database
 import internal.jobs as jobs
+import util.test_env
+import util.datastreamer_connection as dsconn
+import util.logs
 
 
 GLOBAL_BOARD_ID = 0  # Tracking ID for board numbers
 """GLOBAL_BOARD_ID describes the current tracking ID for boards active in the Kamaji service. Whenever
 a new board is generated, it is assigned a new board ID equivalent to this variable value, then it is incremented."""
 
-
-class DatastreamerConnection():
-    """This class links a single thread to a communication channel. Instances are created and added to a list to indicate the nessecity of spinning up new datastreamer threads."""
-
-    def __init__(
-            self,
-            thread_name,
-            communication_channel: websocket_channel.ClientWebsocketConnection) -> None:
-        self.thread_name = thread_name
-        self.communicaton_channel = communication_channel
 
 
 class WebsocketThread(threading.Thread):
@@ -107,6 +101,26 @@ class BoardThread(threading.Thread):
     """Signifies a single datastreamer board connection."""
     packet_buffer = None  # The output buffer of this thread
 
+    class Flags:
+        has_job_config = False
+        is_ready = False
+        job_running = False
+
+        def take_job(self):
+            self.has_job_config = True
+        
+        def ready_recieved(self):
+            self.has_job_config = False
+            self.is_ready = True
+            self.job_running = False
+        
+        def job_run(self):
+            self.is_ready = False
+            self.job_running = True
+        
+        def done_recieved(self):
+            self.job_running = False
+
     def __init__(
             self,
             thread_name: str,
@@ -125,43 +139,42 @@ class BoardThread(threading.Thread):
         self.communication_channel = communication_channel
         self.thread_id = thread_id
         self.cur_job_config: packets.DataPacket = None
-        self.has_job_config = False
         self.running = True
         self.packet_buffer = packets.DataPacketBuffer()
         self.board_id = board_id
         # True when in READY state (? TODO: check if this is true)
-        self.is_ready = False
-        self.job_running = False  # True when actively running job
         self.board_type = ""
         self.last_check = time.time()
         self.callback = pop_back_callback
         self.job_status: packets.JobStatus = None
+        self.flags = BoardThread.Flags()
 
     def can_take_job(self):
         """Whether the board associated to this thread is ready to take a job"""
-        return not self.has_job_config and self.is_ready
+        return not self.flags.has_job_config and self.flags.is_ready
 
     def take_job(self, config: packets.DataPacket):
         """Assign the given job config to this board
         @config: The JOB packet that contains this config"""
         # Set all flags
         self.cur_job_config = config
-        self.has_job_config = True
+        self.flags.take_job()
 
         # Update the job status in the database
         conn = database.connect()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
-            (jobs.JobStatus.RUNNING.value,
+            (jobs.JobStatus.SETUP_PRECOMPILE.value,
              config.data["job_data"]["job_id"]))
+        util.logs.write_to_job_log_timestamp(config.data["job_data"]["job_id"], f"Job assigned to board ID {self.board_id} (Thread ID {self.thread_id})")
         conn.commit()
 
     def terminate(self) -> packets.DataPacket:
         """Drop this thread"""
         # TODO make sure this works properly every time
         self.running = False
-        if self.has_job_config:
+        if self.flags.has_job_config:
             self.callback(self.cur_job_config)
 
     def run_job(self):
@@ -169,16 +182,17 @@ class BoardThread(threading.Thread):
         print(
             f"(comm:#{self.thread_id})",
             f"[run_job]",
-            f"Using given config to initialize job on linked board")
+            f"Using given config to initialize job on linked board", flush=True)
         # Send the job by adding it to the packet buffer (See:
         # packets.DataPacketBuffer)
         self.packet_buffer.add(self.cur_job_config)
+        for packet in self.packet_buffer.packet_buffer:
+            print("--->             ", packet.packet_type, packet.data, flush=True)
         print(
             f"(comm:#{self.thread_id})",
             f"[run_job]",
             f"Job initialization command sent",
             flush=True)
-        self.job_running = True  # Set job flags
 
     def complete_job(self, packet: packets.DataPacket):
         """Called when a job is complete"""
@@ -189,7 +203,33 @@ class BoardThread(threading.Thread):
             "UPDATE hilsim_runs set run_status = %s, run_end = now() where run_id = %s ",
             (jobs.JobStatus.SUCCESS.value,
              packet.data["job_data"]["job_id"]))
+        util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Job completed successfully")
         conn.commit()
+
+        util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Writing output directory..")
+
+        # Create directory
+        cursor.execute("SELECT * FROM hilsim_runs WHERE run_id = %s", (packet.data["job_data"]["job_id"],))
+        results = cursor.fetchall()
+        if(len(results) != 0):
+            output_dir = database.convert_database_tuple(cursor, results[0]).output_path
+            if (not os.path.exists(output_dir)):
+                os.makedirs(output_dir)
+            text = packet.raw_data
+            if len(text) == 0:
+                text = "No data :( Why Zhu Li?"
+            out_file = os.path.join(output_dir, "output.txt")
+            fuke = open(out_file, "w")
+            fuke.write(text)
+            fuke.flush()
+            fuke.close()
+
+            id = packet.data["job_data"]["job_id"]
+            util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Output successfully written to '{out_file}'")
+            util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Finalized job {id}")
+        else:
+            # No jobs :'(
+            pass
 
     def handle_packet(self, packet):
         if (packet.packet_type == packets.DataPacketType.IDENT):
@@ -197,7 +237,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Sent ACK to linked board")
+                f"Sent ACK to linked board", flush=True)
             self.packet_buffer.add(packets.SV_ACKNOWLEDGE(self.board_id))
             self.board_type = packet.data["board_type"]
         elif (packet.packet_type == packets.DataPacketType.READY):
@@ -205,12 +245,11 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Recieved READY signal from linked board")
+                f"Recieved READY signal from linked board", flush=True)
             # Reset all job flags
-            self.is_ready = True
             self.cur_job_config = None
-            self.has_job_config = False
-            self.job_running = False
+
+            self.flags.ready_recieved()
         elif (packet.packet_type == packets.DataPacketType.HEARTBEAT):
             # Datastreamer packet containing server data.
             # self.last_check = time.time()
@@ -227,16 +266,34 @@ class BoardThread(threading.Thread):
             self.board_type = packet.data["board_type"]
         elif (packet.packet_type == packets.DataPacketType.DONE):
             # This packet signifies that a job has finished running
-            self.job_running = False
+            self.flags.done_recieved()
+            # self.has_job_config = False
             self.complete_job(packet)
             print(
                 f"(comm:#{self.thread_id})",
                 f"[job done]",
-                f"This board has finished a job and has moved into cleanup")
+                f"This board has finished a job and has moved into cleanup", flush=True)
         elif (packet.packet_type == packets.DataPacketType.JOB_UPDATE):
             print(packet.data, flush=True)
-            # self.job_status.current_action = packet.data["job_status"]["current_action"]
-            # self.job_status.status_text = packet.data["job_status"]["status_text"]
+            cur_action = packet.data["job_status"]["current_action"]
+            job_id = self.cur_job_config.data["job_data"]["job_id"]
+            conn = database.connect()
+            cursor = conn.cursor()
+            if (cur_action == "COMPILE_READY"):
+                cursor.execute(
+                    "UPDATE hilsim_runs set run_status = %s where run_id = %s",
+                    (jobs.JobStatus.SETUP_COMPILING.value,
+                    job_id))
+                util.logs.write_to_job_log_timestamp(job_id, f"Finished pre-compile setup on job {job_id}, beginning compilation.")
+            if (cur_action == "COMPILED"):
+                cursor.execute(
+                    "UPDATE hilsim_runs set run_status = %s where run_id = %s",
+                    (jobs.JobStatus.RUNNING.value,
+                    job_id))
+                util.logs.write_to_job_log_timestamp(job_id, f"Successfully compiled job {job_id}, initializing HITL run.")
+
+            conn.commit()
+            cursor.close()
             """to be implemented, this is just the board giving updates on the status of a job"""
         elif (packet.packet_type == packets.DataPacketType.PONG):
             self.last_check = time.time()
@@ -249,7 +306,7 @@ class BoardThread(threading.Thread):
             print(
                 f"(comm:#{self.thread_id})",
                 f"[handle_packet]",
-                f"Handling packet {packet}")
+                f"Handling packet {packet}", flush=True)
             self.last_check = time.time()
             self.handle_packet(packet)
 
@@ -264,17 +321,13 @@ class BoardThread(threading.Thread):
             self.handle_communication(self.packet_buffer.input_buffer)
 
             # If a board is primed to run a job, run it.
-            if self.has_job_config and self.job_running == False and self.is_ready:
-                self.job_running = True
+            if self.flags.has_job_config and self.flags.job_running == False and self.flags.is_ready:
+                self.flags.job_run()
                 self.run_job()
 
             self.packet_buffer.clear_input_buffer()
 
-            time.sleep(1)
-            if (time.time() - self.last_check > 120):
-                # Remove tars if we can't detect it
-                print("Terminated", flush=True)
-                self.terminate()
+            # time.sleep(1)
             if not self.communication_channel.socket_open():
                 print(
                     "Terminated due to communication channel termination",
@@ -295,7 +348,7 @@ class BoardManagerThread(threading.Thread):
     """This thread is the main export of `threads.py`, it handles all datastreamer communication internally."""
     threads: List[BoardThread] = []
     """Datastreamer threads"""
-    spin_up_queue: List[DatastreamerConnection] = []
+    spin_up_queue: List[dsconn.DatastreamerConnection] = []
     """Queue that holds which threads need to be spun up."""
 
     ws_thread: WebsocketThread = None
@@ -307,6 +360,9 @@ class BoardManagerThread(threading.Thread):
         self.queue = []
         self.running = True
         self.last_time = datetime.datetime(2005, 7, 2)
+
+    def clear_queue(self):
+        self.queue = []
 
     def pop_killed_job_back_to_queue(self, job: packets.DataPacket):
         """Used as a callback for board threads, makes unfinished/errored jobs pop back into the queue instead of going into limbo/being discarded"""
@@ -322,6 +378,7 @@ class BoardManagerThread(threading.Thread):
             "UPDATE hilsim_runs set run_status = %s, run_start = now() where run_id = %s",
             (jobs.JobStatus.QUEUED.value,
              job.data["job_data"]["job_id"]))
+        util.logs.write_to_job_log_timestamp(job.data["job_data"]["job_id"], f"Popping job back to queue due to failure")
         cursor.close()
 
     def get_recent_queue(self) -> list:  # List of namedtuples of a job record
@@ -333,6 +390,7 @@ class BoardManagerThread(threading.Thread):
         cursor.execute(db_query, (jobs.JobStatus.QUEUED.value, self.last_time))
         queued_jobs = cursor.fetchall()
         if len(queued_jobs) > 0:
+            
             # Then get the last one
             struct = database.convert_database_tuple(cursor, queued_jobs[-1])
             self.last_time = struct.submitted_time
@@ -417,6 +475,7 @@ class BoardManagerThread(threading.Thread):
                 pull_target=job.branch,
                 job_author_id=job.user_id)
             packet = packets.SV_JOB(job_data, "")
+            print("(check_jobs) Adding job from check_jobs")
             self.add_job(packet)
 
     def run(self):
@@ -425,16 +484,20 @@ class BoardManagerThread(threading.Thread):
 
         # Datastreamer websocket implementation
         def ws_on_connect(sid, environ):
-            self.add_thread(
-                DatastreamerConnection(
+            conn = dsconn.DatastreamerConnection(
                     sid, websocket_channel.ClientWebsocketConnection(
-                        self.ws_thread.socketio_server, sid)))
-
+                        self.ws_thread.socketio_server, sid))
+            if(not util.test_env.is_test_environment()):
+                self.add_thread(conn)
+            else:
+                util.test_env.datastreamer_comp_test_hook(conn)
+            
         def ws_on_message(sid, data):
             print(sid, ": ", data)
 
-        def ws_on_disconnect(sid):
-            self.kill_thr(sid)
+        def ws_on_disconnect():
+            self.kill_thr()
+            # force status to reconnect
 
         print("(board_manager_thread) Creating websocket subthread")
         self.ws_thread = WebsocketThread(5001)
