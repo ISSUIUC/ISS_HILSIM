@@ -32,6 +32,13 @@ function NavBar() {
               <Button variant="success">Submit New Job</Button>
             </Link>
           </Nav>
+
+          <Nav className="nav-left-pad">
+            <Link to="/jobs">
+              <Button variant="secondary">Jobs</Button>
+            </Link>
+          </Nav>
+
           <DevOnly>
             <Nav className="nav-left-pad">
               <Link to="/testing_dash">

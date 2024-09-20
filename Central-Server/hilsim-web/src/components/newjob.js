@@ -60,7 +60,7 @@ function NewJob() {
       },
       body: JSON.stringify({
         commit: "0000",
-        username: "test_usear",
+        username: "test_user",
         branch: selectedBranch,
         description: description
       })

@@ -48,7 +48,6 @@ function TestingDashboard() {
   useEffect(() => {
     let i = setInterval(() => {
       refresh()
-      console.log("shit")
     }, 1500);
   }, [])
 

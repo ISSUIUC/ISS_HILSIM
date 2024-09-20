@@ -8,6 +8,7 @@ import internal.database as database
 import internal.auth as auth
 import internal.sanitizers as sanitizers
 from internal.jobs import *
+import util.logs
 
 
 def sanitize_job_info(job):
@@ -73,7 +74,6 @@ def job_information(job_id):
         database.convert_database_tuple(
             cursor, data)._asdict())
 
-
 @jobs_blueprint.route('/job/<int:job_id>/data', methods=["GET"])
 def job_data(job_id):
     """
@@ -89,14 +89,41 @@ def job_data(job_id):
     data = cursor.fetchone()
     data = database.convert_database_tuple(cursor, data)
     file_name = data.output_path
-    if os.path.exists(file_name):
+    if os.path.exists(file_name + "/output.txt"):
         try:
-            with open(file_name) as f:
-                return Response(str(f.read()), mimetype='text/csv')
+            with open(file_name + "/output.txt") as f:
+                return Response(str(f.read()), mimetype='text/plain')
         except Exception as e:
-            return "Error with file: " + Exception(e), 500
+            print(f"(/job/id/data) Exception: {e}")
+            return "Error with file: " + str(Exception(e)), 500
     else:
         return jsonify({"error": "Output file does not exist"}), 404
+
+
+@jobs_blueprint.route('/job/<int:job_id>/log', methods=["GET"])
+def job_log(job_id):
+    """
+    Gets the job log for a job
+    """
+    # Get the jobs data from the job id
+    if (auth.authenticate_request(request) == False):
+        abort(403)
+    # List out all the jobs in the database
+    conn = database.connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM hilsim_runs where run_id=%s", (job_id,))
+    data = cursor.fetchone()
+    data = database.convert_database_tuple(cursor, data)
+    file_name = data.output_path
+    if os.path.exists(file_name + "/kamaji_log.txt"):
+        try:
+            with open(file_name + "/kamaji_log.txt") as f:
+                return Response(str(f.read()), mimetype='text/plain')
+        except Exception as e:
+            print(f"(/job/id/data) Exception: {e}")
+            return "Error with file: " + str(Exception(e)), 500
+    else:
+        return jsonify({"error": "Log file does not exist"}), 404
 
 
 @jobs_blueprint.route('/job', methods=["POST"])
@@ -134,13 +161,16 @@ def queue_job(json_data):
          0,
          desc,
          data_uri))
-    # TODO: Directory will be consructed later when the work actually starts
-    # https://github.com/orgs/ISSUIUC/projects/4/views/1?pane=issue&itemId=46405451
+    
+    
 
     st = cursor.fetchall()
     conn.commit()
     conn.close()
     cursor.close()
+
+    util.logs.write_to_job_log_timestamp(st[0][0], "Job created successfully")
+
     if len(st) > 0:
         return jsonify({"status": "Job was created", "run_id": st[0][0]}), 201
     else:

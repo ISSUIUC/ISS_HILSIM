@@ -19,7 +19,6 @@ import util.handle_packets as handle_packets
 import util.datastreamer_server as Datastreamer
 import util.communication.ws_channel as ws_channel
 import util.communication.communication_interface as comm
-import threading
 
 # Set up interface defined in config
 avionics = test_board_config.use_interface

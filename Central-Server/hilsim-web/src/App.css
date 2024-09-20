@@ -111,3 +111,141 @@
 .nav-left-pad {
   margin-left: 10px;
 }
+
+.code-text {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 0.8em;
+}
+
+.console-output-line {
+  margin-right: 5px;
+  color: #444;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.job-raw-output-container {
+  height: 12em;
+  max-height: 12em !important;
+  overflow-y:scroll;
+}
+
+.extend-job-raw-output {
+  position: absolute;
+  width: 100%;
+  top: 100%;
+  left: 50%;
+  cursor: pointer;
+  transform: translate(-50%, -125%);
+  text-align: center;
+  color: #333;
+  transition: color 0.1s;
+  font-size: 0.75em;
+}
+
+.no-job-raw-output {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #c9c9c9;
+}
+
+.badge {
+  font-weight: bold;
+  padding-left: 5px;
+  padding-right: 5px;
+  font-size: 0.8em;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+
+.badge-success {
+  background-color: #28a745;
+  color: white !important;
+}
+
+.badge-pending {
+  background-color: #17a2b8;
+  color: white !important;
+}
+
+.badge-error {
+  background-color: #dc3545;
+  color: white !important;
+}
+
+.blurred-text {
+  color: transparent !important;
+  text-shadow: 0 0 8px #fff;
+}
+
+.blurred-text-gray {
+  color: transparent !important;
+  text-shadow: 0 0 8px #555;
+}
+
+.badge-tests {
+  background-color: #9122e0;
+  color: white !important;
+}
+
+.badge-queued {
+  background-color: #ccc;
+  color: black !important;
+}
+
+.badge-progress {
+  background-color: #ffc107;
+  color: black !important;
+}
+
+.job-data-small {
+  font-size: 0.6em;
+  color: #444;
+  margin-bottom: 2px;
+}
+
+.extend-job-raw-output:hover {
+  color: #ccc;
+}
+
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 10px;
+  height: 10px;
+  left: -6px;
+  top: -6px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: 8px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #fff transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

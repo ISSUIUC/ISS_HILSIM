@@ -4,7 +4,6 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Row from 'react-bootstrap/esm/Row';
 import Col from 'react-bootstrap/esm/Col';
 import QueueList from '../components/queuelist';
-import QueueItem from '../components/queueitem';
 import Status from '../components/status';
 import { useEffect, useState } from 'react';
 
