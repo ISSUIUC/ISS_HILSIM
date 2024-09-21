@@ -126,7 +126,7 @@ def job_log(job_id):
         return jsonify({"error": "Log file does not exist"}), 404
 
 
-@jobs_blueprint.route('/job', methods=["POST"])
+@jobs_blueprint.route('/job', methods=["POST"]) #HANLDES JOB REQUESTS
 @jobs_blueprint.input(JobRequestSchema, location="json")
 def queue_job(json_data):
     """
