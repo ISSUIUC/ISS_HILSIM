@@ -21,3 +21,10 @@ CREATE TABLE "hilsim_runs" (
   "description" varchar(512) NULL,
   "data_uri" varchar(128) NULL
 );
+CREATE TABLE "public"."job_configuration" (
+    "job_name" character varying(40) NOT NULL,
+    "job_type" character varying(10) NOT NULL,
+    "json_config" text NOT NULL,
+    "time_to_run" timestamp NOT NULL
+) WITH (oids = false);
+
