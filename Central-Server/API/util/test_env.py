@@ -8,6 +8,7 @@ import util.datastreamer_connection
 
 
 def is_test_environment() -> bool:
+    return True
     try:
         if (os.environ['USE_TESTING_ENVIRONMENT'] == "true"):
             return True
