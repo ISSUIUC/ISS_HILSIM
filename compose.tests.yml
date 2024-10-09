@@ -12,7 +12,7 @@ services:
       - PORT=443
       - DB_PASSWORD_FILE=/run/secrets/db_password
       - DB_NAME=tests_db
-      - USE_TESTING_ENVIRONMENT=true
+      - USE_TESTING_ENVIRONMENT=false
     volumes:
       - ./Central-Server/API:/src/api
     secrets:
