@@ -1,8 +1,11 @@
 import os
 import os.path
 
+from io import BytesIO
+import zipfile
+
 from apiflask import APIBlueprint
-from flask import abort, jsonify, request, Response
+from flask import abort, jsonify, request, Response, send_file
 
 import internal.database as database
 import internal.auth as auth
@@ -91,8 +94,14 @@ def job_data(job_id):
     file_name = data.output_path
     if os.path.exists(file_name + "/output.txt"):
         try:
-            with open(file_name + "/output.txt") as f:
-                return Response(str(f.read()), mimetype='text/plain')
+            zip_stream = BytesIO()
+            
+            zip_stream.seek(0)
+           
+            with zipfile.ZipFile(zip_stream, 'w', zipfile.ZIP_DEFLATED) as f:
+                f.write(f"{file_name}/output.txt", arcname='output.txt')
+           
+            return send_file(zip_stream, mimetype='application/zip', as_attachment=True, attachment_filename='output.zip')
         except Exception as e:
             print(f"(/job/id/data) Exception: {e}")
             return "Error with file: " + str(Exception(e)), 500
