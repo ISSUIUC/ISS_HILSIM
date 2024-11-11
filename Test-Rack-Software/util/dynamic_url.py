@@ -10,6 +10,7 @@ def get_dynamic_url(kamaji_target="main") -> str:
     args = parser.parse_args()
     
     if args.ip is not None:
+        print(f"(dynamic url) URL {args.ip} from command line")
         return args.ip
     
     """Retrieves the api url for kamaji
