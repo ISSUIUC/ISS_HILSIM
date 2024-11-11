@@ -1,5 +1,6 @@
 import requests
 import argparse
+import sys
 
 api_source = "https://raw.githubusercontent.com/ISSUIUC/ISS_HILSIM/active_server_url/server_url.txt"
 api_default = "http://localhost/"
