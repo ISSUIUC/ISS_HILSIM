@@ -52,6 +52,7 @@ def should_heartbeat(Server: Datastreamer.DatastreamerServer):
 
 
 def send_wide_ident(Server: Datastreamer.DatastreamerServer):
+    print("THE SERVER TO SEND WIDE INTENT IS BEING RUN")
     if (not Server.do_wide_ident):
         return True
     if (time.time() > Server.last_server_connection_check):

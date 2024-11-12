@@ -85,6 +85,10 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
         def disconnect():
             print("(websocket_channel) Disconnected to ws at",
                   self.websocket_location + self.websocket_path)
+        
+        @self.websocket_client.on('test')
+        def arbitrary_func():
+            print("The arbitrary data has been printed")
 
         self.open()
 
@@ -117,6 +121,10 @@ class WebsocketChannel(communication_interface.CommunicationChannel):
     def write(self, data: str) -> None:
         print("emit", data)
         self.websocket_client.emit("wsdata", data)
+        
+    def test(self):
+        print("THIS IS A TEST TO TRY TO EMIT SOME DATA")
+        self.websocket_client.emit("test", "notification")
 
 
 connected_websockets: List[WebsocketChannel] = []

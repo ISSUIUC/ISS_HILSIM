@@ -10,6 +10,7 @@ avionics = test_board_config.use_interface
 
 
 def run_setup_job(Server: Datastreamer.DatastreamerServer):
+    print("IT IS NOT YET CRASHED WE ARE CURRENTLY INSIDE OF THE RUN SETUP JOB")
     """Invokes the avionics system's job setup method.
 
     Avionics setup methods are generally blocking. Make sure that they properly call Server.defer() when possible."""
@@ -38,6 +39,7 @@ def run_setup_job(Server: Datastreamer.DatastreamerServer):
 
 
 def run_job(Server: Datastreamer.DatastreamerServer):
+    print("CURRENTLY HAS NOT CRASHED WE ARE IN THE RUN JOB FUNCTION")
     """Invokes the step() method in the current HilsimRun (plaform-blind)"""
     dt = time.time() - Server.last_job_step_time
     current_job: AVInterface.HilsimRunInterface = Server.current_job  # For type hints

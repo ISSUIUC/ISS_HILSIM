@@ -496,6 +496,7 @@ class BoardManagerThread(threading.Thread):
             print(sid, ": ", data)
 
         def ws_on_disconnect():
+            print("THIS IS BEING KILLED")
             self.kill_thr()
             # force status to reconnect
 
