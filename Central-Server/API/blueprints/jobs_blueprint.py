@@ -187,3 +187,36 @@ def get_data():
     with open("./temp-data/flight_computer.csv") as f:
         lines = f.read()
         return lines
+
+@jobs_blueprint.route('/job/update', methods=["POST"])
+def update_job():
+    json_data = request.get_json()
+    """
+    Updates the status of a job
+    """
+    # Update a job
+    if not (auth.authenticate_request(request)):
+        abort(403)
+        return
+
+    conn = database.connect()
+    cursor = conn.cursor()
+    """Check if job exists"""
+    select_query = f"SELECT run_status FROM hilsim_runs WHERE run_id={json_data['run_id']}"
+    print(select_query)
+    cursor.execute(select_query)
+    data = cursor.fetchone()
+    if data is None:
+        return jsonify({"error": "Job not found"}), 404
+    data = data[0]
+    
+    """Update the branch and the hash"""
+    update_query = f"UPDATE hilsim_runs SET branch='{json_data['new_branch']}', git_hash='{json_data['new_commit']}' WHERE run_id={json_data['run_id']}"
+    print(update_query)
+    cursor.execute(update_query)
+    
+    cursor.close()
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"status": "Job updated"}), 200

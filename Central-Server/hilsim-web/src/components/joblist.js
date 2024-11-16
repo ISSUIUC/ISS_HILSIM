@@ -8,8 +8,8 @@ import JobItem from './jobitem';
 
 function JobList() {
   const [jobQueue, setJobQueue] = useState([]);
-
   useEffect(() => {
+    console.log(api_url + `/api/jobs`)
     fetch(api_url + `/api/jobs`, {headers: {
       "ngrok-skip-browser-warning": "true",
       "Access-Control-Allow-Origin": "*"  
