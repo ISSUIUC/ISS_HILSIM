@@ -64,12 +64,3 @@ class JobOutSchema(Schema):
     run_status = String(validate=OneOf([e.name for e in JobStatus]))
     description = String(validate=Length(max=512))
     data_uri = String(validate=Length(max=128))
-
-class JobUpdateSchema(Schema):
-    new_commit = String(
-        required=True, validate=Regexp(
-            sanitizers.git_hash_regexp()))
-    new_branch = String(
-        required=True, validate=Regexp(
-            sanitizers.branch_name_regexp()))
-    run_id = Integer(required=True)
