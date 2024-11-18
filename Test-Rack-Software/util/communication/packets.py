@@ -523,6 +523,10 @@ def SV_JOB(job_data: JobData, flight_csv: str) -> DataPacket:
     packet_data = {'job_data': job_data.to_dict()}
     return DataPacket(DataPacketType.JOB, packet_data, flight_csv)
 
+def SV_NEW_JOB(url:str, flight_csv: str) -> DataPacket:
+    packet = {'url': url}
+    return DataPacket(DataPacketType.JOB, packet, flight_csv)
+
 # Misc packets
 
 

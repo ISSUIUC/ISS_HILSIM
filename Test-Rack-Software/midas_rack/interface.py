@@ -45,7 +45,7 @@ class MIDASAvionics(AVInterface.AvionicsInterface):
     def detect(self) -> bool:
         # For MIDAS, we need to make sure that we're already connected to the
         # server
-        print("(detect_avionics) Attempting to detect avionics")
+        # print("(detect_avionics) Attempting to detect avionics")
         if (not self.server.server_comm_channel):
             print("(detect_avionics) No server detected!")
             self.ready = False

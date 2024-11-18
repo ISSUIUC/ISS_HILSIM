@@ -135,6 +135,7 @@ class BoardThread(threading.Thread):
         @communication_channel: The method that is used to communicate with the Datastreamer
         @pop_back_callback: The function to be called when this thread needs to pop a job back in the queue."""
         threading.Thread.__init__(self)
+        print("(Im a dumbass) this is where the board thread is being created and communication can occur")
         self.thread_name = thread_name
         self.communication_channel = communication_channel
         self.thread_id = thread_id
@@ -462,7 +463,7 @@ class BoardManagerThread(threading.Thread):
             jobs_to_add = self.get_recent_queue()
         except Exception as e:
             print(e, flush=True)
-            # Most likely, we were unable to connect to the db.
+            # Most likely, we were unable to connect to the db.x
             # maybe the database is down for now, so we will just wait until
             # it's up
             pass
@@ -487,6 +488,10 @@ class BoardManagerThread(threading.Thread):
             conn = dsconn.DatastreamerConnection(
                     sid, websocket_channel.ClientWebsocketConnection(
                         self.ws_thread.socketio_server, sid))
+            
+            websocket_channel_imported = conn.communicaton_channel
+            websocket_channel_imported.write("THIS IS A STRING THAT IS BEING SENT ALL THE WAY TO THE RASBERRY PI")
+            
             if(not util.test_env.is_test_environment()):
                 self.add_thread(conn)
             else:
@@ -505,6 +510,8 @@ class BoardManagerThread(threading.Thread):
         self.ws_thread.setup_callbacks(
             ws_on_connect, ws_on_message, ws_on_disconnect)
         self.ws_thread.start()
+        
+        print("THIS IS THE POINT WHERE THE WEBSOCKET IS BEING CREATED")
 
         while self.running:
             # Main manager thread loop

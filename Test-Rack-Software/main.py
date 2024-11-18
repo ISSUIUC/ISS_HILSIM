@@ -52,7 +52,7 @@ def should_heartbeat(Server: Datastreamer.DatastreamerServer):
 
 
 def send_wide_ident(Server: Datastreamer.DatastreamerServer):
-    print("THE SERVER TO SEND WIDE INTENT IS BEING RUN")
+    # print("THIS IS A SERVER WIDE EVENT THAT IS BEING SENT")
     if (not Server.do_wide_ident):
         return True
     if (time.time() > Server.last_server_connection_check):
@@ -62,6 +62,11 @@ def send_wide_ident(Server: Datastreamer.DatastreamerServer):
             try:
                 websocket = ws_channel.WebsocketChannel(
                     test_board_config.api_url, "/api/dscomm/ws/socket.io")
+                
+                # job_data = packet.JobData(1)
+                # data_packet_ = packet.SV_JOB(job_data, "This is a test_value")
+                new_data_packet = packet.SV_NEW_JOB("this is a github_url", "random shit")
+                # websocket.write(data_packet_.serialize())
                 # We've connected, we haven't sent an IDENT, but we know we're
                 # in theory good to go.
                 Server.do_wide_ident = False
@@ -115,9 +120,10 @@ def detect_avionics(Server: Datastreamer.DatastreamerServer):
     try:
         return avionics.av_instance.detect()
     except Exception as e:
-        print("(detect_avionics) Detect_avionics encountered an error during the detection process:")
-        print(e)
-        print()
+        # print("(detect_avionics) Detect_avionics encountered an error during the detection process:")
+        # print(e)
+        # print()
+        True
 
 
 def on_ready(Server: Datastreamer.DatastreamerServer):
