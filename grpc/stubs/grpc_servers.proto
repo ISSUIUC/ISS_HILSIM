@@ -7,6 +7,11 @@ service ManagerService {
     rpc SendJob(JobPacket) returns (google.protobuf.Empty);
 }
 
+service TestRackService {
+    rpc SubscribeToServer(WorkerInfo) returns (google.protobuf.Empty);
+    rpc ExecuteJob(JobPacket) returns (google.protobuf.Empty);
+}
+
 message WorkerInfo {
     string id = 1;
     string ip_address = 2;
