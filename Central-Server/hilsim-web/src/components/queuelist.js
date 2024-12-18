@@ -39,7 +39,7 @@ function QueueList(props) {
   }
 
 
-  let allowed_job_states = ["QUEUED", "RUNNING", "SETUP_PRECOMPILE", "SETUP_COMPILING"]
+  let allowed_job_states = ["QUEUED", "RUNNING", "SETUP_PRECOMPILE", "SETUP_COMPILING", "FAILED_OTHER"]
   function should_show_job(job_data) {
     return allowed_job_states.includes(job_data.run_status);
   }

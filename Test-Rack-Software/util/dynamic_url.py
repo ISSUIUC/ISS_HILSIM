@@ -6,6 +6,8 @@ api_default = "http://localhost/"
 def get_dynamic_url(kamaji_target="main") -> str:
     """Retrieves the api url for kamaji
     @kamaji_target: Which target to retrieve the URI for? `main` will always be the main Kamaji server."""
+    # Read the arguments
+    return api_default
     if api_source is not None:
         print("(dynamic url) Retrieving dynamic url")
         result = requests.get(api_source)
