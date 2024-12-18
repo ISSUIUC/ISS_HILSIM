@@ -2,13 +2,13 @@
 
 case "$1" in
 start)
-./testrack.sh start
+/opt/testrack.sh start
 ;;
 stop)
-./testrack.sh stop
+/opt/testrack.sh stop
 ;;
 restart)
-./testrack.sh restart
+/opt/testrack.sh restart
 ;;
 *)
 echo "Usage: /etc/init.d/testrack.sh {start|stop|restart}"
