@@ -59,6 +59,7 @@ def send_wide_ident(Server: Datastreamer.DatastreamerServer):
                 comm.CommunicationChannelType.WEBSOCKET):
             # Check websockets
             try:
+                print("Testboard url", test_board_config.api_url)
                 websocket = ws_channel.WebsocketChannel(
                     test_board_config.api_url, "/api/dscomm/ws/socket.io")
                 # We've connected, we haven't sent an IDENT, but we know we're
@@ -72,7 +73,7 @@ def send_wide_ident(Server: Datastreamer.DatastreamerServer):
                 packet.DataPacketBuffer.write_packet(
                     packet.CL_IDENT(av_meta.board_type), websocket)
             except Exception as e:
-                print(e)
+                print("(websocket exception): ", e)
 
         # Check comports
         if (Server.server_preferred_comm_method ==

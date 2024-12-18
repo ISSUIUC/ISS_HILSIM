@@ -65,6 +65,7 @@ def init_com_ports():
     Loop through each port and try to initialize it if it's not already initialized
     """
     print("(init_comports) Attempting to initialize all connected COM ports..")
+    # Check if debug and then we can virtualize the serial channels
     for port_data in get_com_ports():
         try:
             port = serial_interface.SerialChannel(

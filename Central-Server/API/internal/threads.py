@@ -194,6 +194,17 @@ class BoardThread(threading.Thread):
             f"Job initialization command sent",
             flush=True)
 
+    def fail_job(self, packet: packets.DataPacket):
+        conn = database.connect()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE hilsim_runs set run_status = %s, run_end = now() where run_id = %s ",
+            (jobs.JobStatus.FAILED_OTHER.value,
+             packet.data["job_data"]["job_id"]))
+        util.logs.write_to_job_log_timestamp(packet.data["job_data"]["job_id"], f"Job failed")
+        conn.commit()
+
+        
     def complete_job(self, packet: packets.DataPacket):
         """Called when a job is complete"""
         # Update the job state in the database
@@ -250,6 +261,13 @@ class BoardThread(threading.Thread):
             self.cur_job_config = None
 
             self.flags.ready_recieved()
+        elif (packet.packet_type == packets.DataPacketType.ERR):
+            print(
+                f"(comm:#{self.thread_id})",
+                f"[handle_packet]",
+                f"Current job failed!", flush=True)
+            # Then we should kill the thread and then
+            self.fail_job(packet)
         elif (packet.packet_type == packets.DataPacketType.HEARTBEAT):
             # Datastreamer packet containing server data.
             # self.last_check = time.time()

@@ -526,9 +526,9 @@ def SV_JOB(job_data: JobData, flight_csv: str) -> DataPacket:
 # Misc packets
 
 
-def MISC_ERR(error: str) -> DataPacket:
+def MISC_ERR(error: str, job_data: JobData, ) -> DataPacket:
     """Constructs ERR packet"""
-    packet_data = {'error': error}
+    packet_data = {'error': error, 'job_data': job_data.to_dict()}
     return DataPacket(DataPacketType.ERR, packet_data)
 
 

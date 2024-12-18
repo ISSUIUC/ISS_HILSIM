@@ -83,12 +83,17 @@ def job_cleanup(Server: Datastreamer.DatastreamerServer):
 
 
 def handle_job_setup_error(Server: Datastreamer.DatastreamerServer):
-    pass
+    Server.packet_buffer.add(pkt.MISC_ERR("setup error!", Server.current_job_data))
+    Server.defer()
+    print("Failed job!")
+    Server.job_active = False
 
 
 def handle_job_runtime_error(Server: Datastreamer.DatastreamerServer):
-    pass
-
+    # Return to the server that the job failed...
+    print("Failed job!")
+    Server.packet_buffer.add(pkt.MISC_ERR("Runtime error!", Server.current_job_data))
+    Server.defer()
 
 def handle_job_transitions(statemachine: Datastreamer.ServerStateController):
     """Add transition events for jobs"""
